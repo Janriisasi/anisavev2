@@ -1,0 +1,41 @@
+{
+  "Vegetables": {
+    "Eggplant": 40,
+    "Tomato": 45,
+    "Cabbage": 30,
+    "Squash": 28,
+    "String Beans": 35,
+    "Ampalaya": 50,
+    "Okra": 33,
+    "Pechay": 25,
+    "Carrot": 48,
+    "Bell Pepper": 60
+  },
+  "Fruits": {
+    "Mango": 60,
+    "Banana": 35,
+    "Calamansi": 50,
+    "Papaya": 32,
+    "Pineapple": 45,
+    "Watermelon": 28,
+    "Lanzones": 90,
+    "Rambutan": 80,
+    "Durian": 120,
+    "Guyabano": 70
+  },
+  "Grains": {
+    "Rice": 42,
+    "Corn": 18,
+    "Sorghum": 25,
+    "Millet": 30
+  },
+  "HerbsAndSpices": {
+    "Ginger": 100,
+    "Garlic": 80,
+    "Onion": 70,
+    "Chili": 120,
+    "Lemongrass": 20,
+    "Basil": 35,
+    "Turmeric": 90
+  }
+}
