@@ -110,7 +110,7 @@ function Login() {
           <button 
             type="submit" 
             disabled={loading} 
-            className="btn w-full bg-green-800 hover:bg-green-900 transform transition-all duration-200"
+            className="btn w-full bg-green-800 transform transition-all duration-200"
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
@@ -139,7 +139,7 @@ function Login() {
         
         <p className="text-center mt-6 text-gray-600">
           Don't have an account?{' '}
-          <a href="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+          <a href="/signup" className="text-green-600 hover:text-green-800 font-medium">
             Sign up here
           </a>
         </p>
