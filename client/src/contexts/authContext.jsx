@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
         
-        // Add artificial delay (2 seconds)
+        //delay loading for 2 sec
         await new Promise(resolve => setTimeout(resolve, 2000));
         
       } catch (error) {
