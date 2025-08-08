@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
         setUser(session?.user ?? null);
         
         //delay loading for 2 sec
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
         console.error('Error checking auth status:', error);
