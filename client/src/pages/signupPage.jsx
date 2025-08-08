@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import bgImage from '../assets/bg.png';
 
 function SignUp() {
   const { user } = useAuth();
@@ -81,13 +82,22 @@ function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 relative"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+
+      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20 relative z-10">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Join AniSave
+          <h2 className="text-3xl font-bold bg-black bg-clip-text text-transparent">
+            Get Started
           </h2>
-          <p className="text-gray-600 mt-2">Connect with farmers and buyers</p>
+          <p className="text-gray-600 mt-2">Create your account now</p>
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
@@ -142,7 +152,7 @@ function SignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105"
+            className="w-full py-2 px-4 bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105"
           >
             {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
@@ -150,7 +160,10 @@ function SignUp() {
 
         <p className="text-center mt-6 text-gray-600">
           Already have an account?{' '}
-          <a href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+          <a
+            href="/login"
+            className="text-green-800 hover:text-green-900 font-medium"
+          >
             Login here
           </a>
         </p>

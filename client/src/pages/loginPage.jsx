@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import bgImage from '../assets/bg.png';
 
 function Login() {
   const { user } = useAuth();
@@ -82,13 +83,22 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
+    <div 
+      className="min-h-screen flex items-center justify-center px-4 relative"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      
+      <div className="bg-white/90 backdrop-blur-sm p-11 rounded-2xl shadow-xl w-full max-w-md h-full border border-white/20 relative">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-green-800">
+          <h2 className="text-3xl font-bold text-black">
             Welcome Back
           </h2>
-          <p className="text-gray-600 mt-2">Sign in to your AniSave account</p>
+          <p className="text-gray-600 mt-2">Log in your account now!</p>
         </div>
         
         <form onSubmit={handleLogin} className="space-y-4">
@@ -139,7 +149,7 @@ function Login() {
         
         <p className="text-center mt-6 text-gray-600">
           Don't have an account?{' '}
-          <a href="/signup" className="text-green-600 hover:text-green-800 font-medium">
+          <a href="/signup" className="text-green-800 hover:text-green-900 font-medium">
             Sign up here
           </a>
         </p>
