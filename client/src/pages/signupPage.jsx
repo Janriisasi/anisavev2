@@ -101,54 +101,90 @@ function SignUp() {
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
-          <input
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-400"
-            name="full_name"
-            value={form.full_name}
-            onChange={handleChange}
-            required
-            placeholder="Full Name"
-          />
-          <input
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-400"
-            name="username"
-            value={form.username}
-            onChange={handleChange}
-            required
-            placeholder="Username"
-          />
-          <input
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-400"
-            name="address"
-            value={form.address}
-            onChange={handleChange}
-            placeholder="Address"
-          />
-          <input
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-400"
-            name="contact_number"
-            value={form.contact_number}
-            onChange={handleChange}
-            placeholder="Contact Number"
-          />
-          <input
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-400"
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            required
-            placeholder="Email"
-          />
-          <input
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-400"
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            required
-            placeholder="Password (min 6 characters)"
-          />
+          <div className="space-y-1">
+            <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
+              Full Name
+            </label>
+            <input
+              id="full_name"
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              name="full_name"
+              value={form.full_name}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Username
+            </label>
+            <input
+              id="username"
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+              Address
+            </label>
+            <input
+              id="address"
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="contact_number" className="block text-sm font-medium text-gray-700">
+              Contact Number
+            </label>
+            <input
+              id="contact_number"
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              name="contact_number"
+              value={form.contact_number}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input
+              id="email"
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password (min 6 characters)
+            </label>
+            <input
+              id="password"
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
           <button
             type="submit"
             disabled={loading}

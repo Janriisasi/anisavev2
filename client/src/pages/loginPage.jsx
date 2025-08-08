@@ -101,22 +101,37 @@ function Login() {
           <p className="text-gray-600 mt-2">Log in your account now!</p>
         </div>
         
-        <form onSubmit={handleLogin} className="space-y-4">
-          <input 
-            className="input" 
-            name="email" 
-            onChange={handleChange} 
-            required 
-            placeholder="Email" 
-          />
-          <input 
-            className="input" 
-            type="password" 
-            name="password" 
-            onChange={handleChange} 
-            required 
-            placeholder="Password" 
-          />
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input 
+              id="email"
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+              name="email" 
+              type="email"
+              value={form.email}
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+          
+          <div className="space-y-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input 
+              id="password"
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+              type="password" 
+              name="password" 
+              value={form.password}
+              onChange={handleChange} 
+              required 
+            />
+          </div>
+          
           <button 
             type="submit" 
             disabled={loading} 
