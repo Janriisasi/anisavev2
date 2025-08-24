@@ -48,7 +48,7 @@ function Login() {
         .eq('id', data.user.id)
         .single();
 
-      // If no profile exists, create one
+      // if no profile exists, create one
       if (profileError) {
         const { error: createError } = await supabase
           .from('profiles')
@@ -135,9 +135,9 @@ function Login() {
           <button 
             type="submit" 
             disabled={loading} 
-            className="btn w-full bg-green-800 transform transition-all duration-200"
+            className="w-full py-2 px-4 bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200"
           >
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? 'Logging In...' : 'Log in'}
           </button>
         </form>
 
