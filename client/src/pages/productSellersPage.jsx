@@ -95,18 +95,6 @@ export default function ProductSellersPage() {
     }
   };
 
-  const handleContactSeller = (seller) => {
-    const message = `Hi ${seller.profiles.full_name || seller.profiles.username}! I'm interested in buying ${productName}. Is it still available?`;
-    const phoneNumber = seller.profiles.contact_number?.replace(/[^0-9]/g, '');
-    
-    if (phoneNumber) {
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-    } else {
-      alert('Contact information not available');
-    }
-  };
-
   useEffect(() => {
     const fetchSellers = async () => {
       const { data, error } = await supabase
@@ -188,11 +176,13 @@ export default function ProductSellersPage() {
           {/* product details */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 h-fit sticky top-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Product Details</h2>
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="w-full h-64 object-cover rounded-xl mb-4"
-            />
+            <div className="flex justify-center mb-4">
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="w-56 h-56 object-cover"
+              />
+            </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">{product.name}</h3>
             <div className="flex items-center gap-4 mb-4">
               <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
