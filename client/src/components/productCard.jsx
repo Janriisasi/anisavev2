@@ -1,4 +1,3 @@
-// components/ProductCard.jsx (Enhanced version)
 import { Star, Bookmark } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import productPrices from '../data/productPrices.json';
@@ -25,12 +24,12 @@ export default function ProductCard({ product, onSaveContact, showSaveButton = t
   const savingsPercent = savings > 0 ? ((savings / marketPrice) * 100).toFixed(1) : 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-green overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-      <div className="relative">
+    <div className="bg-white rounded-2xl border border-green overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 max-w-63 mx-auto">
+      <div className="relative h-48 flex justify-center items-center">
         <img
-          src={image_url || 'https://via.placeholder.com/300x200?text=Product'}
+          src={image_url || 'https://via.placeholder.com/200x200?text=Product'}
           alt={name}
-          className="h-48 w-full object-cover"
+          className="h-32 w-32 mx-auto object-cover rounded-lg"
         />
         {savings > 0 && (
           <div className="absolute top-3 left-3 bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-bold">
@@ -60,32 +59,6 @@ export default function ProductCard({ product, onSaveContact, showSaveButton = t
             </div>
           </div>
         </div>
-
-        {profiles && (
-          <div className="flex items-center gap-3">
-            <img
-              src={profiles.avatar_url || '/default-avatar.png'}
-              alt="Farmer"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-            <span className="text-sm font-medium text-gray-700">
-              {profiles.username || profiles.full_name}
-            </span>
-          </div>
-        )}
-
-        {showSaveButton && onSaveContact && profiles && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSaveContact(profiles.id);
-            }}
-            className="w-full mt-2 flex items-center justify-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors py-2 border border-blue-600 rounded-lg hover:bg-blue-50"
-          >
-            <Bookmark className="w-4 h-4" />
-            Save Contact
-          </button>
-        )}
       </div>
     </div>
   );
