@@ -5,7 +5,6 @@ import ProductCard from '../components/productCard';
 import productPrices from '../data/productPrices.json';
 import { ArrowLeft } from 'lucide-react';
 
-
 export default function CategoriesPage() {
   const { name } = useParams();
   const [products, setProducts] = useState([]);
@@ -15,30 +14,89 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
 
+  const productImages = {
+  //vegetables
+  "Eggplant": "../src/assets/images/eggplant.png",
+  "Tomato": "../src/assets/images/tomato.png",
+  "Cabbage": "../src/assets/images/cabbage.png",
+  "Carrot": "../src/assets/images/carrots.png",
+  "Onion": "../src/assets/images/onion.avif",
+  "Potato": "../src/assets/images/potato.png",
+  "Squash": "../src/assets/images/squash.png",
+  "String Beans": "../src/assets/images/54EDF324AD7242CA.png!c750x0.jpeg",
+  "Ampalaya": "../src/assets/images/107992536.webp",
+  "Okra": "../src/assets/images/okra.webp",
+  "Pechay": "../src/assets/images/pechay.webp",
+  "Bell Pepper": "../src/assets/images/bellpepper.png",
+  //fruits
+  "Mango": "../src/assets/images/mango.webp",
+  "Banana": "../src/assets/images/banana.jpg",
+  "Calamansi": "../src/assets/images/calamansi.jpg",
+  "Papaya": "../src/assets/images/papaya.jpg",
+  "Pineapple": "../src/assets/images/pineapple.avif",
+  "Watermelon": "../src/assets/images/watermelon.jpg",
+  "Lanzones": "../src/assets/images/lanzones.jpg",
+  "Rambutan": "../src/assets/images/rambutan.webp",
+  "Durian": "../src/assets/images/durian.png",
+  "Guyabano": "../src/assets/images/guyabano.avif",
+  //grains
+  "Rice": "../src/assets/images/rice.png",
+  "Corn": "../src/assets/images/corn.png",
+  "Sorghum": "../src/assets/images/sorghum.jpg",
+  "Millet": "../src/assets/images/millet.avif",
+  //herbs & spices
+  "Ginger": "../src/assets/images/ginger.jpg",
+  "Garlic": "../src/assets/images/garlic.jpg",
+  "Chili": "../src/assets/images/chili.png",
+  "Lemongrass": "../src/assets/images/lemongrass.webp",
+  "Basil": "../src/assets/images/basil.webp",
+  "Turmeric": "../src/assets/images/turmeric.webp"
+};
+
   const categories = ['Vegetables', 'Fruits', 'Grains', 'HerbsAndSpices'];
 
   useEffect(() => {
     setLoading(true);
-    setProducts([]); // Clear existing products first
+    setProducts([]);
     
     if (name) {
       generateCategoryProducts();
     } else {
       generateAllProducts();
     }
-  }, [name]); // Keep only name
+  }, [name]);
 
   const getProductImage = (category, productName) => {
-    const categoryImages = productPrices[category]?.images || {};
-    return categoryImages[productName] || `https://via.placeholder.com/300x200?text=${encodeURIComponent(productName)}`;
+    return productImages[productName] || `https://via.placeholder.com/300x200?text=${encodeURIComponent(productName)}`;
+  };
+
+  const groupProductsByName = (allProducts) => {
+    const grouped = new Map();
+    
+    allProducts.forEach(product => {
+      const key = `${product.name.toLowerCase().trim()}_${product.category.toLowerCase().trim()}`;
+      
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          ...product,
+          //store all variations for "View Sellers" functionality
+          variations: [product]
+        });
+      } else {
+        const existing = grouped.get(key);
+        existing.variations.push(product);
+      }
+    });
+    
+    return Array.from(grouped.values());
   };
 
   const generateCategoryProducts = async () => {
     setLoading(true);
-    const categoryProducts = [];
+    const allCategoryProducts = [];
     let productId = 1;
 
-    //fetch products in db
+    //fetch products from database
     const { data: dbProducts, error } = await supabase
       .from('products')
       .select(`
@@ -47,31 +105,35 @@ export default function CategoriesPage() {
       `)
       .eq('category', name);
 
-    // Add db products
-    if (!error && dbProducts) {
-      categoryProducts.push(...dbProducts);
+    //add database products
+    if (!error && dbProducts && dbProducts.length > 0) {
+      allCategoryProducts.push(...dbProducts);
     }
 
-    // Add template products from productPrices.json
-    if (productPrices[name]) {
-      Object.entries(productPrices[name]).forEach(([productName, price]) => {
-        // Only add if product name doesn't exist in products
-        if (!categoryProducts.find(p => p.name.toLowerCase() === productName.toLowerCase())) {
-          categoryProducts.push({
-            id: `template-${productId++}`,
-            name: productName,
-            category: name,
-            price: price,
-            quantity_kg: Math.floor(Math.random() * 100) + 10,
-            image_url: getProductImage(name, productName),
-            description: `Fresh ${productName.toLowerCase()} from local farmers`,
-            profiles: null
-          });
+    //add template products from productPrices.json
+    if (productPrices[name] && typeof productPrices[name] === 'object') {
+      Object.entries(productPrices[name]).forEach(([productName, priceData]) => {
+        if (productName === 'images' || typeof priceData !== 'number') {
+          return;
         }
+
+        allCategoryProducts.push({
+          id: `template-${productId++}`,
+          name: productName,
+          category: name,
+          price: priceData,
+          quantity_kg: Math.floor(Math.random() * 100) + 10,
+          image_url: getProductImage(name, productName),
+          description: `Fresh ${productName.toLowerCase()} from local farmers`,
+          profiles: null
+        });
       });
     }
 
-    setProducts(categoryProducts);
+    //group products by name and category
+    const groupedProducts = groupProductsByName(allCategoryProducts);
+    
+    setProducts(groupedProducts);
     setLoading(false);
   };
 
@@ -88,31 +150,37 @@ export default function CategoriesPage() {
         profiles(id, username, full_name, avatar_url, address, contact_number)
       `);
 
-    // Add database products
-    if (!error && dbProducts) {
+    //add database products
+    if (!error && dbProducts && dbProducts.length > 0) {
       allProducts.push(...dbProducts);
     }
 
-    // Add template products
+    //add template products
     Object.entries(productPrices).forEach(([category, items]) => {
-      Object.entries(items).forEach(([productName, price]) => {
-        // Only add if product name doesn't exist in database products
-        if (!allProducts.find(p => p.name.toLowerCase() === productName.toLowerCase())) {
+      if (typeof items === 'object' && items !== null) {
+        Object.entries(items).forEach(([productName, priceData]) => {
+          if (productName === 'images' || typeof priceData !== 'number') {
+            return;
+          }
+
           allProducts.push({
             id: `template-${productId++}`,
             name: productName,
             category: category,
-            price: price,
+            price: priceData,
             quantity_kg: Math.floor(Math.random() * 100) + 10,
             image_url: getProductImage(category, productName),
             description: `Fresh ${productName.toLowerCase()} from local farmers`,
             profiles: null
           });
-        }
-      });
+        });
+      }
     });
 
-    setProducts(allProducts);
+    //group products by name and category
+    const groupedProducts = groupProductsByName(allProducts);
+    
+    setProducts(groupedProducts);
     setLoading(false);
   };
 
@@ -121,6 +189,12 @@ export default function CategoriesPage() {
       product.name.toLowerCase().includes(search.toLowerCase()) ||
       product.category.toLowerCase().includes(search.toLowerCase())
     );
+  };
+
+  const handleViewSellers = (product) => {
+    setSelectedProduct(product);
+    setSellers(product.variations || [product]);
+    setShowSellers(true);
   };
 
   const handleSaveContact = async (farmerId) => {
@@ -175,49 +249,67 @@ export default function CategoriesPage() {
 
             {/* sellers list */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Available Sellers</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Available Sellers ({sellers.length})</h2>
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {sellers.map((seller, index) => (
-                  <div key={index} className="bg-white rounded-xl p-4 shadow border border-gray-100">
-                    <div className="flex items-center gap-4 mb-3">
-                      <img
-                        src={seller.profiles.avatar_url || '/default-avatar.png'}
-                        alt="Seller"
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-800">
-                          {seller.profiles.username || seller.profiles.full_name}
-                        </h4>
-                        {seller.profiles.address && (
-                          <p className="text-sm text-gray-600">{seller.profiles.address}</p>
+                  <div key={`${seller.id}-${index}`} className="bg-white rounded-xl p-4 shadow border border-gray-100">
+                    {seller.profiles ? (
+                      <>
+                        <div className="flex items-center gap-4 mb-3">
+                          <img
+                            src={seller.profiles.avatar_url || '/default-avatar.png'}
+                            alt="Seller"
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-800">
+                              {seller.profiles.username || seller.profiles.full_name}
+                            </h4>
+                            {seller.profiles.address && (
+                              <p className="text-sm text-gray-600">{seller.profiles.address}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                          <div>
+                            <span className="text-gray-500">Price:</span>
+                            <span className="font-semibold text-green-600 ml-1">₱{seller.price}/kg</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Available:</span>
+                            <span className="font-semibold ml-1">{seller.quantity_kg} kg</span>
+                          </div>
+                        </div>
+
+                        {seller.profiles.contact_number && (
+                          <div className="text-sm text-gray-600 mb-3">
+                            Contact: {seller.profiles.contact_number}
+                          </div>
                         )}
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-                      <div>
-                        <span className="text-gray-500">Price:</span>
-                        <span className="font-semibold text-green-600 ml-1">₱{seller.price}/kg</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Available:</span>
-                        <span className="font-semibold ml-1">{seller.quantity_kg} kg</span>
-                      </div>
-                    </div>
-
-                    {seller.profiles.contact_number && (
-                      <div className="text-sm text-gray-600 mb-3">
-                        Contact: {seller.profiles.contact_number}
+                        <button
+                          onClick={() => handleSaveContact(seller.profiles.id)}
+                          className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                        >
+                          Save Contact
+                        </button>
+                      </>
+                    ) : (
+                      <div className="text-center py-4">
+                        <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                          <div>
+                            <span className="text-gray-500">Market Price:</span>
+                            <span className="font-semibold text-green-600 ml-1">₱{seller.price}/kg</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Available:</span>
+                            <span className="font-semibold ml-1">{seller.quantity_kg} kg</span>
+                          </div>
+                        </div>
+                        <p className="text-gray-500">Template Product - No specific seller</p>
                       </div>
                     )}
-
-                    <button
-                      onClick={() => handleSaveContact(seller.profiles.id)}
-                      className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium"
-                    >
-                      Save Contact
-                    </button>
                   </div>
                 ))}
               </div>
@@ -231,8 +323,8 @@ export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-8">
-          {name ? `${name} Products` : 'Product Categories'}
+        <h1 className="text-center text-4xl font-bold text-gray-800 mb-6">
+          {name ? `${name} Products` : 'Categories'}
         </h1>
 
         {!name && (
@@ -244,9 +336,9 @@ export default function CategoriesPage() {
                 <Link
                   key={category}
                   to={`/categories/${category}`}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-center group"
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:bg-green-800 text-center group"
                 >
-                  <h3 className="font-semibold text-gray-800 group-hover:text-gray-900">
+                  <h3 className="font-semibold text-gray-800 group-hover:text-white">
                     {displayName}
                   </h3>
                 </Link>
@@ -283,7 +375,7 @@ export default function CategoriesPage() {
               <div key={product.id} className="relative">
                 <ProductCard
                   product={product}
-                  onSaveContact={() => handleSaveContact(product.profiles?.id)}
+                  onViewSellers={() => handleViewSellers(product)}
                   showSaveButton={false}
                 />
               </div>
