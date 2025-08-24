@@ -12,6 +12,7 @@ export default function FarmerProfile() {
   const [farmer, setFarmer] = useState(null);
   const [products, setProducts] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
+  const [totalRatings, setTotalRatings] = useState(0);
   const [isContactSaved, setIsContactSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -26,12 +27,7 @@ export default function FarmerProfile() {
     try {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          ratings (
-            rating
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -39,7 +35,7 @@ export default function FarmerProfile() {
 
       setFarmer(profile);
       
-      //fetch farmer's products
+      //fetch the products of farmers
       const { data: products, error: productsError } = await supabase
         .from('products')
         .select('*')
@@ -49,6 +45,24 @@ export default function FarmerProfile() {
       if (productsError) throw productsError;
       setProducts(products || []);
 
+      //fetch the ratings
+      const { data: ratingsData, error: ratingsError } = await supabase
+        .from('ratings')
+        .select('rating')
+        .eq('farmer_id', id);
+
+      if (ratingsError) {
+        console.error('Error fetching ratings:', ratingsError);
+      } else if (ratingsData && ratingsData.length > 0) {
+        const totalRating = ratingsData.reduce((sum, r) => sum + r.rating, 0);
+        const average = (totalRating / ratingsData.length).toFixed(1);
+        setAvgRating(parseFloat(average));
+        setTotalRatings(ratingsData.length);
+      } else {
+        setAvgRating(0);
+        setTotalRatings(0);
+      }
+
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load farmer profile');
@@ -57,10 +71,23 @@ export default function FarmerProfile() {
 
   const checkIfContactSaved = async () => {
     try {
+      //verify user profile exists first
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        setIsContactSaved(false);
+        return;
+      }
+
       const { data } = await supabase
         .from('saved_contacts')
         .select('id')
-        .eq('buyer_id', user.id)
+        .eq('buyer_id', profileData.id)
         .eq('farmer_id', id)
         .single();
 
@@ -78,12 +105,26 @@ export default function FarmerProfile() {
 
     setSaving(true);
     try {
+      //verify user profile exists
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        toast.error('User profile not found. Please complete your profile setup.');
+        setSaving(false);
+        return;
+      }
+
       if (isContactSaved) {
         //remove the contact
         const { error } = await supabase
           .from('saved_contacts')
           .delete()
-          .eq('buyer_id', user.id)
+          .eq('buyer_id', profileData.id)
           .eq('farmer_id', id);
 
         if (error) throw error;
@@ -95,7 +136,7 @@ export default function FarmerProfile() {
         const { error } = await supabase
           .from('saved_contacts')
           .insert({
-            buyer_id: user.id,
+            buyer_id: profileData.id,
             farmer_id: id
           });
 
@@ -144,7 +185,7 @@ export default function FarmerProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* farmer profile header */}
+        {/* farmer profile */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
           <div className="flex flex-col md:flex-row items-start gap-6">
             <img
@@ -163,13 +204,17 @@ export default function FarmerProfile() {
                     <p className="text-gray-600">@{farmer.username}</p>
                   )}
                   
-                  {avgRating > 0 && (
-                    <div className="flex items-center gap-1 mt-2">
-                      <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                      <span className="font-medium text-gray-700">{avgRating}</span>
-                      <span className="text-gray-500 text-sm">average rating</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 mt-2">
+                    <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                    <span className="font-medium text-gray-700">
+                      {avgRating > 0 ? avgRating : 'No ratings yet'}
+                    </span>
+                    {totalRatings > 0 && (
+                      <span className="text-gray-500 text-sm">
+                        ({totalRatings} rating{totalRatings > 1 ? 's' : ''})
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {user && user.id !== farmer.id && (
@@ -212,7 +257,7 @@ export default function FarmerProfile() {
           </div>
         </div>
 
-        {/* products section */}
+        {/* product section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
             <Package className="w-6 h-6 text-green-600" />
@@ -250,12 +295,12 @@ export default function FarmerProfile() {
           )}
         </div>
 
-        {/* rating section */}
+        {/* rating */}
         {user && user.id !== farmer.id && (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8">
             <RateFarmer 
               farmerId={farmer.id} 
-              onRatingSubmitted={() => fetchFarmerData()}
+              onRatingSubmitted={fetchFarmerData}
             />
           </div>
         )}
