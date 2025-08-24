@@ -68,58 +68,91 @@ export default function Profile() {
   };
 
   const handleUpload = async (e) => {
-    try {
-      const file = e.target.files[0];
-      if (!file) return;
+  try {
+    const file = e.target.files[0];
+    if (!file) return;
 
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('Image must be less than 2MB');
-        return;
-      }
-
-      setUploading(true);
-
-      //create file path
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${user.id}/${fileName}`;
-
-      //upload image
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
-
-      // URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      //update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
-      toast.success('Profile picture updated!');
-
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Failed to update profile picture');
-    } finally {
-      setUploading(false);
+    //validate the file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
     }
-  };
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be less than 2MB');
+      return;
+    }
+
+    //checks the user id
+    console.log('User ID:', user.id, 'Type:', typeof user.id);
+    
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    setUploading(true);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `avatar-${Date.now()}.${fileExt}`;
+    const filePath = `${user.id}/${fileName}`;
+
+    console.log('Upload path:', filePath); // Debug
+
+    //upload image to db
+    const { data, error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
+
+    console.log('Upload successful:', data);
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    console.log('Public URL:', publicUrl);
+
+    //update profile in db
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        avatar_url: publicUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Database update error:', updateError);
+      throw updateError;
+    }
+
+    //update local state
+    setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
+    toast.success('Profile picture updated!');
+
+  } catch (error) {
+    console.error('Error:', error);
+    
+    //error messages
+    if (error.message?.includes('uuid')) {
+      toast.error('Authentication error. Please try logging out and back in.');
+    } else if (error.message?.includes('storage')) {
+      toast.error('Storage error. Please try again.');
+    } else {
+      toast.error('Failed to update profile picture');
+    }
+  } finally {
+    setUploading(false);
+  }
+};
 
   const deleteProduct = async (productId) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -188,75 +221,73 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-6 sm:mb-8 text-center sm:text-left">
           My Profile
         </h1>
 
         {/* profile section */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/20 mb-8">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-            <div className="relative">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-6 sm:mb-8">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
+            <div className="relative flex-shrink-0">
               {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
-                  className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-lg"
                   alt="Profile"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-green-200 to-blue-200 flex items-center justify-center border-4 border-white shadow-lg">
-                  <Camera className="w-8 h-8 text-gray-500" />
-                </div>
-              )}
-
-              <label className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full cursor-pointer hover:bg-blue-600 transition-colors shadow-lg">
-                <Camera className="w-4 h-4" />
-                <input
+                <label>
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-green-700 flex items-center justify-center border-4 border-white shadow-lg hover:bg-green-800 cursor-pointer transition-colors duration-200">
+                  <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <input
                   type="file"
                   accept="image/*"
                   onChange={handleUpload}
                   disabled={uploading}
                   className="hidden"
                 />
-              </label>
+                </div>
+                </label>
+              )}
             </div>
 
-            <div className="flex-1 text-center md:text-left">
+            <div className="flex-1 text-center md:text-left w-full">
               {isEditing ? (
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                <form onSubmit={handleUpdateProfile} className="space-y-3 sm:space-y-4">
                   <input
                     type="text"
                     placeholder="Full Name"
                     value={formData.full_name}
                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 sm:px-4 sm:py-2 border rounded-lg text-sm sm:text-base"
                   />
                   <input
                     type="text"
                     placeholder="Address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 sm:px-4 sm:py-2 border rounded-lg text-sm sm:text-base"
                   />
                   <input
                     type="text"
                     placeholder="Contact Number"
                     value={formData.contact_number}
                     onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 sm:px-4 sm:py-2 border rounded-lg text-sm sm:text-base"
                   />
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       type="submit"
-                      className="bg-green-500 text-white px-4 py-2 rounded-lg"
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm sm:text-base"
                     >
                       Save
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg"
+                      className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm sm:text-base"
                     >
                       Cancel
                     </button>
@@ -264,11 +295,11 @@ export default function Profile() {
                 </form>
               ) : (
                 <>
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-2xl font-bold text-gray-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
                       {profile?.full_name || 'Anonymous'}
                     </h2>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <button
                         onClick={() => {
                           setFormData({
@@ -278,39 +309,39 @@ export default function Profile() {
                           });
                           setIsEditing(true);
                         }}
-                        className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm"
+                        className="bg-blue-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
                       >
                         Edit Profile
                       </button>
                       {user && (
                         <button
                           onClick={handleLogout}
-                          className="text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-sm"
+                          className="text-white bg-red-500 hover:bg-red-600 px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
                         >
                           Logout
                         </button>
                       )}
                     </div>
                   </div>
-                  <p className="text-gray-600 mb-2">@{profile?.username}</p>
-                  <p className="text-gray-600 mb-4">{user?.email}</p>
+                  <p className="text-gray-600 mb-2 text-sm sm:text-base">@{profile?.username}</p>
+                  <p className="text-gray-600 mb-4 text-sm sm:text-base">{user?.email}</p>
                   
-                  <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm">
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 justify-center md:justify-start text-xs sm:text-sm">
                     {profile?.address && (
-                      <div className="bg-gray-100 px-4 py-2 rounded-lg flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-gray-600" />
-                        {profile.address}
+                      <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                        <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
+                        <span className="truncate">{profile.address}</span>
                       </div>
                     )}
                     {profile?.contact_number && (
-                      <div className="bg-gray-100 px-4 py-2 rounded-lg flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-gray-600" />
-                        {profile.contact_number}
+                      <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                        <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
+                        <span>{profile.contact_number}</span>
                       </div>
                     )}
-                    <div className="bg-yellow-100 px-4 py-2 rounded-lg flex items-center gap-2">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      {avgRating > 0 ? avgRating : 'No ratings yet'}
+                    <div className="bg-yellow-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
+                      <span>{avgRating > 0 ? avgRating : 'No ratings yet'}</span>
                     </div>
                   </div>
                 </>
@@ -318,64 +349,65 @@ export default function Profile() {
             </div>
           </div>
         </div>
+        
         {/* products section */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/20">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <Package className="w-6 h-6 text-green-600" />
-              My Products ({products.length})
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <Package className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              Products ({products.length})
             </h2>
             <button
               onClick={() => setShowProductForm(true)}
-              className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-600"
+              className="bg-green-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-600 text-sm sm:text-base"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               Add Product
             </button>
           </div>
 
           {loading ? (
-            <div>Loading...</div>
+            <div className="text-center py-8">Loading...</div>
           ) : products.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No products yet</p>
-              <p className="text-gray-400">Start selling by adding your first product!</p>
+            <div className="text-center py-8 sm:py-12">
+              <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-base sm:text-lg">No products yet</p>
+              <p className="text-gray-400 text-sm">Start selling by adding your first product!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {products.map((product) => (
                 <div key={product.id} className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
                   <img 
                     src={product.image_url || '/placeholder.jpg'} 
                     alt={product.name}
-                    className="h-40 w-full object-cover"
+                    className="h-32 sm:h-40 w-full object-cover"
                   />
-                  <div className="p-4">
+                  <div className="p-3 sm:p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-800">{product.name}</h3>
-                      <div className="flex gap-1">
+                      <h3 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{product.name}</h3>
+                      <div className="flex gap-1 ml-2">
                         <button
                           onClick={() => setEditingProduct(product)}
                           className="text-blue-500 hover:text-blue-600 p-1"
                         >
-                          <Edit3 className="w-4 h-4" />
+                          <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </button>
                         <button
                           onClick={() => deleteProduct(product.id)}
                           className="text-red-500 hover:text-red-600 p-1"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{product.category}</p>
-                    <p className="font-bold text-green-600 mb-2">₱{product.price}/kg</p>
-                    <p className="text-sm text-gray-600 mb-3">{product.quantity_kg} kg available</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2">{product.category}</p>
+                    <p className="font-bold text-green-600 mb-2 text-sm sm:text-base">₱{product.price}/kg</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-3">{product.quantity_kg} kg available</p>
                     
                     <button
                       onClick={() => toggleProductStatus(product.id, product.status)}
-                      className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+                      className={`w-full py-2 px-3 sm:px-4 rounded-lg font-medium transition-colors text-xs sm:text-sm ${
                         product.status === 'Available'
                           ? 'bg-green-100 text-green-700 hover:bg-green-200'
                           : 'bg-red-100 text-red-700 hover:bg-red-200'
@@ -391,16 +423,20 @@ export default function Profile() {
         </div>
       </div>
 
-      {showProductForm && (
+      {(showProductForm || editingProduct) && (
         <ProductFormModal
-          onClose={() => setShowProductForm(false)}
+          onClose={() => {
+            setShowProductForm(false);
+            setEditingProduct(null);
+          }}
           onSuccess={() => {
             setShowProductForm(false);
+            setEditingProduct(null);
             fetchUserProducts(user.id);
           }}
+          existingProduct={editingProduct}
         />
-      )
-      }
+      )}
     </div>
   );
 }
