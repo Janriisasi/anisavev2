@@ -12,8 +12,6 @@ function SignUp() {
   const [form, setForm] = useState({
     full_name: '',
     username: '',
-    address: '',
-    contact_number: '',
     email: '',
     password: '',
   });
@@ -92,7 +90,7 @@ function SignUp() {
       }}
     >
 
-      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20 relative z-10">
+      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-2xl border border-white/20 relative z-10">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold bg-black bg-clip-text text-transparent">
             Get Started
@@ -100,95 +98,75 @@ function SignUp() {
           <p className="text-gray-600 mt-2">Create your account now</p>
         </div>
 
-        <form onSubmit={handleSignUp} className="space-y-4">
-          <div className="space-y-1">
-            <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              id="full_name"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              name="full_name"
-              value={form.full_name}
-              onChange={handleChange}
-              required
-            />
-          </div>
+        <form onSubmit={handleSignUp} className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
+                  Full Name
+                </label>
+                <input
+                  id="full_name"
+                  className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  name="full_name"
+                  value={form.full_name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-          <div className="space-y-1">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Username
-            </label>
-            <input
-              id="username"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              required
-            />
-          </div>
+              <div className="space-y-2">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  name="username"
+                  value={form.username}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
 
-          <div className="space-y-1">
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-              Address
-            </label>
-            <input
-              id="address"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-            />
-          </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-          <div className="space-y-1">
-            <label htmlFor="contact_number" className="block text-sm font-medium text-gray-700">
-              Contact Number
-            </label>
-            <input
-              id="contact_number"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              name="contact_number"
-              value={form.contact_number}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="email"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password (min 6 characters)
-            </label>
-            <input
-              id="password"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password (6 characters required)
+                </label>
+                <input
+                  id="password"
+                  className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105"
+            className="w-full py-3 px-4 bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200"
           >
             {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
