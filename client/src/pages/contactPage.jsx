@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
+import Loader from '../components/loader';
 import { useUser } from '../hooks/useUser';
-import { Phone, MapPin, Copy, MessageCircle, Star, Trash2, User } from 'lucide-react';
+import { Copy, Star, Trash2, User, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function SavedContacts() {
   const { user } = useUser();
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [ratings, setRatings] = useState({});
 
   useEffect(() => {
     if (user) {
@@ -19,7 +21,21 @@ export default function SavedContacts() {
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      //updates the query
+      //verify user profile exists first
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        toast.error('User profile not found.');
+        setLoading(false);
+        return;
+      }
+
+      //updated the query
       const { data, error } = await supabase
         .from('saved_contacts')
         .select(`
@@ -34,27 +50,32 @@ export default function SavedContacts() {
             contact_number
           )
         `)
-        .eq('buyer_id', user.id);
+        .eq('buyer_id', profileData.id);
 
       if (error) throw error;
 
       const contactsWithRatings = await Promise.all(
         data.map(async (contact) => {
-          const { data: ratingsData } = await supabase
+          //fetch ratings for this farmer
+          const { data: ratingsData, error: ratingsError } = await supabase
             .from('ratings')
             .select('rating')
             .eq('farmer_id', contact.farmer_id);
 
           let avgRating = 0;
-          if (ratingsData && ratingsData.length > 0) {
+          let totalRatings = 0;
+          
+          if (!ratingsError && ratingsData && ratingsData.length > 0) {
             const total = ratingsData.reduce((sum, r) => sum + r.rating, 0);
-            avgRating = (total / ratingsData.length).toFixed(1);
+            avgRating = (total / ratingsData.length);
+            totalRatings = ratingsData.length;
           }
 
           return {
             ...contact,
             farmer: contact.farmers,
-            avgRating
+            avgRating: avgRating > 0 ? parseFloat(avgRating.toFixed(1)) : 0,
+            totalRatings
           };
         })
       );
@@ -68,7 +89,7 @@ export default function SavedContacts() {
     }
   };
 
-  const copyToClipboard = async (text, type = 'contact') => {
+  const copyToClipboard = async (text, type = 'Contact number') => {
     try {
       await navigator.clipboard.writeText(text);
       toast.success(`${type} copied to clipboard!`);
@@ -97,22 +118,55 @@ export default function SavedContacts() {
       if (error) throw error;
 
       toast.success('Contact removed successfully');
-      fetchContacts(); //refresh the list of contacts
+      fetchContacts(); //refresh the contacts
     } catch (error) {
       console.error('Error removing contact:', error);
       toast.error('Failed to remove contact');
     }
   };
 
+  const viewFarmerProfile = (farmerId) => {
+    navigate(`/farmer/${farmerId}`);
+  };
+
+  const renderStars = (rating, totalRatings) => {
+    if (rating === 0) {
+      return (
+        <div className="flex items-center gap-1 text-gray-400 text-sm">
+          <Star className="w-4 h-4" />
+          <span>No ratings yet</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-1">
+        <div className="flex">
+          {[...Array(5)].map((_, index) => {
+            const isFilled = index < Math.floor(rating);
+            const isHalfFilled = index < rating && index >= Math.floor(rating);
+            
+            return (
+              <Star
+                key={index}
+                className={`w-4 h-4 ${
+                  isFilled ? 'text-yellow-400 fill-yellow-400' : isHalfFilled ? 'text-yellow-400 fill-yellow-200' : 'text-gray-300'
+                }`}
+              />
+            );
+          })}
+        </div>
+        <span className="text-sm text-gray-600 ml-1">
+          {rating} ({totalRatings} rating{totalRatings !== 1 ? 's' : ''})
+        </span>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your saved contacts...</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 flex items-center justify-center">
+        <Loader className="w-15 h-15 text-gray-500 mb-5" />
       </div>
     );
   }
@@ -121,24 +175,28 @@ export default function SavedContacts() {
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-green-800">
-            Saved Contacts
-          </h1>
+          <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Saved Contacts</h2>
         </div>
 
         {contacts.length === 0 ? (
-          <div className="flex items-center justify-center min-h-screen">
+          <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-700 mb-2">No saved contacts yet</h3>
               <p className="text-gray-500 mb-6">
                 Start exploring products and save contacts from farmers you'd like to connect with.
               </p>
+              <button
+                onClick={() => navigate('/home')}
+                className="bg-green-800 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+              >
+                Explore Products
+              </button>
             </div>
           </div>
         ) : (
           <>
-            <div className="mb-6 bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <div className="mb-6">
               <p className="text-gray-700">
                 <span className="font-semibold">{contacts.length}</span> saved contact{contacts.length !== 1 ? 's' : ''}
               </p>
@@ -150,79 +208,85 @@ export default function SavedContacts() {
                   key={contact.id}
                   className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                 >
-                  {/* header with profile image and basic info */}
-                  <div className="p-6 pb-4">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
+                  {/* header */}
+                  <div className="p-6 pb-4 relative">
+                    <div className="flex items-start gap-4 mb-4">
+                      {/* profile */}
+                      <div className="flex-shrink-0">
                         <img
                           src={contact.farmer.avatar_url || '/default-avatar.png'}
                           alt="Farmer Avatar"
-                          className="w-14 h-14 rounded-full object-cover border-2 border-green-200"
+                          className="w-20 h-20 rounded-full object-cover border-2 border-green-200"
                         />
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-800">
-                            {contact.farmer.full_name || contact.farmer.username}
-                          </h3>
-                          {contact.farmer.username && contact.farmer.full_name && (
-                            <p className="text-sm text-gray-600">@{contact.farmer.username}</p>
-                          )}
-                        </div>
                       </div>
                       
-                      <button
-                        onClick={() => removeContact(contact.id, contact.farmer.full_name || contact.farmer.username)}
-                        className="text-red-400 hover:text-red-600 transition-colors p-1"
-                        title="Remove contact"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* cinfo */}
+                      <div className="flex-1 min-w-0">
+                        {/* rating*/}
+                        <div className="mb-2">
+                          {renderStars(contact.avgRating, contact.totalRatings)}
+                        </div>
+                        
+                        {/* name */}
+                        <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                          {contact.farmer.full_name || contact.farmer.username}
+                        </h3>
+                        
+                        {/* username if diff to full name */}
+                        {contact.farmer.username && contact.farmer.full_name && (
+                          <p className="text-sm text-gray-600 mb-1">@{contact.farmer.username}</p>
+                        )}
+                        
+                        {/* address */}
+                        {contact.farmer.address && (
+                          <p className="text-gray-500 text-sm mb-1 line-clamp-2">
+                            {contact.farmer.address}
+                          </p>
+                        )}
+                        
+                        {/* phone number */}
+                        {contact.farmer.contact_number && (
+                          <p className="text-gray-500 text-sm">
+                            {contact.farmer.contact_number}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    {/* ratings */}
-                    {contact.avgRating > 0 && (
-                      <div className="flex items-center gap-1 mb-4">
-                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span className="text-sm font-medium text-gray-700">
-                          {contact.avgRating} rating
-                        </span>
-                      </div>
-                    )}
+                    {/* buttons */}
+                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex gap-2">
+                        {/* view profile button */}
+                        <button
+                          onClick={() => viewFarmerProfile(contact.farmer.id)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm"
+                          title="View profile"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Profile
+                        </button>
 
-                    {/* contact details */}
-                    <div className="space-y-3">
-                      {contact.farmer.address && (
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-700">{contact.farmer.address}</span>
-                        </div>
-                      )}
-                      
-                      {contact.farmer.contact_number && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 flex-1">
-                            {contact.farmer.contact_number}
-                          </span>
+                        {/* copy button */}
+                        {contact.farmer.contact_number && (
                           <button
-                            onClick={() => copyToClipboard(contact.farmer.contact_number, 'Contact number')}
-                            className="text-blue-500 hover:text-blue-600 transition-colors p-1"
+                            onClick={() => copyToClipboard(contact.farmer.contact_number)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm"
                             title="Copy contact number"
                           >
                             <Copy className="w-4 h-4" />
+                            Copy
                           </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                        )}
+                      </div>
 
-                  {/* action buttons */}
-                  <div className="px-6 pb-6">
-                    <div className="flex gap-2">
+                      {/* remove button */}
                       <button
-                        onClick={() => window.location.href = `/farmer/${contact.farmer.id}`}
-                        className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-blue-600 transition-all duration-200"
+                        onClick={() => removeContact(contact.id, contact.farmer.full_name || contact.farmer.username)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
+                        title="Remove contact"
                       >
-                        View Profile
+                        <Trash2 className="w-4 h-4" />
+                        Remove
                       </button>
                     </div>
                   </div>
