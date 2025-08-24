@@ -53,11 +53,11 @@ export default function Navbar() {
     { label: 'Profile', to: '/profile' },
   ];
 
-  // If no user, don't render the navbar
+  //if no user the navbar will not appear
   if (!user) return null;
 
   return (
-    <nav className="bg-green-800 text-white px-4 py-3 shadow-lg backdrop-blur-sm">
+    <nav className="bg-green-800 text-white px-4 py-3 shadow-lg backdrop-blur-sm relative z-50">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* our logo */}
         <Link to="/homepage" className="flex items-center">
@@ -104,13 +104,13 @@ export default function Navbar() {
             
             {/* search results dropdown */}
             {showSearchResults && searchResults.users?.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border overflow-hidden z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[9999] max-h-80 overflow-y-auto">
                 <div>
-                  <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm">Users</div>
+                  <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0">Users</div>
                   {searchResults.users.map((user) => (
                     <div
                       key={user.id}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800"
+                      className="px-4 py-4 hover:bg-gray-50 cursor-pointer text-gray-800"
                       onClick={() => {
                         navigate(`/farmer/${user.id}`);
                         setShowSearchResults(false);
@@ -118,9 +118,13 @@ export default function Navbar() {
                       }}
                     >
                       <div className="flex items-center gap-3">
-                        <img src={user.avatar_url || '/default-avatar.png'} alt="" className="w-8 h-8 rounded-full object-cover" />
-                        <div>
-                          <div className="font-medium">{user.username || user.full_name}</div>
+                        <img 
+                          src={user.avatar_url || '/default-avatar.png'} 
+                          alt="" 
+                          className="w-8 h-8 rounded-full object-cover flex-shrink-0" 
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{user.username || user.full_name}</div>
                           <div className="text-sm text-gray-500">Farmer</div>
                         </div>
                       </div>
@@ -142,7 +146,7 @@ export default function Navbar() {
 
       {/* mobile menu */}
       {menuOpen && (
-        <div className="md:hidden flex flex-col gap-4 mt-3 px-4 bg-green-700/50 backdrop-blur-sm rounded-lg">
+        <div className="md:hidden flex flex-col gap-4 mt-3 px-4 bg-green-700/50 backdrop-blur-sm rounded-lg relative z-40">
           {/* mobile search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -156,6 +160,39 @@ export default function Navbar() {
                 handleSearch(e.target.value);
               }}
             />
+            
+            {/* mobile search results */}
+            {showSearchResults && searchResults.users?.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[9999] max-h-60 overflow-y-auto">
+                <div>
+                  <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0">Users</div>
+                  {searchResults.users.map((user) => (
+                    <div
+                      key={user.id}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800 border-b border-gray-100 last:border-b-0"
+                      onClick={() => {
+                        navigate(`/farmer/${user.id}`);
+                        setShowSearchResults(false);
+                        setSearchQuery('');
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={user.avatar_url || '/default-avatar.png'} 
+                          alt="" 
+                          className="w-6 h-6 rounded-full object-cover flex-shrink-0" 
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate text-sm">{user.username || user.full_name}</div>
+                          <div className="text-xs text-gray-500">Farmer</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
           {links.map(({ label, to }) => (
