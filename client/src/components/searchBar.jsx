@@ -1,4 +1,3 @@
-// Import necessary hooks and Supabase client
 import { useState } from 'react';
 import supabase from '../lib/supabase';
 
