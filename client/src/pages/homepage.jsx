@@ -191,7 +191,7 @@ const Home = () => {
                 <p className="text-sm text-gray-500 font-medium">Your Rating</p>
                 <div className="flex items-center gap-1 mt-1">
                   <h2 className="text-xl font-bold text-gray-800">
-                    {myRating > 0 ? myRating : 'N/A'}
+                    {myRating > 0 ? myRating : 'No ratings yet'}
                   </h2>
                   {myRating > 0 && (
                     <>
