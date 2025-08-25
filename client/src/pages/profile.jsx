@@ -223,10 +223,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-6 sm:mb-8 text-center sm:text-left">
-          My Profile
-        </h1>
-
+        <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Profile</h2>
         {/* profile section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-6 sm:mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
@@ -354,12 +351,12 @@ export default function Profile() {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <Package className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <Package className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />
               Products ({products.length})
             </h2>
             <button
               onClick={() => setShowProductForm(true)}
-              className="bg-green-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-600 text-sm sm:text-base"
+              className="bg-green-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-800 text-sm sm:text-base"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               Add Product
