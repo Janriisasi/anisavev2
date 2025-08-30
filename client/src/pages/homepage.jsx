@@ -231,7 +231,7 @@ const Home = () => {
         <div className="backdrop-blur-sm rounded-2xl p-6">
 
             <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Explore Products</h2>
-
+            
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-2 gap-y-3">
             {filteredProducts.map((product) => (
               <div key={product.id} className="relative">
