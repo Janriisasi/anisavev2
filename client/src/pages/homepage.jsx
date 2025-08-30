@@ -228,19 +228,9 @@ const Home = () => {
         </div>
 
         {/* explore products */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-4xl font-bold text-gray-800">Explore Products</h2>
-            <div className="flex gap-4">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-          </div>
+        <div className="backdrop-blur-sm rounded-2xl p-6">
+
+            <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Explore Products</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-2 gap-y-3">
             {filteredProducts.map((product) => (
