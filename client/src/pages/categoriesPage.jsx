@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function CategoriesPage() {
   const { name } = useParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [sellers, setSellers] = useState([]);
@@ -323,9 +324,38 @@ export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-center text-4xl font-bold text-gray-800 mb-6">
-          {name ? `${name} Products` : 'Categories'}
-        </h1>
+        {name ? (
+          <div className="mb-6">
+            <div className="block sm:hidden">
+              <button
+                onClick={() => navigate('/categories')}
+                className="flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="text-center text-2xl font-bold text-gray-800">
+                {name === 'HerbsAndSpices' ? 'Herbs & Spices' : name} Products
+              </h1>
+            </div>
+            <div className="hidden sm:flex items-center justify-between">
+              <button
+                onClick={() => navigate('/categories')}
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Categories</span>
+              </button>
+              <h1 className="text-4xl font-bold text-gray-800 flex-1 text-center">
+                {name === 'HerbsAndSpices' ? 'Herbs & Spices' : name} Products
+              </h1>
+              <div className="w-[160px]"></div>
+            </div>
+          </div>
+        ) : (
+          <h1 className="text-center text-3xl sm:text-4xl font-bold text-gray-800 mb-6">
+            Categories
+          </h1>
+        )}
 
         {!name && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
@@ -336,7 +366,7 @@ export default function CategoriesPage() {
                 <Link
                   key={category}
                   to={`/categories/${category}`}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:bg-green-800 text-center group"
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-md border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:bg-green-800 text-center group"
                 >
                   <h3 className="font-semibold text-gray-800 group-hover:text-white">
                     {displayName}
@@ -351,7 +381,7 @@ export default function CategoriesPage() {
           <input
             type="text"
             placeholder="Search products..."
-            className="w-full p-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent bg-white/80 backdrop-blur-sm"
+            className="w-full p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white backdrop-blur-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
