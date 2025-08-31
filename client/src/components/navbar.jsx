@@ -58,7 +58,6 @@ export default function Navbar() {
 
   return (
     <nav className="bg-green-800 text-white shadow-lg backdrop-blur-sm relative z-50">
-      {/* Main navbar container */}
       <div className="px-4 py-3">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           {/* our logo */}
@@ -151,12 +150,11 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu with smooth animation */}
+      {/* animation */}
       <div 
         className={`md:hidden absolute top-full left-0 w-full bg-green-800 shadow-2xl z-40 overflow-hidden transition-all duration-500 ease-in-out ${
           menuOpen 
-            ? 'max-h-[500px] opacity-100 transform translate-y-0' 
-            : 'max-h-0 opacity-0 transform -translate-y-4'
+            ? 'max-h-[500px] opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-4'
         }`}
       >
         <div className="px-4 py-6 space-y-4">
@@ -213,7 +211,7 @@ export default function Navbar() {
             )}
           </div>
           
-          {/* Menu links with staggered animation */}
+          {/* animation */}
           {links.map(({ label, to }, index) => (
             <Link
               key={to}
@@ -227,7 +225,7 @@ export default function Navbar() {
             </Link>
           ))}
           
-          {/* Logout button */}
+          {/* logout button */}
           <button
             onClick={() => {
               setMenuOpen(false);
@@ -242,7 +240,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Overlay backdrop for mobile menu */}
+      {/* backdrop */}
       {menuOpen && (
         <div 
           className="md:hidden fixed inset-0 z-30 transition-opacity duration-300"
