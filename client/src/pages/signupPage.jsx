@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Eye, EyeOff } from 'lucide-react';
 import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import bgImage from '../assets/bg.png';
@@ -17,6 +18,8 @@ function SignUp() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -27,6 +30,41 @@ function SignUp() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  const handlePasswordFocus = () => {
+    setShowPasswordRequirements(true);
+  };
+
+  const handlePasswordBlur = () => {
+    if (form.password === '') {
+      setShowPasswordRequirements(false);
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  //password validation
+  const hasMinLength = form.password.length >= 6;
+  const hasUpperCase = /[A-Z]/.test(form.password);
+  const hasLowerCase = /[a-z]/.test(form.password);
+  const hasNumber = /\d/.test(form.password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
+
+  const getRequirementClass = (isValid) => {
+    return `flex items-center text-sm ${
+      isValid ? 'text-green-600' : 'text-red-500'
+    }`;
+  };
+
+  const RequirementItem = ({ isValid, text }) => (
+    <div className={getRequirementClass(isValid)}>
+      <span className="mr-2">
+        {isValid ? '✔' : 'X'}
+      </span>
+      {text}
+    </div>
+  );
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -39,8 +77,12 @@ function SignUp() {
         throw new Error('Please fill in all required fields.');
       }
 
-      if (password.length < 6) {
+      if (!hasMinLength) {
         throw new Error('Password must be at least 6 characters.');
+      }
+
+       if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+         throw new Error('Password must contain uppercase, lowercase, and number.');
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -70,7 +112,7 @@ function SignUp() {
         throw new Error('Signup succeeded, but no user data returned.');
       }
 
-      toast.success('Account created! Please check your email to confirm.');
+      toast.success('Account created!');
       navigate('/login');
     } catch (err) {
       toast.error(err.message || 'Sign up failed.');
@@ -89,7 +131,6 @@ function SignUp() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-
       <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-2xl border border-white/20 relative z-10">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold bg-black bg-clip-text text-transparent">
@@ -148,17 +189,81 @@ function SignUp() {
 
               <div className="space-y-2">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password (6 characters required)
+                  Password
                 </label>
-                <input
-                  id="password"
-                  className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    className="w-full px-4 py-3 pr-12 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    onFocus={handlePasswordFocus}
+                    onBlur={handlePasswordBlur}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                
+                {/* password requirements */}
+                {showPasswordRequirements && (
+                  <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    {(!hasMinLength || !hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) && (
+                      <p className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</p>
+                    )}
+                    
+                    <div className="space-y-1">
+                      {!hasMinLength && (
+                        <RequirementItem 
+                          isValid={false} 
+                          text="At least 6 characters" 
+                        />
+                      )}
+                      {!hasUpperCase && (
+                        <RequirementItem 
+                          isValid={false} 
+                          text="One uppercase letter (A-Z)" 
+                        />
+                      )}
+                      {!hasLowerCase && (
+                        <RequirementItem 
+                          isValid={false} 
+                          text="One lowercase letter (a-z)" 
+                        />
+                      )}
+                      {!hasNumber && (
+                        <RequirementItem 
+                          isValid={false} 
+                          text="One number (0-9)" 
+                        />
+                      )}
+                      {!hasSpecialChar && (
+                        <RequirementItem 
+                          isValid={false} 
+                          text="One special character (!@#$%^&*)" 
+                        />
+                      )}
+                      {hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar && (
+                        <div className="flex items-center text-sm text-green-600 font-medium">
+                          <span className="mr-2">✔</span>
+                          You have a strong password!
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
