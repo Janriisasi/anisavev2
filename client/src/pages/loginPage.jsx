@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Eye, EyeOff } from 'lucide-react';
 import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import bgImage from '../assets/bg.png';
@@ -12,7 +13,7 @@ function Login() {
   const location = useLocation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [showResend, setShowResend] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   //redirect if already logged in
   useEffect(() => {
@@ -24,6 +25,10 @@ function Login() {
   }, [user, navigate, location]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -118,19 +123,33 @@ function Login() {
           </div>
           
           <div className="space-y-1">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input 
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <div className="relative">
+            <input
               id="password"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-              type="password" 
-              name="password" 
+              className="w-full px-4 py-2 pr-12 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              type={showPassword ? "text" : "password"}
+              name="password"
               value={form.password}
-              onChange={handleChange} 
-              required 
+              onChange={handleChange}
+              required
             />
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
           </div>
+        </div>
           
           <button 
             type="submit" 
@@ -140,27 +159,6 @@ function Login() {
             {loading ? 'Logging In...' : 'Log in'}
           </button>
         </form>
-
-        {showResend && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={async () => {
-                const { error } = await supabase.auth.resend({
-                  type: 'signup',
-                  email: form.email,
-                });
-                if (error) {
-                  toast.error('Error resending confirmation email');
-                } else {
-                  toast.success('Confirmation email resent!');
-                }
-              }}
-              className="text-sm text-blue-600 hover:text-blue-700"
-            >
-              Resend confirmation email
-            </button>
-          </div>
-        )}
         
         <p className="text-center mt-6 text-gray-600">
           Don't have an account?{' '}
