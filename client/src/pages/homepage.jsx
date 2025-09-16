@@ -158,9 +158,10 @@ const Home = () => {
   const totalSales = myProducts.reduce((acc, product) => acc + (product.price * 10), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50">
-      <div className="p-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
+      <div className="max-w-7xl mx-auto">
         <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Dashboard</h2>
+        
         {/* dashboard */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-6 border hover:shadow-xl transition-all duration-300">
@@ -228,11 +229,29 @@ const Home = () => {
         </div>
 
         {/* explore products */}
-        <div className="backdrop-blur-sm rounded-2xl p-6">
+        <div className="mb-6">
+          <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Explore Products</h2>
+        </div>
 
-            <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Explore Products</h2>
-            
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-2 gap-y-3">
+        {filteredProducts.length === 0 ? (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center">
+            <div className="text-gray-400 mb-4">
+              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            </div>
+            <p className="text-gray-500 text-lg">
+              {search ? 'No products found matching your search.' : 'No products found.'}
+            </p>
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="mt-2 text-blue-500 hover:text-blue-600 underline"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <div key={product.id} className="relative">
                 <ProductCard
@@ -243,22 +262,7 @@ const Home = () => {
               </div>
             ))}
           </div>
-
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No products found</p>
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="mt-2 text-blue-500 hover:text-blue-600 underline"
-                >
-                  Clear search
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
