@@ -113,7 +113,7 @@ function Login() {
             </label>
             <input 
               id="email"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700" 
               name="email" 
               type="email"
               value={form.email}
@@ -129,7 +129,7 @@ function Login() {
           <div className="relative">
             <input
               id="password"
-              className="w-full px-4 py-2 pr-12 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="w-full px-4 py-2 pr-12 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
               type={showPassword ? "text" : "password"}
               name="password"
               value={form.password}
