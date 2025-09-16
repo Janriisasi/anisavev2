@@ -106,9 +106,13 @@ export default function CategoriesPage() {
       `)
       .eq('category', name);
 
-    //add database products
+    //add database products with default images
     if (!error && dbProducts && dbProducts.length > 0) {
-      allCategoryProducts.push(...dbProducts);
+      const productsWithDefaultImages = dbProducts.map(product => ({
+        ...product,
+        image_url: getProductImage(product.category, product.name)
+      }));
+      allCategoryProducts.push(...productsWithDefaultImages);
     }
 
     //add template products from productPrices.json
@@ -151,9 +155,13 @@ export default function CategoriesPage() {
         profiles(id, username, full_name, avatar_url, address, contact_number)
       `);
 
-    //add database products
+    //add database products with default images
     if (!error && dbProducts && dbProducts.length > 0) {
-      allProducts.push(...dbProducts);
+      const productsWithDefaultImages = dbProducts.map(product => ({
+        ...product,
+        image_url: getProductImage(product.category, product.name)
+      }));
+      allProducts.push(...productsWithDefaultImages);
     }
 
     //add template products
