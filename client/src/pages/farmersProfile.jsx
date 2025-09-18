@@ -104,6 +104,12 @@ export default function FarmerProfile() {
       return;
     }
 
+    //check if farmer has contact information
+    if (!farmer.contact_number || !farmer.address) {
+      toast.error('Cannot save contact. This user has not provided contact information.');
+      return;
+    }
+
     setSaving(true);
     try {
       //verify user profile exists
@@ -173,11 +179,9 @@ export default function FarmerProfile() {
   };
 
   const handleBackNavigation = () => {
-    // Use browser's back functionality as a fallback
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      // Fallback to a safe route if no history
       navigate('/');
     }
   };
@@ -223,8 +227,8 @@ export default function FarmerProfile() {
                     <p className="text-gray-600">@{farmer.username}</p>
                   )}
                   
-                  {/* Contact info styled like profile page */}
-                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4 text-xs sm:text-sm mt-2">
+                  {/* contact info */}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4 text-xs sm:text-sm mt-8">
                     {farmer.address && (
                       <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
                         <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
