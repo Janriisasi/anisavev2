@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import { useUser } from '../hooks/useUser';
 import RateFarmer from '../components/rateFarmer';
-import { Star, MapPin, Phone, Package } from 'lucide-react';
+import { Star, MapPin, Phone, Package, ArrowLeft, Copy } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function FarmerProfile() {
   const { id } = useParams();
   const { user } = useUser();
+  const navigate = useNavigate();
   const [farmer, setFarmer] = useState(null);
   const [products, setProducts] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
@@ -171,6 +172,16 @@ export default function FarmerProfile() {
     }
   };
 
+  const handleBackNavigation = () => {
+    // Use browser's back functionality as a fallback
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // Fallback to a safe route if no history
+      navigate('/');
+    }
+  };
+
   if (!farmer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
@@ -185,13 +196,21 @@ export default function FarmerProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-6xl mx-auto">
+        <button
+          onClick={handleBackNavigation}
+          className="flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 mr-1" />
+          Back
+        </button>
+        
         {/* farmer profile */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
           <div className="flex flex-col md:flex-row items-start gap-6">
             <img
               src={farmer.avatar_url || '/default-avatar.png'}
               alt="Farmer Avatar"
-              className="w-24 h-24 rounded-full object-cover border-4 border-green-200"
+              className="w-32 h-32 rounded-full object-cover border-4 border-green-200"
             />
             
             <div className="flex-1">
@@ -204,16 +223,38 @@ export default function FarmerProfile() {
                     <p className="text-gray-600">@{farmer.username}</p>
                   )}
                   
-                  <div className="flex items-center gap-1 mt-2">
-                    <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                    <span className="font-medium text-gray-700">
-                      {avgRating > 0 ? avgRating : 'No ratings yet'}
-                    </span>
-                    {totalRatings > 0 && (
-                      <span className="text-gray-500 text-sm">
-                        ({totalRatings} rating{totalRatings > 1 ? 's' : ''})
-                      </span>
+                  {/* Contact info styled like profile page */}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4 text-xs sm:text-sm mt-2">
+                    {farmer.address && (
+                      <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                        <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
+                        <span className="truncate">{farmer.address}</span>
+                      </div>
                     )}
+                    {farmer.contact_number && (
+                      <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                        <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
+                        <span>{farmer.contact_number}</span>
+                        <button
+                          onClick={copyContact}
+                          className="ml-2 p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200"
+                          title="Copy contact number"
+                        >
+                          <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
+                        </button>
+                      </div>
+                    )}
+                    <div className="bg-yellow-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
+                      <span>
+                        {avgRating > 0 ? avgRating : 'No ratings yet'}
+                        {totalRatings > 0 && (
+                          <span className="text-gray-500 ml-1">
+                            ({totalRatings} rating{totalRatings > 1 ? 's' : ''})
+                          </span>
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -229,28 +270,6 @@ export default function FarmerProfile() {
                   >
                     {saving ? 'Processing...' : isContactSaved ? 'Remove Contact' : 'Save Contact'}
                   </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                {farmer.address && (
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">{farmer.address}</span>
-                  </div>
-                )}
-                
-                {farmer.contact_number && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                    <span className="text-gray-700 flex-1">{farmer.contact_number}</span>
-                    <button
-                      onClick={copyContact}
-                      className="text-blue-500 hover:text-blue-600 transition-colors text-xs"
-                    >
-                      Copy
-                    </button>
-                  </div>
                 )}
               </div>
             </div>
@@ -270,24 +289,33 @@ export default function FarmerProfile() {
               <p className="text-gray-500">No products available</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product) => (
-                <div key={product.id} className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-                  <img 
-                    src={product.image_url || '/placeholder.jpg'} 
-                    alt={product.name}
-                    className="w-full h-40 object-cover" 
-                  />
+                <div key={product.id} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+                  <div className="relative">
+                    <img 
+                      src={product.image_url || '/placeholder.jpg'} 
+                      alt={product.name}
+                      className="h-48 w-full object-cover"
+                    />
+                  </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 mb-1">{product.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{product.category}</p>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold text-green-600">₱{product.price}/kg</span>
-                      <span className="text-sm text-gray-500">{product.quantity_kg} kg</span>
+                    <div className="mb-2">
+                      <h3 className="font-bold text-gray-800 text-lg mb-1 truncate">{product.name}</h3>
+                      <p className="text-gray-600 text-sm">{product.category}</p>
                     </div>
-                    {product.description && (
-                      <p className="text-sm text-gray-700">{product.description}</p>
-                    )}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-green-600 font-bold text-lg">₱{product.price}/kg</span>
+                      <span className="text-gray-600 text-sm">{product.quantity_kg} kg available</span>
+                    </div>
+                    
+                    <div className={`w-full py-2 px-4 rounded-lg font-medium text-sm text-center ${
+                      product.status === 'Available'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {product.status || 'Available'}
+                    </div>
                   </div>
                 </div>
               ))}
