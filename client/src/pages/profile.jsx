@@ -2,7 +2,7 @@ import { useEffect, useState, useNavigate } from 'react';
 import supabase from '../lib/supabase';
 import ProductFormModal from '../components/ProductFormModal';
 import { toast } from 'react-toastify';
-import { Camera, Star, Package, Edit3, Trash2, Plus, MapPin, Phone } from 'lucide-react';
+import { Camera, Star, Package, Edit3, Trash2, Plus, MapPin, Phone, LogOut, Edit } from 'lucide-react';
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -19,6 +19,7 @@ export default function Profile() {
     address: '',
     contact_number: ''
   });
+  const [contactError, setContactError] = useState('');
 
   useEffect(() => {
     getUser();
@@ -67,6 +68,33 @@ export default function Profile() {
     }
   };
 
+  //contact number validation function
+  const handleContactNumberChange = (e) => {
+    let value = e.target.value;
+    
+    //remove all the non-numeric characters
+    let numericValue = value.replace(/\D/g, '');
+    
+    //if user tries to delete the "09", restore it
+    if (numericValue.length < 2 || !numericValue.startsWith('09')) {
+      numericValue = '09' + numericValue.replace(/^09/, '');
+    }
+    
+    //limit to 11 digits
+    numericValue = numericValue.slice(0, 11);
+    
+    setFormData({ ...formData, contact_number: numericValue });
+    
+    //validates the contact number
+    if (numericValue.length === 2) {
+      setContactError('Please enter the remaining 9 digits');
+    } else if (numericValue.length < 11) {
+      setContactError(`Contact number must be exactly 11 digits (${11 - numericValue.length} more digits needed)`);
+    } else if (numericValue.length === 11) {
+      setContactError('');
+    }
+  };
+
   const handleUpload = async (e) => {
   try {
     const file = e.target.files[0];
@@ -97,7 +125,7 @@ export default function Profile() {
     const fileName = `avatar-${Date.now()}.${fileExt}`;
     const filePath = `${user.id}/${fileName}`;
 
-    console.log('Upload path:', filePath); // Debug
+    console.log('Upload path:', filePath);
 
     //upload image to db
     const { data, error: uploadError } = await supabase.storage
@@ -193,6 +221,18 @@ export default function Profile() {
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    
+    // Validate contact number before submission
+    if (formData.contact_number && formData.contact_number.length !== 11) {
+      toast.error('Contact number must be exactly 11 digits starting with 09');
+      return;
+    }
+    
+    if (formData.contact_number && !formData.contact_number.startsWith('09')) {
+      toast.error('Contact number must start with 09');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('profiles')
@@ -213,6 +253,7 @@ export default function Profile() {
         contact_number: formData.contact_number
       }));
       setIsEditing(false);
+      setContactError('');
       toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -221,9 +262,42 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-4 sm:p-6">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Profile</h2>
+    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Profile</h2>
+          <div className="flex items-center gap-2">
+            {!isEditing && (
+              <button
+                onClick={() => {
+                  setFormData({
+                    full_name: profile?.full_name || '',
+                    address: profile?.address || '',
+                    contact_number: profile?.contact_number || '09'
+                  });
+                  setContactError('');
+                  setIsEditing(true);
+                }}
+                className="md:hidden p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                title="Edit Profile"
+              >
+                <Edit className="w-5 h-5" />
+              </button>
+            )}
+            {/* logout */}
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="hidden md:flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-10 py-2 rounded-lg transition-all duration-200"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className='font-medium'>Logout</span>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* profile section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-6 sm:mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
@@ -250,80 +324,111 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="flex-1 text-center md:text-left w-full">
+            <div className="flex-1 text-center md:text-left w-full relative">
+              {/* edit */}
+              {!isEditing && (
+                <button
+                  onClick={() => {
+                    setFormData({
+                      full_name: profile?.full_name || '',
+                      address: profile?.address || '',
+                      contact_number: profile?.contact_number || '09'
+                    });
+                    setContactError('');
+                    setIsEditing(true);
+                  }}
+                  className="hidden md:block absolute top-0 right-0 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  title="Edit Profile"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+              )}
+
               {isEditing ? (
-                <form onSubmit={handleUpdateProfile} className="space-y-3 sm:space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Full Name"
-                    value={formData.full_name}
-                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                    className="w-full px-3 py-2 sm:px-4 sm:py-2 border rounded-lg text-sm sm:text-base"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-3 py-2 sm:px-4 sm:py-2 border rounded-lg text-sm sm:text-base"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Contact Number"
-                    value={formData.contact_number}
-                    onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                    className="w-full px-3 py-2 sm:px-4 sm:py-2 border rounded-lg text-sm sm:text-base"
-                  />
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <button
-                      type="submit"
-                      className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm sm:text-base"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(false)}
-                      className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm sm:text-base"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
+                <div className="space-y-4 md:pr-12">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Profile</h3>
+                    <form onSubmit={handleUpdateProfile} className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input
+                          type="text"
+                          placeholder="Enter your full name"
+                          value={formData.full_name}
+                          onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 text-sm sm:text-base"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Address</label>
+                        <input
+                          type="text"
+                          placeholder="Enter your address"
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 text-sm sm:text-base"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Contact Number 
+                          <span className="text-xs text-gray-500 ml-1">(11 digits required. Enter 9 more digits)</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="09XXXXXXXXX"
+                          value={formData.contact_number}
+                          onChange={handleContactNumberChange}
+                          onFocus={(e) => {
+                            //09
+                            if (!formData.contact_number) {
+                              setFormData({ ...formData, contact_number: '09' });
+                            }
+                          }}
+                          maxLength={11}
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all duration-200 text-sm sm:text-base ${
+                            contactError 
+                              ? 'border-red-300 focus:ring-red-200 focus:border-red-500' 
+                              : 'border-gray-300 focus:ring-green-200 focus:border-green-500'
+                          }`}
+                        />
+                        {contactError && (
+                          <p className="text-red-500 text-xs mt-1">{contactError}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                        <button
+                          type="submit"
+                          disabled={contactError || (formData.contact_number && formData.contact_number.length !== 11)}
+                          className={`flex-1 py-3 px-4 rounded-lg transition-colors font-medium text-sm sm:text-base ${
+                            contactError || (formData.contact_number && formData.contact_number.length !== 11)
+                              ? 'bg-gray-400 text-white cursor-not-allowed'
+                              : 'bg-green-700 text-white hover:bg-green-800'
+                          }`}
+                        >
+                          Save Changes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditing(false);
+                            setContactError('');
+                          }}
+                          className="px-8 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                </div>
               ) : (
                 <>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-                      {profile?.full_name || 'Anonymous'}
-                    </h2>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <button
-                        onClick={() => {
-                          setFormData({
-                            full_name: profile?.full_name || '',
-                            address: profile?.address || '',
-                            contact_number: profile?.contact_number || ''
-                          });
-                          setIsEditing(true);
-                        }}
-                        className="bg-blue-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
-                      >
-                        Edit Profile
-                      </button>
-                      {user && (
-                        <button
-                          onClick={handleLogout}
-                          className="text-white bg-red-500 hover:bg-red-600 px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm"
-                        >
-                          Logout
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 md:pr-12">
+                    {profile?.full_name || 'Anonymous'}
+                  </h2>
                   <p className="text-gray-600 mb-2 text-sm sm:text-base">@{profile?.username}</p>
                   <p className="text-gray-600 mb-4 text-sm sm:text-base">{user?.email}</p>
                   
-                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 justify-center md:justify-start text-xs sm:text-sm">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4 justify-center md:justify-start text-xs sm:text-sm">
                     {profile?.address && (
                       <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
                         <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
@@ -349,65 +454,75 @@ export default function Profile() {
         
         {/* products section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
               <Package className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />
-              Products ({products.length})
+              Products
             </h2>
             <button
               onClick={() => setShowProductForm(true)}
-              className="bg-green-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-800 text-sm sm:text-base"
+              className="bg-green-700 text-white p-3 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-800 text-sm sm:text-base flex-shrink-0"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-              Add Product
+              <span className="hidden sm:inline">Add Product</span>
             </button>
           </div>
 
           {loading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+            </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-8 sm:py-12">
-              <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-base sm:text-lg">No products yet</p>
-              <p className="text-gray-400 text-sm">Start selling by adding your first product!</p>
+            <div className="backdrop-blur-sm rounded-2xl p-12 text-center">
+              <div className="text-gray-400 mb-4">
+                <Package className="w-16 h-16 mx-auto" />
+              </div>
+              <p className="text-gray-500 text-lg">No products yet</p>
+              <p className="text-gray-400">Start selling by adding your first product!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product) => (
-                <div key={product.id} className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-                  <img 
-                    src={product.image_url || '/placeholder.jpg'} 
-                    alt={product.name}
-                    className="h-32 sm:h-40 w-full object-cover"
-                  />
-                  <div className="p-3 sm:p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{product.name}</h3>
-                      <div className="flex gap-1 ml-2">
-                        <button
-                          onClick={() => setEditingProduct(product)}
-                          className="text-blue-500 hover:text-blue-600 p-1"
-                        >
-                          <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteProduct(product.id)}
-                          className="text-red-500 hover:text-red-600 p-1"
-                        >
-                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </button>
-                      </div>
+                <div key={product.id} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+                  <div className="relative">
+                    <img 
+                      src={product.image_url || '/placeholder.jpg'} 
+                      alt={product.name}
+                      className="h-48 w-full object-cover"
+                    />
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <button
+                        onClick={() => setEditingProduct(product)}
+                        className="bg-white/90 backdrop-blur-sm text-blue-500 hover:text-blue-600 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200"
+                        title="Edit Product"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(product.id)}
+                        className="bg-white/90 backdrop-blur-sm text-red-500 hover:text-red-600 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200"
+                        title="Delete Product"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-2">{product.category}</p>
-                    <p className="font-bold text-green-600 mb-2 text-sm sm:text-base">₱{product.price}/kg</p>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-3">{product.quantity_kg} kg available</p>
+                  </div>
+                  <div className="p-4">
+                    <div className="mb-2">
+                      <h3 className="font-bold text-gray-800 text-lg mb-1 truncate">{product.name}</h3>
+                      <p className="text-gray-600 text-sm">{product.category}</p>
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-green-600 font-bold text-lg">₱{product.price}/kg</span>
+                      <span className="text-gray-600 text-sm">{product.quantity_kg} kg available</span>
+                    </div>
                     
                     <button
                       onClick={() => toggleProductStatus(product.id, product.status)}
-                      className={`w-full py-2 px-3 sm:px-4 rounded-lg font-medium transition-colors text-xs sm:text-sm ${
+                      className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-300 text-sm ${
                         product.status === 'Available'
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-red-100 text-red-700 hover:bg-red-200'
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800'
+                          : 'bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-800'
                       }`}
                     >
                       {product.status || 'Available'}
