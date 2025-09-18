@@ -9,6 +9,7 @@ import Categories from './pages/categoriesPage';
 import ProductSellers from './pages/productSellersPage';
 import Contacts from './pages/contactPage';
 import Farmer from './pages/farmersProfile';
+import AdminDashboard from './pages/adminDashboard';
 
 export default function Routes() {
   const { user } = useAuth();
@@ -29,6 +30,13 @@ export default function Routes() {
       } />
 
       {/* protected routes */}
+
+      <Route path="/admin" element={
+        <ProtectedRoute>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
+
       <Route path="/homepage" element={
         <ProtectedRoute>
           <Homepage />
