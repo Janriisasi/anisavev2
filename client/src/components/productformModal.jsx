@@ -1,11 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import supabase from '../lib/supabase';
-import { Upload, ChevronDown } from 'lucide-react';
+import { Upload, ChevronDown, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import productPrices from '../data/productPrices.json';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function ProductFormModal({ onClose, onSuccess, existingProduct }) {
+export default function ProductFormModal({ onClose, onSuccess, existingProduct, userProfile }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -24,6 +24,9 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct }
   const [productOpen, setProductOpen] = useState(false);
   const categoryRef = useRef(null);
   const productRef = useRef(null);
+
+  //check if user profile is complete
+  const isProfileComplete = userProfile?.address && userProfile?.contact_number;
 
   //get available products based on selected category
   const availableProducts = useMemo(() => {
@@ -58,7 +61,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Custom Dropdown Component
+  //dropdown component
   const CustomDropdown = ({ 
     label, 
     value, 
@@ -182,6 +185,13 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    //check if profile is complete
+    if (!isProfileComplete) {
+      toast.error('Please complete your profile with address and phone number before adding products.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -244,6 +254,60 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct }
       setLoading(false);
     }
   };
+
+  //if profile is not complete, show warning message
+  if (!isProfileComplete) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-2xl w-full max-w-md p-6">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+              <AlertTriangle className="w-8 h-8 text-yellow-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Complete Your Profile
+            </h2>
+            <p className="text-gray-600 mb-6">
+              To add products, you need to complete your profile with:
+            </p>
+            <div className="text-left bg-gray-50 rounded-lg p-4 mb-6">
+              <ul className="space-y-2">
+                {!userProfile?.address && (
+                  <li className="flex items-center text-red-600">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                    Address information
+                  </li>
+                )}
+                {!userProfile?.contact_number && (
+                  <li className="flex items-center text-red-600">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                    Phone number
+                  </li>
+                )}
+              </ul>
+            </div>
+            <p className="text-sm text-gray-500 mb-6">
+              This information helps buyers contact you and arrange deliveries.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 bg-green-700 text-white py-3 rounded-lg hover:bg-green-800 transition-colors font-medium"
+              >
+                Update Profile
+              </button>
+              <button
+                onClick={onClose}
+                className="px-6 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
