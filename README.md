@@ -1,5 +1,3 @@
-# 🌱 AniSave
-
 <div align="center">
 
 ![AniSave Logo](client/src/assets/anisave_logo.png)
