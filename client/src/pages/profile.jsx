@@ -68,6 +68,26 @@ export default function Profile() {
     }
   };
 
+  //check if profile is complete
+  const isProfileComplete = profile?.address && profile?.contact_number;
+
+  //handle add product button
+  const handleAddProductClick = () => {
+    if (!isProfileComplete) {
+      toast.warning('Please complete your profile with address and phone number before adding products.');
+      //auto-open if profile is incomplete
+      setFormData({
+        full_name: profile?.full_name || '',
+        address: profile?.address || '',
+        contact_number: profile?.contact_number || '09'
+      });
+      setContactError('');
+      setIsEditing(true);
+      return;
+    }
+    setShowProductForm(true);
+  };
+
   //contact number validation function
   const handleContactNumberChange = (e) => {
     let value = e.target.value;
@@ -460,13 +480,41 @@ export default function Profile() {
               Products
             </h2>
             <button
-              onClick={() => setShowProductForm(true)}
-              className="bg-green-700 text-white p-3 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-800 text-sm sm:text-base flex-shrink-0"
+              onClick={handleAddProductClick}
+              className={`p-3 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base flex-shrink-0 transition-all duration-200 ${
+                isProfileComplete 
+                  ? 'bg-green-700 text-white hover:bg-green-800' 
+                  : 'bg-yellow-600 text-white hover:bg-yellow-700'
+              }`}
+              title={!isProfileComplete ? 'Complete profile to add products' : 'Add new product'}
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">Add Product</span>
+              <span className="hidden sm:inline">
+                {isProfileComplete ? 'Add Product' : 'Complete Profile'}
+              </span>
             </button>
           </div>
+
+          {/* profile completion notice */}
+          {!isProfileComplete && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-sm font-bold">!</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-yellow-800 mb-2">Complete Your Profile to Add Products</h4>
+                  <p className="text-yellow-700 text-sm mb-3">
+                    To start selling, please add the following information to your profile:
+                  </p>
+                  <ul className="text-yellow-700 text-sm space-y-1 mb-3">
+                    {!profile?.address && <li>• Your address (for delivery arrangements)</li>}
+                    {!profile?.contact_number && <li>• Your phone number (for buyer communication)</li>}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -478,7 +526,11 @@ export default function Profile() {
                 <Package className="w-16 h-16 mx-auto" />
               </div>
               <p className="text-gray-500 text-lg">No products yet</p>
-              <p className="text-gray-400">Start selling by adding your first product!</p>
+              <p className="text-gray-400">
+                {isProfileComplete 
+                  ? 'Start selling by adding your first product!' 
+                  : 'Complete your profile to start adding products!'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -547,6 +599,7 @@ export default function Profile() {
             fetchUserProducts(user.id);
           }}
           existingProduct={editingProduct}
+          userProfile={profile}
         />
       )}
     </div>
