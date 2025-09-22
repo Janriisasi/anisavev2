@@ -95,7 +95,35 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 
 ```
 
-not finished
+ANISAVE2.0/
+├── .vscode/
+├── client/
+├── node_modules/
+├── public/
+├── src/
+│   ├── assets/
+│   │   └── images/
+│   ├── components/
+│   ├── contexts/
+│   ├── data/
+│   ├── hooks/
+│   ├── lib/
+│   ├── pages/
+│   ├── App.css
+│   ├── App.jsx
+│   ├── index.css
+│   ├── main.jsx
+│   └── Routes.jsx
+├── .env
+├── .gitignore
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── README.md
+├── tailwind.config.js
+└── vite.config.js
 
 ```
 
