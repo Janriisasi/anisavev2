@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![AniSave Logo](https://via.placeholder.com/200x80/3ECF8E/FFFFFF?text=AniSave)
+![AniSave Logo](client/src/assets/anisave_logo.png)
 
 **Bridging the gap between farmers and buyers through modern agricultural commerce**
 
