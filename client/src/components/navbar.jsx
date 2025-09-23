@@ -37,6 +37,14 @@ export default function Navbar() {
     }
   };
 
+  const handleUserClick = (userId) => {
+    console.log('Clicking on user:', userId);
+    navigate(`/farmer/${userId}`);
+    setShowSearchResults(false);
+    setSearchQuery('');
+    setMenuOpen(false);
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -116,7 +124,10 @@ export default function Navbar() {
                       setSearchQuery(e.target.value);
                       handleSearch(e.target.value);
                     }}
-                    onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+                    onBlur={() => {
+                      //increased the timeout to allow click events to process
+                      setTimeout(() => setShowSearchResults(false), 300);
+                    }}
                     onFocus={() => searchQuery && setShowSearchResults(true)}
                   />
                 </div>
@@ -130,10 +141,9 @@ export default function Navbar() {
                         <div
                           key={user.id}
                           className="px-4 py-4 hover:bg-gray-50 cursor-pointer text-gray-800"
-                          onClick={() => {
-                            navigate(`/farmer/${user.id}`);
-                            setShowSearchResults(false);
-                            setSearchQuery('');
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleUserClick(user.id);
                           }}
                         >
                           <div className="flex items-center gap-3">
@@ -168,7 +178,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* animation */}
+        {/* mobile menu animation */}
         <div 
           className={`md:hidden absolute top-full left-0 w-full bg-green-800 shadow-2xl z-40 overflow-hidden transition-all duration-500 ease-in-out ${
             menuOpen 
@@ -192,6 +202,10 @@ export default function Navbar() {
                   setSearchQuery(e.target.value);
                   handleSearch(e.target.value);
                 }}
+                onBlur={() => {
+                  setTimeout(() => setShowSearchResults(false), 300);
+                }}
+                onFocus={() => searchQuery && setShowSearchResults(true)}
               />
               
               {/* mobile search results */}
@@ -204,11 +218,9 @@ export default function Navbar() {
                         key={user.id}
                         className={`px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800 border-b border-gray-100 last:border-b-0 transition-all duration-300 hover:translate-x-1`}
                         style={{ animationDelay: `${index * 50}ms` }}
-                        onClick={() => {
-                          navigate(`/farmer/${user.id}`);
-                          setShowSearchResults(false);
-                          setSearchQuery('');
-                          setMenuOpen(false);
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleUserClick(user.id);
                         }}
                       >
                         <div className="flex items-center gap-3">
@@ -229,7 +241,7 @@ export default function Navbar() {
               )}
             </div>
             
-            {/* animation */}
+            {/* navigation links */}
             {links.map(({ label, to }, index) => (
               <Link
                 key={to}
