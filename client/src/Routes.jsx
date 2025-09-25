@@ -1,6 +1,7 @@
 import { Routes as RouterRoutes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
+import LandingPage from './pages/landingPage';
 import Login from './pages/loginPage';
 import SignUp from './pages/signupPage';
 import Homepage from './pages/homepage';
@@ -16,9 +17,14 @@ export default function Routes() {
 
   return (
     <RouterRoutes>
-      {/* pub routes */}
+      {/* default route */}
       <Route path="/" element={
-        <Navigate to={user ? "/homepage" : "/login"} replace />
+        <Navigate to={user ? "/homepage" : "/landing"} replace />
+      } />
+      
+      {/* public routes */}
+      <Route path="/landing" element={
+        user ? <Navigate to="/homepage" replace /> : <LandingPage />
       } />
       
       <Route path="/login" element={
@@ -30,7 +36,6 @@ export default function Routes() {
       } />
 
       {/* protected routes */}
-
       <Route path="/admin" element={
         <ProtectedRoute>
           <AdminDashboard />
@@ -79,7 +84,7 @@ export default function Routes() {
         </ProtectedRoute>
       } />
 
-      {/* error 404*/}
+      {/* error 404 */}
       <Route path="*" element={
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
