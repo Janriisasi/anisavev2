@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Facebook, Instagram, Linkedin } from 'lucide-react';
+import TrueFocus from '../components/trueFocus.jsx';
 
 //button components
 const Button = ({ className, variant = "default", size = "md", children, onClick, ...props }) => {
@@ -14,9 +15,9 @@ const Button = ({ className, variant = "default", size = "md", children, onClick
   };
   
   const sizeStyles = {
-    sm: "h-10 px-4 text-sm rounded-md",
-    md: "h-12 px-6 text-base rounded-lg",
-    lg: "h-14 px-8 text-lg rounded-lg"
+    sm: "h-8 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm rounded-md",
+    md: "h-10 px-4 text-sm sm:h-12 sm:px-6 sm:text-base rounded-lg",
+    lg: "h-12 px-5 text-base sm:h-14 sm:px-8 sm:text-lg rounded-lg"
   };
   
   return (
@@ -43,7 +44,7 @@ const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative overflow-hidden">
-        <div className={`w-full h-[220px] sm:h-[240px] lg:h-[280px] bg-gray-200 flex items-center justify-center transition-transform duration-500 ${
+        <div className={`w-full h-[180px] sm:h-[220px] lg:h-[280px] bg-gray-200 flex items-center justify-center transition-transform duration-500 ${
           isHovered ? 'scale-110' : 'scale-100'
         }`}>
           <img
@@ -60,8 +61,8 @@ const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
           isHovered ? 'opacity-100' : ''
         }`} />
       </div>
-      <div className="p-6 lg:p-6">
-        <h3 className={`font-medium text-lg sm:text-xl lg:text-[20px] leading-tight mb-3 transition-colors duration-300 ${
+      <div className="p-4 sm:p-6 lg:p-6">
+        <h3 className={`font-medium text-base sm:text-lg lg:text-[20px] leading-tight mb-2 sm:mb-3 transition-colors duration-300 ${
           isHighlighted ? 'text-[#00573C]' : 'text-[#00573C]'
         }`}>
           {title}
@@ -77,8 +78,8 @@ const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
 //logo
 const Logo = ({ isScrolled = false }) => {
   return (
-    <div className="flex items-center gap-3 transition-all duration-300">
-      <span className={`text-xl sm:text-2xl lg:text-[31px] font-extrabold tracking-tight transition-colors duration-300 ${
+    <div className="flex items-center gap-2 sm:gap-3 transition-all duration-300">
+      <span className={`text-lg sm:text-xl lg:text-[31px] font-extrabold tracking-tight transition-colors duration-300 ${
         isScrolled ? 'text-[#00573C]' : 'text-white'
       }`}>
         anisave
@@ -88,7 +89,7 @@ const Logo = ({ isScrolled = false }) => {
         <img 
           src="./src/assets/ani_logo.svg" 
           alt="Wheat Logo" 
-          className="w-8 h-8 sm:w-10 sm:h-10 lg:w-[41px] lg:h-[44px] object-contain"
+          className="w-6 h-6 sm:w-8 sm:h-8 lg:w-[41px] lg:h-[44px] object-contain"
         />
       </div>
     </div>
@@ -144,8 +145,8 @@ export default function LandingPage() {
       <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
       }`}>
-        <nav className={`max-w-7xl mx-auto px-6 h-14 sm:h-16 lg:h-18 flex items-center justify-between ${
-          isScrolled ? 'mt-2' : 'mt-2'
+        <nav className={`max-w-7xl mx-auto px-4 sm:px-6 h-12 sm:h-14 lg:h-18 flex items-center justify-between ${
+          isScrolled ? 'mt-1 sm:mt-2' : 'mt-1 sm:mt-2'
         }`}>
           {/* logo */}
           <Logo isScrolled={isScrolled} />
@@ -169,11 +170,11 @@ export default function LandingPage() {
           </div>
 
           {/* buttons */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button 
               variant="outline" 
               size="sm"
-              className="min-w-[80px] sm:min-w-[120px] text-sm sm:text-base"
+              className="min-w-[60px] sm:min-w-[80px] lg:min-w-[120px]"
               onClick={() => navigate('/login')}
             >
               Log in
@@ -181,7 +182,7 @@ export default function LandingPage() {
             <Button 
               variant="default" 
               size="sm"
-              className="min-w-[100px] sm:min-w-[140px] text-sm sm:text-base gap-2"
+              className="min-w-[70px] sm:min-w-[100px] lg:min-w-[140px] gap-1 sm:gap-2"
               onClick={() => navigate('/signup')}
             >
               Sign Up
@@ -205,15 +206,17 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-black/40" />
         
         {/* content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
-          <div className="max-w-4xl">
-            <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-[64px] font-bold leading-tight mb-6 lg:mb-8 animate-fade-in">
-              Know your prices like
-              <br />
-              never before
-            </h1>
-            
-            <p className="text-white/90 text-base sm:text-lg lg:text-xl leading-relaxed max-w-3xl mb-8 lg:mb-12">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 w-full">
+          <div className="max-w-4xl mx-auto text-center">
+              <TrueFocus 
+              sentence="Know your prices like never before"
+              manualMode={false}
+              blurAmount={5}
+              borderColor="green"
+              animationDuration={0.5}
+              pauseBetweenAnimations={0.5}
+              />
+            <p className="text-white/90 text-sm sm:text-base lg:text-xl leading-relaxed max-w-3xl mx-auto mb-6 sm:mb-8 lg:mb-12">
               A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops. 
               With Anisave, every Filipino farmer gains a partner in achieving a more secure and profitable harvest.
             </p>
@@ -221,14 +224,14 @@ export default function LandingPage() {
             <Button
               variant="default"
               size="lg"
-              className="text-lg px-8 py-4 gap-3 transform hover:scale-105 transition-all duration-300"
+              className="gap-2 sm:gap-3 transform hover:scale-105 transition-all duration-300"
               onClick={() => scrollToId('features')}
             >
               Get started
               <img 
                 src="./src/assets/ani_logo.svg" 
                 alt="Wheat" 
-                className="w-6 h-6 object-contain"
+                className="w-4 h-4 sm:w-6 sm:h-6 object-contain"
               />
             </Button>
           </div>
@@ -238,7 +241,7 @@ export default function LandingPage() {
       {/* features section */}
       <section 
         id="features" 
-        className="relative py-16 sm:py-20 lg:py-24 overflow-hidden"
+        className="relative py-12 sm:py-16 lg:py-24 overflow-hidden"
         style={{
           backgroundImage: "url('./src/assets/Notif.png')",
           backgroundSize: 'cover',
@@ -247,15 +250,15 @@ export default function LandingPage() {
         }}
       >
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
             {/* feature list (left) */}
             <div className="text-white">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold mb-8 lg:mb-12">
+              <h2 className="text-2xl sm:text-3xl lg:text-5xl xl:text-[48px] font-bold mb-6 sm:mb-8 lg:mb-12">
                 Features
               </h2>
 
-              <div className="space-y-8 lg:space-y-10">
+              <div className="space-y-6 sm:space-y-8 lg:space-y-10">
                 {[
                   {
                     title: "Real-time Prices",
@@ -276,12 +279,12 @@ export default function LandingPage() {
                 ].map((feature, index) => (
                   <div 
                     key={index}
-                    className="group cursor-pointer transition-all duration-300 hover:translate-x-2"
+                    className="group cursor-pointer transition-all duration-300"
                   >
-                    <h3 className="text-xl sm:text-2xl lg:text-[37px] font-extrabold mb-2 group-hover:text-green-300 transition-colors duration-300">
+                    <h3 className="text-lg sm:text-xl lg:text-[37px] font-extrabold mb-1 sm:mb-2 group-hover:text-green-300 transition-colors duration-300">
                       {feature.title}
                     </h3>
-                    <p className="text-white/80 text-base sm:text-lg lg:text-[20px] leading-relaxed group-hover:text-white transition-colors duration-300">
+                    <p className="text-white/80 text-sm sm:text-base lg:text-[20px] leading-relaxed group-hover:text-white transition-colors duration-300">
                       {feature.description}
                     </p>
                   </div>
@@ -292,13 +295,13 @@ export default function LandingPage() {
             {/* feature image (right) */}
             <div className="flex justify-center lg:justify-end">
               <div className="relative max-w-lg lg:max-w-2xl w-full">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-all duration-500">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl cursor-pointer transform hover:scale-105 transition-all duration-500">
                   <img
                     src="./src/assets/45202324647AM.jpg"
                     alt="Farmer"
-                    className="w-full h-[400px] sm:h-[500px] lg:h-[600px] object-cover"
+                    className="w-full h-[300px] sm:h-[400px] lg:h-[600px] object-cover"
                     onError={(e) => {
-                      e.target.parentElement.innerHTML = '<div class="w-full h-[400px] sm:h-[500px] lg:h-[600px] bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
+                      e.target.parentElement.innerHTML = '<div class="w-full h-[300px] sm:h-[400px] lg:h-[600px] bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
@@ -310,9 +313,9 @@ export default function LandingPage() {
       </section>
 
       {/* about section */}
-      <section id="about" className="py-16 sm:py-20 lg:py-24 bg-[#F5F5F5]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-16 lg:mb-24">
+      <section id="about" className="py-12 sm:py-16 lg:py-24 bg-[#F5F5F5]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center mb-12 sm:mb-16 lg:mb-24">
             <div className="flex justify-center lg:justify-start">
               <div className="relative max-w-lg lg:max-w-xl w-full">
                 <img
@@ -326,31 +329,31 @@ export default function LandingPage() {
               </div>
             </div>
             <div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-6 lg:mb-8">
+              <h2 className="text-2xl sm:text-3xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-6 lg:mb-8">
                 About Anisave
               </h2>
               
-              <p className="text-[#726767] text-base sm:text-lg lg:text-[20px] leading-relaxed mb-8 lg:mb-12">
+              <p className="text-[#726767] text-sm sm:text-base lg:text-[20px] leading-relaxed mb-6 sm:mb-8 lg:mb-12">
                 To empower farmers with real-time, accessible, and accurate market pricing information, 
                 enabling them to make informed decisions, improve their profitability, and thrive in an 
                 ever-changing agricultural landscape.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
                 <div className="group">
-                  <h3 className="text-2xl sm:text-3xl lg:text-[48px] font-bold text-[#00573C] mb-4 group-hover:text-green-600 transition-colors duration-300">
+                  <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4 group-hover:text-green-600 transition-colors duration-300">
                     Our vision
                   </h3>
-                  <p className="text-[#726767] text-sm sm:text-base lg:text-[20px] leading-relaxed">
+                  <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
                     Creating solutions that are capable of adapting to the changing needs of the agricultural community.
                   </p>
                 </div>
                 
                 <div className="group">
-                  <h3 className="text-2xl sm:text-3xl lg:text-[48px] font-bold text-[#00573C] mb-4 group-hover:text-green-600 transition-colors duration-300">
+                  <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4 group-hover:text-green-600 transition-colors duration-300">
                     Our mission
                   </h3>
-                  <p className="text-[#726767] text-sm sm:text-base lg:text-[20px] leading-relaxed">
+                  <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
                     To deliver real-time market prices, empowering farmers to make smarter choices.
                   </p>
                 </div>
@@ -398,16 +401,16 @@ export default function LandingPage() {
 
       {/* footer */}
       <footer className="bg-[#D5E9D6] border-t border-black/10">
-        <div className="max-w-7xl mx-auto px-6 py-12 sm:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12 mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 mb-6 sm:mb-8">
             {/* nav links */}
             <div>
-              <ul className="space-y-4">
+              <ul className="space-y-3 sm:space-y-4">
                 {navLinks.map((link) => (
                   <li key={link.id}>
                     <button 
                       onClick={() => scrollToId(link.id)}
-                      className="text-black hover:text-[#00573C] transition-colors duration-300 text-lg font-medium"
+                      className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg font-medium"
                     >
                       {link.label}
                     </button>
@@ -417,45 +420,45 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold text-black text-lg mb-4">Legal</h4>
-              <ul className="space-y-4">
-                <li><a href="#privacy" className="text-black hover:text-[#00573C] transition-colors duration-300 text-lg">Privacy Policy</a></li>
-                <li><a href="#terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-lg">Terms of service</a></li>
+              <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Legal</h4>
+              <ul className="space-y-3 sm:space-y-4">
+                <li><a href="#privacy" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">Privacy Policy</a></li>
+                <li><a href="#terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">Terms of service</a></li>
               </ul>
             </div>
 
             {/* social links */}
             <div>
-              <h4 className="font-semibold text-black text-lg mb-4">Follow us</h4>
-              <div className="flex items-center gap-6">
+              <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Follow us</h4>
+              <div className="flex items-center gap-4 sm:gap-6">
                 <a
                   href="https://facebook.com"
                   aria-label="Facebook"
                   className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
                 >
-                  <Facebook size={24} />
+                  <Facebook size={20} className="sm:w-6 sm:h-6" />
                 </a>
                 <a
                   href="https://instagram.com"
                   aria-label="Instagram"
                   className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
                 >
-                  <Instagram size={24} />
+                  <Instagram size={20} className="sm:w-6 sm:h-6" />
                 </a>
                 <a
                   href="https://linkedin.com"
                   aria-label="LinkedIn"
                   className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
                 >
-                  <Linkedin size={24} />
+                  <Linkedin size={20} className="sm:w-6 sm:h-6" />
                 </a>
               </div>
             </div>
           </div>
         </div>
         <div className="bg-[#ECEFF2] border-t border-black/20">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <p className="text-center text-black text-lg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <p className="text-center text-black text-sm sm:text-base lg:text-lg">
               © 2025 Anisave. All rights reserved.
             </p>
           </div>
