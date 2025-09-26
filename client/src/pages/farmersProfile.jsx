@@ -195,7 +195,7 @@ export default function FarmerProfile() {
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
@@ -217,56 +217,73 @@ export default function FarmerProfile() {
               className="w-32 h-32 rounded-full object-cover border-4 border-green-200"
             />
             
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                <div>
+                <div className="w-full sm:w-auto">
                   <h1 className="text-3xl font-bold text-gray-800">
                     {farmer.full_name || farmer.username}
                   </h1>
                   {farmer.username && farmer.full_name && (
                     <p className="text-gray-600">@{farmer.username}</p>
                   )}
-                  
-                  {/* contact info */}
-                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4 text-xs sm:text-sm mt-8">
-                    {farmer.address && (
-                      <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
-                        <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
-                        <span className="truncate">{farmer.address}</span>
-                      </div>
-                    )}
-                    {farmer.contact_number && (
-                      <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
-                        <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
-                        <span>{farmer.contact_number}</span>
-                        <button
-                          onClick={copyContact}
-                          className="ml-2 p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200"
-                          title="Copy contact number"
-                        >
-                          <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </button>
-                      </div>
-                    )}
-                    <div className="bg-yellow-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
-                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
-                      <span>
-                        {avgRating > 0 ? avgRating : 'No ratings yet'}
-                        {totalRatings > 0 && (
-                          <span className="text-gray-500 ml-1">
-                            ({totalRatings} rating{totalRatings > 1 ? 's' : ''})
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  </div>
                 </div>
 
                 {user && user.id !== farmer.id && (
                   <button
                     onClick={handleSaveContact}
                     disabled={saving}
-                    className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 ${
+                    className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 hidden sm:block ${
+                      isContactSaved
+                        ? 'bg-red-500 text-white hover:bg-red-600'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                    } disabled:opacity-50`}
+                  >
+                    {saving ? 'Processing...' : isContactSaved ? 'Remove Contact' : 'Save Contact'}
+                  </button>
+                )}
+              </div>
+              
+              {/* contact info - full width on mobile, constrained on desktop */}
+              <div className="w-full">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4 text-xs sm:text-sm">
+                  {farmer.address && (
+                    <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
+                      <span className="truncate">{farmer.address}</span>
+                    </div>
+                  )}
+                  {farmer.contact_number && (
+                    <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                      <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
+                      <span>{farmer.contact_number}</span>
+                      <button
+                        onClick={copyContact}
+                        className="ml-2 p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200"
+                        title="Copy contact number"
+                      >
+                        <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="bg-yellow-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                    <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
+                    <span>
+                      {avgRating > 0 ? avgRating : 'No ratings yet'}
+                      {totalRatings > 0 && (
+                        <span className="text-gray-500 ml-1">
+                          ({totalRatings} rating{totalRatings > 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Mobile button - shows under contact info */}
+                {user && user.id !== farmer.id && (
+                  <button
+                    onClick={handleSaveContact}
+                    disabled={saving}
+                    className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 w-full mt-4 sm:hidden ${
                       isContactSaved
                         ? 'bg-red-500 text-white hover:bg-red-600'
                         : 'bg-blue-500 text-white hover:bg-blue-600'
