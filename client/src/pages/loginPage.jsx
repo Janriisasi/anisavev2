@@ -89,7 +89,7 @@ function Login() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center px-4 relative"
+      className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative"
       style={{
         backgroundImage: `url(${bgImage})`,
         backgroundSize: 'cover',
@@ -98,22 +98,22 @@ function Login() {
       }}
     >
       
-      <div className="bg-white/90 backdrop-blur-sm p-11 rounded-2xl shadow-xl w-full max-w-md h-full border border-white/20 relative">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-black">
+      <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-11 rounded-2xl shadow-xl w-full max-w-md h-full border border-white/20 relative">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-black">
             Welcome Back
           </h2>
-          <p className="text-gray-600 mt-2">Log in your account now!</p>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">Log in your account now!</p>
         </div>
         
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
+          <div className="space-y-1 sm:space-y-1">
+            <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700">
               Email
             </label>
             <input 
               id="email"
-              className="w-full px-4 py-2 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2 text-sm sm:text-base border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700" 
               name="email" 
               type="email"
               value={form.email}
@@ -122,45 +122,45 @@ function Login() {
             />
           </div>
           
-          <div className="space-y-1">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              className="w-full px-4 py-2 pr-12 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-              tabIndex={-1}
-            >
-              {showPassword ? (
-                <EyeOff className="w-5 h-5" />
-              ) : (
-                <Eye className="w-5 h-5" />
-              )}
-            </button>
+          <div className="space-y-1 sm:space-y-1">
+            <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                ) : (
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
           
           <button 
             type="submit" 
             disabled={loading} 
-            className="w-full py-2 px-4 bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200"
+            className="w-full py-2 sm:py-2 px-4 text-sm sm:text-base bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200"
           >
             {loading ? 'Logging In...' : 'Log in'}
           </button>
         </form>
         
-        <p className="text-center mt-6 text-gray-600">
+        <p className="text-center mt-4 sm:mt-6 text-gray-600 text-xs sm:text-base">
           Don't have an account?{' '}
           <a href="/signup" className="text-green-800 hover:text-green-900 font-medium">
             Sign up here
