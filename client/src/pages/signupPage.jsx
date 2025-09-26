@@ -52,7 +52,7 @@ function SignUp() {
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
 
   const getRequirementClass = (isValid) => {
-    return `flex items-center text-sm ${
+    return `flex items-center text-xs sm:text-sm ${
       isValid ? 'text-green-600' : 'text-red-500'
     }`;
   };
@@ -60,7 +60,7 @@ function SignUp() {
   const RequirementItem = ({ isValid, text }) => (
     <div className={getRequirementClass(isValid)}>
       <span className="mr-2">
-        {isValid ? '✔' : 'X'}
+        {isValid ? '✓' : 'X'}
       </span>
       {text}
     </div>
@@ -123,7 +123,7 @@ function SignUp() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 relative"
+      className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative"
       style={{
         backgroundImage: `url(${bgImage})`,
         backgroundSize: 'cover',
@@ -131,24 +131,24 @@ function SignUp() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-2xl border border-white/20 relative z-10">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold bg-black bg-clip-text text-transparent">
+      <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl w-full max-w-2xl border border-white/20 relative z-10">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold bg-black bg-clip-text text-transparent">
             Get Started
           </h2>
-          <p className="text-gray-600 mt-2">Create your account now</p>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">Create your account now</p>
         </div>
 
-        <form onSubmit={handleSignUp} className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
+        <form onSubmit={handleSignUp} className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-1 sm:space-y-2">
+                <label htmlFor="full_name" className="block text-xs sm:text-sm font-medium text-gray-700">
                   Full Name
                 </label>
                 <input
                   id="full_name"
-                  className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
                   name="full_name"
                   value={form.full_name}
                   onChange={handleChange}
@@ -156,13 +156,13 @@ function SignUp() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <div className="space-y-1 sm:space-y-2">
+                <label htmlFor="username" className="block text-xs sm:text-sm font-medium text-gray-700">
                   Username
                 </label>
                 <input
                   id="username"
-                  className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
                   name="username"
                   value={form.username}
                   onChange={handleChange}
@@ -171,14 +171,14 @@ function SignUp() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-1 sm:space-y-2">
+                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700">
                   Email
                 </label>
                 <input
                   id="email"
-                  className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
                   type="email"
                   name="email"
                   value={form.email}
@@ -187,14 +187,14 @@ function SignUp() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <div className="space-y-1 sm:space-y-2">
+                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700">
                   Password
                 </label>
                 <div className="relative">
                   <input
                     id="password"
-                    className="w-full px-4 py-3 pr-12 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={form.password}
@@ -206,22 +206,22 @@ function SignUp() {
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-700 focus:outline-none"
+                    className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-700 focus:outline-none"
                     tabIndex={-1}
                   >
                     {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
+                      <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
                     ) : (
-                      <Eye className="w-5 h-5" />
+                      <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                     )}
                   </button>
                 </div>
                 
                 {/* password requirements */}
                 {showPasswordRequirements && (
-                  <div className="mt-3 p-3 bg-gray-50 border border-gray-500 rounded-lg">
+                  <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-gray-50 border border-gray-500 rounded-lg">
                     {(!hasMinLength || !hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) && (
-                      <p className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</p>
+                      <p className="text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Password Requirements:</p>
                     )}
                     
                     <div className="space-y-1">
@@ -256,8 +256,8 @@ function SignUp() {
                         />
                       )}
                       {hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar && (
-                        <div className="flex items-center text-sm text-green-600 font-medium">
-                          <span className="mr-2">✔</span>
+                        <div className="flex items-center text-xs sm:text-sm text-green-600 font-medium">
+                          <span className="mr-2">✓</span>
                           You have a strong password!
                         </div>
                       )}
@@ -271,13 +271,13 @@ function SignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200"
+            className="w-full py-2 sm:py-3 px-4 text-sm sm:text-base bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200"
           >
             {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
 
-        <p className="text-center mt-6 text-gray-600">
+        <p className="text-center mt-4 sm:mt-6 text-gray-600 text-xs sm:text-base">
           Already have an account?{' '}
           <a
             href="/login"
