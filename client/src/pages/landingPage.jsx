@@ -1,6 +1,6 @@
 //charlesCastillano
 import React, { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Facebook, Instagram, Linkedin } from 'lucide-react';
 import TrueFocus from '../components/trueFocus.jsx';
 
@@ -78,7 +78,7 @@ const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
 //logo
 const Logo = ({ isScrolled = false }) => {
   return (
-    <div className="flex items-center gap-2 sm:gap-3 transition-all duration-300">
+    <Link to="/landing" className="flex items-center gap-2 sm:gap-3 transition-all duration-300 cursor-pointer">
       <span className={`text-lg sm:text-xl lg:text-[31px] font-extrabold tracking-tight transition-colors duration-300 ${
         isScrolled ? 'text-[#00573C]' : 'text-white'
       }`}>
@@ -92,7 +92,7 @@ const Logo = ({ isScrolled = false }) => {
           className="w-6 h-6 sm:w-8 sm:h-8 lg:w-[41px] lg:h-[44px] object-contain"
         />
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -269,8 +269,8 @@ export default function LandingPage() {
                     description: "Organizes products into clear, easy-to-browse categories."
                   },
                   {
-                    title: "Sell",
-                    description: "Allows users to post and sell products quickly and effortlessly."
+                    title: "Showcase",
+                    description: "Allows users to post and showcase their products quickly and effortlessly."
                   },
                   {
                     title: "Contact Farmers",
@@ -341,8 +341,8 @@ export default function LandingPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
                 <div className="group">
-                  <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4 group-hover:text-green-600 transition-colors duration-300">
-                    Our vision
+                  <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
+                    Our <br/> vision
                   </h3>
                   <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
                     Creating solutions that are capable of adapting to the changing needs of the agricultural community.
@@ -350,7 +350,7 @@ export default function LandingPage() {
                 </div>
                 
                 <div className="group">
-                  <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4 group-hover:text-green-600 transition-colors duration-300">
+                  <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
                     Our mission
                   </h3>
                   <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
