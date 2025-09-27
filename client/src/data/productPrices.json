@@ -10,19 +10,16 @@
     "Pechay": 92.38,
     "Carrot": 252.17,
     "Bell Pepper": 349.35,
-    "Bell Pepper (Red)": 388.15,
     "Broccoli": 294.62,
     "Potato": 102.97,
+    "Sitao": 109.90,
     "Lettuce (Green Ice)": 158.83,
     "Lettuce (Iceberg)": 173.17,
     "Lettuce (Romaine)": 147.54,
-    "Sitao": 109.90
+    "Bell Pepper (Red)": 388.15
   },
   "Fruits": {
     "Mango": 199.60,
-    "Banana (Lakatan)": 98.92,
-    "Banana (Latundan)": 74.86,
-    "Banana (Saba)": 52.19,
     "Calamansi": 78.02,
     "Papaya": 68.50,
     "Pineapple": 45,
@@ -33,7 +30,10 @@
     "Guyabano": 70,
     "Avocado": 286.79,
     "Melon": 104.38,
-    "Pomelo": 184.68
+    "Pomelo": 184.68,
+    "Banana (Lakatan)": 98.92,
+    "Banana (Latundan)": 74.86,
+    "Banana (Saba)": 52.19
   },
   "Grains": {
     "Rice (Local Fancy White)": 57.04,
