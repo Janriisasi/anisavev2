@@ -88,12 +88,6 @@ export default function SellerDetailsPopup({ seller, product, onClose }) {
             alt={product.name}
             className="w-full h-48 object-cover"
           />
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         <div className="p-6">
@@ -113,33 +107,33 @@ export default function SellerDetailsPopup({ seller, product, onClose }) {
           </div>
 
           {/* products details */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-2">{product.name}</h4>
-              <div className="space-y-2">
+          <div className="mb-6">
+            <h4 className="font-semibold text-gray-800 mb-4">{product.name}</h4>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Package className="w-4 h-4" />
+                  <Package className="w-4 h-4 flex-shrink-0" />
                   <span>{seller.quantity_kg} kg available</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
-                  <DollarSign className="w-4 h-4" />
+                  <DollarSign className="w-4 h-4 flex-shrink-0" />
                   <span>₱{seller.price}/kg</span>
                 </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              {seller.profiles.address && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="w-4 h-4" />
-                  <span>{seller.profiles.address}</span>
-                </div>
-              )}
-              {seller.profiles.contact_number && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Phone className="w-4 h-4" />
-                  <span>{seller.profiles.contact_number}</span>
-                </div>
-              )}
+              <div className="space-y-3">
+                {seller.profiles.address && (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <span>{seller.profiles.address}</span>
+                  </div>
+                )}
+                {seller.profiles.contact_number && (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Phone className="w-4 h-4 flex-shrink-0" />
+                    <span>{seller.profiles.contact_number}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
