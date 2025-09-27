@@ -12,7 +12,7 @@
     "Bell Pepper": 349.35,
     "Bell Pepper (Red)": 388.15,
     "Broccoli": 294.62,
-    "White Potato": 102.97,
+    "Potato": 102.97,
     "Lettuce (Green Ice)": 158.83,
     "Lettuce (Iceberg)": 173.17,
     "Lettuce (Romaine)": 147.54,
@@ -36,10 +36,6 @@
     "Pomelo": 184.68
   },
   "Grains": {
-    "Rice (Imported Fancy White)": 58.06,
-    "Rice (Imported Premium 5% broken)": 45.90,
-    "Rice (Imported Well Milled)": 43.67,
-    "Rice (Imported Regular Milled)": 37.56,
     "Rice (Local Fancy White)": 57.04,
     "Rice (Local Premium 5% broken)": 49.68,
     "Rice (Local Well Milled)": 43.04,
@@ -55,13 +51,9 @@
   },
   "HerbsAndSpices": {
     "Ginger": 201.76,
-    "Ginger (Imported)": 141.11,
-    "Garlic (Native)": 400.00,
-    "Garlic (Imported)": 155.03,
+    "Garlic": 400.00,
     "Red Onion": 155.61,
-    "White Onion (Imported)": 133.02,
-    "White Onion (Large, Imported)": 123.29,
-    "Chili (Labuyo)": 378.87,
+    "Chili": 378.87,
     "Lemongrass": 20,
     "Basil": 35,
     "Turmeric": 90
