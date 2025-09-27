@@ -204,11 +204,12 @@ export default function ProductSellersPage() {
           </div>
 
           {/* sellers list */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Available Sellers</h2>
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                {sellers.length} sellers found
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
+            {/* Fixed mobile-responsive header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Available Sellers</h2>
+              <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium w-fit">
+                {sellers.length} seller{sellers.length !== 1 ? 's' : ''} found
               </span>
             </div>
 
@@ -217,49 +218,49 @@ export default function ProductSellersPage() {
                 <div
                   key={seller.id}
                   onClick={() => setSelectedSeller(seller)}
-                  className="bg-white rounded-xl p-5 shadow border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                  className="bg-white rounded-xl p-4 sm:p-5 shadow border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
                 >
                   {/* seller header */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                       <img
                         src={seller.profiles.avatar_url || '/default-avatar.png'}
                         alt="Seller"
-                        className="w-14 h-14 rounded-full object-cover"
+                        className="w-12 sm:w-14 h-12 sm:h-14 rounded-full object-cover flex-shrink-0"
                       />
-                      <div>
-                        <h4 className="font-bold text-gray-800 text-lg">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-gray-800 text-base sm:text-lg truncate">
                           {seller.profiles.full_name || seller.profiles.username}
                         </h4>
-                        <p className="text-sm text-gray-500">@{seller.profiles.username}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">@{seller.profiles.username}</p>
                         {seller.rating && (
                           <div className="flex items-center gap-1 mt-1">
-                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span className="text-sm font-medium">{seller.rating}</span>
+                            <Star className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-400 fill-current" />
+                            <span className="text-xs sm:text-sm font-medium">{seller.rating}</span>
                             <span className="text-xs text-gray-500">({seller.totalSales || 0} sales)</span>
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600">₱{seller.price}/kg</div>
-                      <div className="text-sm text-gray-500">{seller.quantity_kg} kg available</div>
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <div className="text-lg sm:text-2xl font-bold text-green-600">₱{seller.price}/kg</div>
+                      <div className="text-xs sm:text-sm text-gray-500">{seller.quantity_kg} kg available</div>
                     </div>
                   </div>
 
                   {/* seller details */}
-                  <div className="grid grid-cols-1 gap-3 mb-4">
+                  <div className="grid grid-cols-1 gap-2 sm:gap-3 mb-4">
                     {seller.profiles.address && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="w-4 h-4" />
-                        <span>{seller.profiles.address}</span>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                        <MapPin className="w-3 sm:w-4 h-3 sm:h-4 flex-shrink-0" />
+                        <span className="truncate">{seller.profiles.address}</span>
                       </div>
                     )}
                     
                     {seller.profiles.contact_number && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Phone className="w-4 h-4" />
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                        <Phone className="w-3 sm:w-4 h-3 sm:h-4 flex-shrink-0" />
                         <span>{seller.profiles.contact_number}</span>
                       </div>
                     )}
@@ -267,8 +268,8 @@ export default function ProductSellersPage() {
 
                   {/* price comparison */}
                   {seller.price !== product.price && (
-                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm">
+                    <div className="mb-4 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs sm:text-sm">
                         {seller.price < product.price ? (
                           <span className="text-green-600 font-medium">
                             ₱{product.price - seller.price} below market price
@@ -286,7 +287,7 @@ export default function ProductSellersPage() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleContactSeller(seller.profiles.id)}
-                      className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium"
+                      className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium text-sm sm:text-base"
                     >
                       View Details
                     </button>
