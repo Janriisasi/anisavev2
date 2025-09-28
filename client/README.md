@@ -1,8 +1,6 @@
-# 🌱 AniSave
-
 <div align="center">
 
-![AniSave Logo](https://via.placeholder.com/200x80/3ECF8E/FFFFFF?text=AniSave)
+![AniSave Logo](/public/images/anisave_logo.png)
 
 **Bridging the gap between farmers and buyers through modern agricultural commerce**
 
@@ -96,24 +94,36 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 ## 📁 Project Structure
 
 ```
-src/
-├── 🎨 assets/              # Static assets and images
+
+ANISAVE2.0/
+├── .vscode/
+├── client/
+├── node_modules/
+├── public/
 │   └── images/
-├── 🧩 components/          # Reusable UI components
-│   ├── common/            # Shared components
-│   ├── farmer/            # Farmer-specific components
-│   └── buyer/             # Buyer-specific components
-├── 🪝 hooks/               # Custom React hooks
-├── 📐 layouts/             # Page layout components
-├── 📄 pages/               # Application pages
-│   ├── api/               # API integration
-│   ├── auth/              # Authentication pages
-│   ├── farmer/            # Farmer dashboard pages
-│   └── buyer/             # Buyer interface pages
-├── 🛣️ routes/              # Application routing
-├── 🔧 services/           # External service integrations
-├── 🎨 styles/             # Global styles and themes
-└── 🛠️ utils/               # Helper functions and utilities
+├── src/
+│   ├── components/
+│   ├── contexts/
+│   ├── data/
+│   ├── hooks/
+│   ├── lib/
+│   ├── pages/
+│   ├── App.css
+│   ├── App.jsx
+│   ├── index.css
+│   ├── main.jsx
+│   └── Routes.jsx
+├── .env
+├── .gitignore
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── README.md
+├── tailwind.config.js
+└── vite.config.js
+
 ```
 
 ---
