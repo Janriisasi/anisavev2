@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import { Menu, X, Search } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/authContext';
 
 export default function Navbar() {
   const { user } = useAuth();
