@@ -1,6 +1,6 @@
 <div align="center">
 
-![AniSave Logo](/public/images/anisave_logo.png)
+![AniSave Logo](/images/anisave_logo.png)
 
 **Bridging the gap between farmers and buyers through modern agricultural commerce**
 
