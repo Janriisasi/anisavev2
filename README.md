@@ -100,9 +100,8 @@ ANISAVE2.0/
 ├── client/
 ├── node_modules/
 ├── public/
+│   └── images/
 ├── src/
-│   ├── assets/
-│   │   └── images/
 │   ├── components/
 │   ├── contexts/
 │   ├── data/
