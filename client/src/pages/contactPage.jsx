@@ -4,7 +4,7 @@ import supabase from '../lib/supabase';
 import Loader from '../components/loader';
 import { useUser } from '../hooks/useUser';
 import { Copy, Star, Trash2, User, Eye } from 'lucide-react';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 export default function SavedContacts() {
   const { user } = useUser();
