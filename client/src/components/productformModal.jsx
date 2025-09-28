@@ -3,7 +3,7 @@ import supabase from '../lib/supabase';
 import { Upload, ChevronDown, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import productPrices from '../data/productPrices.json';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/authContext';
 
 export default function ProductFormModal({ onClose, onSuccess, existingProduct, userProfile }) {
   const { user } = useAuth();

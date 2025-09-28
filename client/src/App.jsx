@@ -1,5 +1,5 @@
 import { BrowserRouter as Router } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/authContext';
 import Navbar from './components/navbar';
 import Routes from './Routes';
 import Loader from './components/loader';
