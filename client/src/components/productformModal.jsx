@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import supabase from '../lib/supabase';
 import { Upload, ChevronDown, AlertTriangle } from 'lucide-react';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import productPrices from '../data/productPrices.json';
 import { useAuth } from '../contexts/AuthContext';
 

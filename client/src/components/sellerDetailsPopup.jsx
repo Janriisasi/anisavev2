@@ -1,6 +1,6 @@
 import { X, MapPin, Phone, Package, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import supabase from '../lib/supabase';
 
 export default function SellerDetailsPopup({ seller, product, onClose }) {

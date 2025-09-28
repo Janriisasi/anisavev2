@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import supabase from '../lib/supabase';
 import { useUser } from '../hooks/useUser';
 import { Star } from 'lucide-react';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 export default function RateFarmer({ farmerId, onRatingSubmitted }) {
   const [rating, setRating] = useState(0);

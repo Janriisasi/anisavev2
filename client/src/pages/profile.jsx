@@ -1,7 +1,7 @@
 import { useEffect, useState, useNavigate } from 'react';
 import supabase from '../lib/supabase';
 import ProductFormModal from '../components/ProductFormModal';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import { Camera, Star, Package, Edit3, Trash2, Plus, MapPin, Phone, LogOut, Edit } from 'lucide-react';
 
 export default function Profile() {

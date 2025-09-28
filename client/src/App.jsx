@@ -3,8 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/navbar';
 import Routes from './Routes';
 import Loader from './components/loader';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Toaster } from 'react-hot-toast';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -17,7 +16,23 @@ function AppContent() {
     <>
       {user && <Navbar />}
       <Routes />
-      <ToastContainer />
+      <Toaster 
+        position="center-top"
+        toastOptions={{
+          duration: 2000,
+          style: {
+            background: '#f1f1f1',
+            color: '#00573C',
+          },
+          success: {
+            duration: 3000,
+            theme: {
+              primary: 'green',
+              secondary: 'black',
+            },
+          },
+        }}
+      />
     </>
   );
 }

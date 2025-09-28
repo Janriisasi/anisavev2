@@ -4,7 +4,7 @@ import supabase from '../lib/supabase';
 import { useUser } from '../hooks/useUser';
 import RateFarmer from '../components/rateFarmer';
 import { Star, MapPin, Phone, Package, ArrowLeft, Copy } from 'lucide-react';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 export default function FarmerProfile() {
   const { id } = useParams();
