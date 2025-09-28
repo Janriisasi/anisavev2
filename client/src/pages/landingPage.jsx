@@ -87,7 +87,7 @@ const Logo = ({ isScrolled = false }) => {
       {/* wheat logo */}
       <div className="relative">
         <img 
-          src="./src/assets/ani_logo.svg" 
+          src="/images/ani_logo.svg" 
           alt="Wheat Logo" 
           className="w-6 h-6 sm:w-8 sm:h-8 lg:w-[41px] lg:h-[44px] object-contain"
         />
@@ -196,7 +196,7 @@ export default function LandingPage() {
         id="home"
         className="relative min-h-screen flex items-center overflow-hidden"
         style={{
-          backgroundImage: "url('./src/assets/bg_feat.png')",
+          backgroundImage: "url('/images/bg_feat.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundColor: '#1a4d35'
@@ -229,7 +229,7 @@ export default function LandingPage() {
             >
               Get started
               <img 
-                src="./src/assets/ani_logo.svg" 
+                src="/images/ani_logo.svg" 
                 alt="Wheat" 
                 className="w-4 h-4 sm:w-6 sm:h-6 object-contain"
               />
@@ -243,7 +243,7 @@ export default function LandingPage() {
         id="features" 
         className="relative py-12 sm:py-16 lg:py-24 overflow-hidden"
         style={{
-          backgroundImage: "url('./src/assets/Notif.png')",
+          backgroundImage: "url('/images/Notif.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundColor: '#00573C'
@@ -297,7 +297,7 @@ export default function LandingPage() {
               <div className="relative max-w-lg lg:max-w-2xl w-full">
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl cursor-pointer transform hover:scale-105 transition-all duration-500">
                   <img
-                    src="./src/assets/45202324647AM.jpg"
+                    src="/images/45202324647AM.jpg"
                     alt="Farmer"
                     className="w-full h-[300px] sm:h-[400px] lg:h-[600px] object-cover"
                     onError={(e) => {
@@ -319,7 +319,7 @@ export default function LandingPage() {
             <div className="flex justify-center lg:justify-start">
               <div className="relative max-w-lg lg:max-w-xl w-full">
                 <img
-                  src="./src/assets/pexels-sorapong-chaipanya-4530766-1.jpg"
+                  src="/images/pexels-sorapong-chaipanya-4530766-1.jpg"
                   alt="Farmer carrying seedlings"
                   className="w-full aspect-square object-cover rounded-lg shadow-xl transform hover:scale-105 transition-all duration-500"
                   onError={(e) => {
@@ -378,19 +378,19 @@ export default function LandingPage() {
           {/* cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             <FeatureCard
-              image="./src/assets/52022106060_bb8f26ba3f_4k.jpg"
+              image="/images/52022106060_bb8f26ba3f_4k.jpg"
               title="Strategic crop planning"
               description="Access to future price trends to improving profitability and reducing risk."
             />
             
             <FeatureCard
-              image="./src/assets/two-happy-farmers-holding-hands-field_993599-21007.jpg"
+              image="/images/two-happy-farmers-holding-hands-field_993599-21007.jpg"
               title="Seamless Market Access"
               description="Real time price feeds reduce middlemen influence and enhance market efficiency."
             />
             
             <FeatureCard
-              image="./src/assets/Department-of-Agriculture-DA.png"
+              image="/images/Department-of-Agriculture-DA.png"
               title="DA's price protection program"
               description="Guarantees stable pricing for cooperatives, working closely with buyers."
               isHighlighted={true}

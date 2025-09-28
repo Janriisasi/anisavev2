@@ -89,7 +89,7 @@ export default function Navbar() {
             {/* our logo */}
             <Link to="/homepage" className="flex items-center">
               <img 
-                src="/src/assets/anisave_logo.png"
+                src="/images/anisave_logo.png"
                 alt="Logo"
                 className="h-10 w-auto"
               />

@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
 import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/authContext';
-import bgImage from '../assets/bg.png';
 
 function SignUp() {
   const { user } = useAuth();
@@ -122,13 +121,13 @@ function SignUp() {
   };
 
   return (
-    <div
+    <div 
       className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative"
       style={{
-        backgroundImage: `url(${bgImage})`,
+        backgroundImage: `url(/images/bg.png)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        backgroundRepeat: 'no-repeat'
       }}
     >
       <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl w-full max-w-2xl border border-white/20 relative z-10">
