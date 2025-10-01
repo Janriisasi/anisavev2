@@ -27,15 +27,14 @@ const Home = () => {
     "Okra": "/images/okra.webp",
     "Pechay": "/images/pechay.webp",
     "Bell Pepper": "/images/bellpepper.png",
-    "Bell Pepper (Red)": "",
-    "Broccoli" : "",
-    "Lettuce (Green Ice)": "",
-    "Lettuce (Iceberg)": "",
-    "Lettuce (Romaine)": "",
-    "Sitao": "",
+    "Broccoli" : "/images/broccoli.jpg",
+    "Lettuce (Green Ice)": "/images/lettuce_green.png",
+    "Lettuce (Iceberg)": "/images/lettuce_iceberg.jpg",
+    "Lettuce (Romaine)": "/images/lettuce_romaine.jpg",
+    "Sitao": "/images/sitao.jpg",
 
     //fruits
-    "Mango": "/images/mango.webp",
+    "Mango": "/images/mango.png",
     "Banana (Lakatan)": "",
     "Banana (Latundan)": "",
     "Banana (Saba)": "",
@@ -47,7 +46,7 @@ const Home = () => {
     "Rambutan": "/images/rambutan.webp",
     "Durian": "/images/durian.png",
     "Guyabano": "/images/guyabano.avif",
-    "Avocado": "",
+    "Avocado": "/images/avocado.jpg",
     "Melon": "",
     "Pomelo": "",
     //grains
@@ -178,113 +177,121 @@ const Home = () => {
   const totalSales = myProducts.reduce((acc, product) => acc + (product.price * 10), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Dashboard</h2>
-        
-        {/* dashboard */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-6 border hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Best Seller</p>
-                <h2 className="text-xl font-bold text-gray-800 mt-1">
-                  {myProducts[0]?.name || 'No products yet'}
-                </h2>
-              </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
-            </div>
+<div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
+  <div className="max-w-7xl mx-auto">
+    {/* Dashboard Title */}
+    <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6">
+      Dashboard
+    </h2>
+    
+    {/* dashboard */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs sm:text-sm text-gray-500 font-medium">Best Seller</p>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mt-1">
+              {myProducts[0]?.name || 'No products yet'}
+            </h2>
           </div>
-
-          <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-6 border hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Sales Summary</p>
-                <h2 className="text-xl font-bold text-gray-800 mt-1">₱{totalSales.toLocaleString()}</h2>
-              </div>
-              <ShoppingCart className="w-8 h-8 text-blue-500" />
-            </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-6 border hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Your Rating</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <h2 className="text-xl font-bold text-gray-800">
-                    {myRating > 0 ? myRating : 'No ratings yet'}
-                  </h2>
-                  {myRating > 0 && (
-                    <>
-                      <span className="text-gray-500">/5</span>
-                      <div className="flex ml-2">
-                        {[...Array(5)].map((_, index) => (
-                          <Star
-                            key={index}
-                            className={`w-4 h-4 ${
-                              index < Math.floor(myRating)
-                                ? 'text-yellow-400 fill-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-              <Star className="w-8 h-8 text-yellow-500" />
-            </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-6 border hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Your Products</p>
-                <h2 className="text-xl font-bold text-gray-800 mt-1">{myProducts.length}</h2>
-              </div>
-              <Package className="w-8 h-8 text-purple-500" />
-            </div>
-          </div>
+          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
         </div>
+      </div>
 
-        {/* explore products */}
-        <div className="mb-6">
-          <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Explore Products</h2>
+      <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs sm:text-sm text-gray-500 font-medium">Sales Summary</p>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mt-1">
+              ₱{totalSales.toLocaleString()}
+            </h2>
+          </div>
+          <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
         </div>
+      </div>
 
-        {filteredProducts.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center">
-            <div className="text-gray-400 mb-4">
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+      <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs sm:text-sm text-gray-500 font-medium">Your Rating</p>
+            <div className="flex items-center gap-1 mt-1">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+                {myRating > 0 ? myRating : 'No ratings yet'}
+              </h2>
+              {myRating > 0 && (
+                <>
+                  <span className="text-gray-500">/5</span>
+                  <div className="flex ml-2">
+                    {[...Array(5)].map((_, index) => (
+                      <Star
+                        key={index}
+                        className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                          index < Math.floor(myRating)
+                            ? 'text-yellow-400 fill-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
-            <p className="text-gray-500 text-lg">
-              {search ? 'No products found matching your search.' : 'No products found.'}
-            </p>
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="mt-2 text-blue-500 hover:text-blue-600 underline"
-              >
-                Clear search
-              </button>
-            )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="relative">
-                <ProductCard
-                  product={product}
-                  onSaveContact={() => handleSaveContact(product.profiles?.id)}
-                  showSaveButton={false}
-                />
-              </div>
-            ))}
+          <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
+        </div>
+      </div>
+
+      <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs sm:text-sm text-gray-500 font-medium">Your Products</p>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mt-1">{myProducts.length}</h2>
           </div>
-        )}
+          <Package className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500" />
+        </div>
       </div>
     </div>
+
+    {/* explore products */}
+    <div className="mb-6">
+      <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6">
+        Explore Products
+      </h2>
+    </div>
+
+    {filteredProducts.length === 0 ? (
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center">
+        <div className="text-gray-400 mb-4">
+          <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+        </div>
+        <p className="text-gray-500 text-base sm:text-lg">
+          {search ? 'No products found matching your search.' : 'No products found.'}
+        </p>
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="mt-2 text-blue-500 hover:text-blue-600 underline"
+          >
+            Clear search
+          </button>
+        )}
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+        {filteredProducts.map((product) => (
+          <div key={product.id} className="relative">
+            <ProductCard
+              product={product}
+              onSaveContact={() => handleSaveContact(product.profiles?.id)}
+              showSaveButton={false}
+            />
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
   );
 };
 
