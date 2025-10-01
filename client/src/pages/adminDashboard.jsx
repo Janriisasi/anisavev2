@@ -474,8 +474,8 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-sm md:text-base text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -484,22 +484,22 @@ export default function AdminDashboard() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-green-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-white" />
+        <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md">
+          <div className="text-center mb-6 md:mb-8">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-green-700 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+              <Users className="w-6 h-6 md:w-8 md:h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Admin Access</h2>
-            <p className="text-gray-600">Enter admin code to access dashboard</p>
-            <p className="text-sm text-red-600 mt-2">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Admin Access</h2>
+            <p className="text-sm md:text-base text-gray-600">Enter admin code to access dashboard</p>
+            <p className="text-xs md:text-sm text-red-600 mt-2">
               If you're not an admin, you don't have access to this page. Return to the homepage.
             </p>
           </div>
           
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-              <span className="text-sm">{error}</span>
+            <div className="mb-4 p-2 md:p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 md:w-5 md:h-5 mt-0.5 flex-shrink-0" />
+              <span className="text-xs md:text-sm">{error}</span>
             </div>
           )}
           
@@ -510,20 +510,20 @@ export default function AdminDashboard() {
                 placeholder="Admin Code"
                 value={adminCode}
                 onChange={(e) => setAdminCode(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 transition-colors"
+                className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 transition-colors"
                 onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
               />
             </div>
             <button
               onClick={handleAdminLogin}
               disabled={loading}
-              className="w-full bg-green-700 text-white py-3 px-4 rounded-lg hover:bg-green-800 transition-colors font-medium disabled:opacity-50"
+              className="w-full bg-green-700 text-white py-2 px-3 md:py-3 md:px-4 rounded-lg hover:bg-green-800 transition-colors font-medium disabled:opacity-50 text-sm md:text-base"
             >
               {loading ? 'Checking...' : 'Access Dashboard'}
             </button>
           </div>
           
-          <div className="mt-6 text-xs text-gray-500 text-center">
+          <div className="mt-5 md:mt-6 text-xs text-gray-500 text-center">
             <p>This dashboard is restricted to authorized administrators only.</p>
           </div>
         </div>
@@ -532,82 +532,94 @@ export default function AdminDashboard() {
   }
 
   const StatCard = ({ title, value, icon: Icon, change, color = "green" }) => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600 font-medium">{title}</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
+          <p className="text-xs md:text-sm text-gray-600 font-medium">{title}</p>
+          <p className="text-lg md:text-2xl font-bold text-gray-800 mt-0.5 md:mt-1">{value}</p>
           {change !== undefined && (
-            <div className={`flex items-center mt-2 text-sm ${change >= 0 ? 'text-green-800' : 'text-red-600'}`}>
-              <TrendingUp className="w-4 h-4 mr-1" />
+            <div className={`flex items-center mt-1 md:mt-2 text-xs md:text-sm ${change >= 0 ? 'text-green-800' : 'text-red-600'}`}>
+              <TrendingUp className="w-3 h-3 md:w-4 md:h-4 mr-0.5 md:mr-1" />
               <span>{change >= 0 ? '+' : ''}{change}%</span>
             </div>
           )}
         </div>
-        <div className={`w-12 h-12 bg-${color}-100 rounded-xl flex items-center justify-center`}>
-          <Icon className={`w-6 h-6 text-${color}-600`} />
+        <div className={`w-8 h-8 md:w-12 md:h-12 bg-${color}-100 rounded-lg md:rounded-xl flex items-center justify-center`}>
+          <Icon className={`w-4 h-4 md:w-6 md:h-6 text-${color}-600`} />
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-2 md:p-4">
       <div className="max-w-7xl mx-auto">
         {/* header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-800 rounded-xl flex items-center justify-center">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-600 mt-1">AniSave Management</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Last updated</p>
-              <p className="text-sm font-medium text-gray-700">{lastRefresh.toLocaleString()}</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-8 gap-2 md:gap-4">
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div>
+              <h1 className="text-xl md:text-3xl font-bold text-gray-800 flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-green-800 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
+                </div>
+                Admin Dashboard
+              </h1>
             </div>
             <button
               onClick={handleLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+              className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2 sm:hidden"
+              title="Logout"
             >
               <LogOut className="w-4 h-4" />
-              Logout
+            </button>
+          </div>
+          <div className="flex items-center gap-2 md:gap-4 self-end sm:self-auto">
+            <div className="text-right hidden sm:block">
+              <p className="text-xs md:text-sm text-gray-500">Last updated</p>
+              <p className="text-xs md:text-sm font-medium text-gray-700">
+                {lastRefresh.toLocaleString()}
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white p-2 md:px-4 md:py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2 hidden sm:flex"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden md:inline">Logout</span>
             </button>
           </div>
         </div>
 
+
         {/* debug info */}
-        <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-            <Database className="w-4 h-4 text-purple-600" />
+        <div className="mb-4 md:mb-6 bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-100 p-3 md:p-4">
+          <h3 className="text-xs md:text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1 md:gap-2">
+            <Database className="w-3 h-3 md:w-4 md:h-4 text-purple-600" />
             Debug Information
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs">
             <div>
               <span className="text-gray-500">Profiles Table:</span>
-              <span className="ml-2 font-medium">{dashboardData.debug.profilesUsers} users</span>
+              <span className="ml-1 md:ml-2 font-medium">{dashboardData.debug.profilesUsers} users</span>
             </div>
             <div>
               <span className="text-gray-500">Auth Users:</span>
-              <span className="ml-2 font-medium">{dashboardData.debug.authUsers} users</span>
+              <span className="ml-1 md:ml-2 font-medium">{dashboardData.debug.authUsers} users</span>
             </div>
             <div>
               <span className="text-gray-500">Real-time:</span>
-              <span className="ml-2 font-medium text-green-600">Active</span>
+              <span className="ml-1 md:ml-2 font-medium text-green-600">Active</span>
             </div>
             <div>
               <span className="text-gray-500">Last Refresh:</span>
-              <span className="ml-2 font-medium">{lastRefresh.toLocaleTimeString()}</span>
+              <span className="ml-1 md:ml-2 font-medium">{lastRefresh.toLocaleTimeString()}</span>
             </div>
           </div>
         </div>
 
         {/* key metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-8">
           <StatCard
             title="Total Users"
             value={dashboardData.users.total}
@@ -637,14 +649,47 @@ export default function AdminDashboard() {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 mb-4 md:mb-8">
           {/* user growth chart */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-800" />
+          <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6">
+            <h3 className="text-sm md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-1 md:gap-2">
+              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-green-800" />
               User Growth (30 Days)
             </h3>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={200} className="md:hidden">
+              <AreaChart data={dashboardData.charts.userGrowth}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="date" 
+                  tickFormatter={(date) => new Date(date).getDate()}
+                  stroke="#666"
+                  tick={{ fontSize: 10 }}
+                />
+                <YAxis stroke="#666" tick={{ fontSize: 10 }} />
+                <Tooltip 
+                  labelFormatter={(date) => new Date(date).toLocaleDateString()}
+                  formatter={(value, name) => [value, name === 'users' ? 'New' : 'Total']}
+                  contentStyle={{ fontSize: '12px' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="cumulative" 
+                  stroke="#10B981" 
+                  fill="#10B981" 
+                  fillOpacity={0.3}
+                  name="Total Users"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="users" 
+                  stroke="#13833cff" 
+                  fill="#16A34A" 
+                  fillOpacity={0.6}
+                  name="New Users"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={300} className="hidden md:block">
               <AreaChart data={dashboardData.charts.userGrowth}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
@@ -678,12 +723,30 @@ export default function AdminDashboard() {
           </div>
 
           {/* products by categories */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5 text-blue-600" />
+          <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6">
+            <h3 className="text-sm md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-1 md:gap-2">
+              <Package className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
               Products by Category
             </h3>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={200} className="md:hidden">
+              <PieChart>
+                <Pie
+                  data={dashboardData.charts.productsByCategory}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={70}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelStyle={{ fontSize: '10px' }}
+                >
+                  {dashboardData.charts.productsByCategory.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ fontSize: '12px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={300} className="hidden md:block">
               <PieChart>
                 <Pie
                   data={dashboardData.charts.productsByCategory}
@@ -704,12 +767,23 @@ export default function AdminDashboard() {
         </div>
 
         {/* activity overview */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-purple-600" />
+        <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 mb-4 md:mb-8">
+          <h3 className="text-sm md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-1 md:gap-2">
+            <Activity className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
             Weekly Activity Overview
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={200} className="md:hidden">
+            <BarChart data={dashboardData.charts.dailyActivity}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="day" stroke="#666" tick={{ fontSize: 10 }} />
+              <YAxis stroke="#666" tick={{ fontSize: 10 }} />
+              <Tooltip contentStyle={{ fontSize: '12px' }} />
+              <Bar dataKey="users" fill="#16A34A" name="Users" />
+              <Bar dataKey="products" fill="#1c63d5ff" name="Products" />
+              <Bar dataKey="ratings" fill="#db941bff" name="Ratings" />
+            </BarChart>
+          </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height={300} className="hidden md:block">
             <BarChart data={dashboardData.charts.dailyActivity}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="day" stroke="#666" />
@@ -724,33 +798,33 @@ export default function AdminDashboard() {
         </div>
 
         {/* recent activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           {/* recent signups */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-green-600" />
+          <div className="lg:col-span-2 bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6">
+            <h3 className="text-sm md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-1 md:gap-2">
+              <UserPlus className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
               Recent Signups
             </h3>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-3 md:space-y-4 max-h-64 md:max-h-96 overflow-y-auto">
               {dashboardData.users.recentSignups.length > 0 ? (
                 dashboardData.users.recentSignups.slice(0, 10).map((user, index) => (
-                  <div key={user.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <Users className="w-5 h-5 text-green-600" />
+                  <div key={user.id || index} className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <Users className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">{user.full_name || user.username || user.email?.split('@')[0]}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <p className="font-medium text-xs md:text-base text-gray-800">{user.full_name || user.username || user.email?.split('@')[0]}</p>
+                        <p className="text-xs md:text-sm text-gray-500">{user.email}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs md:text-sm text-gray-500">
                         {new Date(user.created_at).toLocaleDateString()}
                       </p>
                       {user.address && (
-                        <p className="text-xs text-gray-400 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
+                        <p className="text-xs text-gray-400 flex items-center gap-0.5 md:gap-1">
+                          <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3" />
                           {user.address.split(',')[0]}
                         </p>
                       )}
@@ -758,78 +832,78 @@ export default function AdminDashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>No recent signups found</p>
-                  <p className="text-sm mt-1">New users will appear here when they sign up</p>
+                <div className="text-center py-6 md:py-8 text-gray-500">
+                  <Users className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 text-gray-300" />
+                  <p className="text-sm md:text-base">No recent signups found</p>
+                  <p className="text-xs md:text-sm mt-1">New users will appear here when they sign up</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* quick stats and system health */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <ChartBar  className="w-5 h-5 text-green-800" />
+          <div className="space-y-4 md:space-y-6">
+            <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6">
+              <h3 className="text-sm md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-1 md:gap-2">
+                <ChartBar className="w-4 h-4 md:w-5 md:h-5 text-green-800" />
                 Quick Stats
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Active Users</span>
-                  <span className="font-semibold text-green-600">{dashboardData.users.active}</span>
+                  <span className="text-xs md:text-base text-gray-600">Active Users</span>
+                  <span className="font-semibold text-xs md:text-base text-green-600">{dashboardData.users.active}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Products</span>
-                  <span className="font-semibold text-blue-600">{dashboardData.products.total}</span>
+                  <span className="text-xs md:text-base text-gray-600">Total Products</span>
+                  <span className="font-semibold text-xs md:text-base text-blue-600">{dashboardData.products.total}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Sold Out</span>
-                  <span className="font-semibold text-red-600">{dashboardData.products.soldOut}</span>
+                  <span className="text-xs md:text-base text-gray-600">Sold Out</span>
+                  <span className="font-semibold text-xs md:text-base text-red-600">{dashboardData.products.soldOut}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Ratings</span>
-                  <span className="font-semibold text-yellow-600">{dashboardData.activity.ratings}</span>
+                  <span className="text-xs md:text-base text-gray-600">Total Ratings</span>
+                  <span className="font-semibold text-xs md:text-base text-yellow-600">{dashboardData.activity.ratings}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Saved Contacts</span>
-                  <span className="font-semibold text-purple-600">{dashboardData.activity.contacts}</span>
+                  <span className="text-xs md:text-base text-gray-600">Saved Contacts</span>
+                  <span className="font-semibold text-xs md:text-base text-purple-600">{dashboardData.activity.contacts}</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-orange-600" />
+            <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6">
+              <h3 className="text-sm md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center gap-1 md:gap-2">
+                <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-orange-600" />
                 System Health
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2.5 md:space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Database</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-green-600">Healthy</span>
+                  <span className="text-xs md:text-base text-gray-600">Database</span>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs md:text-sm text-green-600">Healthy</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">API Response</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-green-600">Fast</span>
+                  <span className="text-xs md:text-base text-gray-600">API Response</span>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs md:text-sm text-green-600">Fast</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Real-time Updates</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-green-600">Active</span>
+                  <span className="text-xs md:text-base text-gray-600">Real-time Updates</span>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs md:text-sm text-green-600">Active</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Storage</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-green-600">Available</span>
+                  <span className="text-xs md:text-base text-gray-600">Storage</span>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs md:text-sm text-green-600">Available</span>
                   </div>
                 </div>
               </div>

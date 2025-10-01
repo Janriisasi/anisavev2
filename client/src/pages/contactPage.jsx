@@ -174,9 +174,9 @@ export default function SavedContacts() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Saved Contacts</h2>
-        </div>
+        <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6">
+          Saved Contacts
+        </h2>
 
         {contacts.length === 0 ? (
           <div className="flex items-center justify-center min-h-[60vh]">
@@ -254,30 +254,27 @@ export default function SavedContacts() {
                     </div>
 
                     {/* buttons */}
-                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex gap-8">
-                        {/* view profile button */}
+                    <div className="flex items-center mt-4 pt-4 border-t border-gray-100 gap-4 justify-between">
+                    {/* view profile button */}
+                    <button
+                      onClick={() => viewFarmerProfile(contact.farmer.id)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm whitespace-nowrap"
+                      title="View profile"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View Profile
+                    </button>
+                      {/* copy button */}
+                      {contact.farmer.contact_number && (
                         <button
-                          onClick={() => viewFarmerProfile(contact.farmer.id)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm"
-                          title="View profile"
+                          onClick={() => copyToClipboard(contact.farmer.contact_number)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+                          title="Copy contact number"
                         >
-                          <Eye className="w-4 h-4" />
-                          View Profile
+                          <Copy className="w-4 h-4" />
+                          Copy
                         </button>
-
-                        {/* copy button */}
-                        {contact.farmer.contact_number && (
-                          <button
-                            onClick={() => copyToClipboard(contact.farmer.contact_number)}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-                            title="Copy contact number"
-                          >
-                            <Copy className="w-4 h-4" />
-                            Copy
-                          </button>
-                        )}
-                      </div>
+                      )}
 
                       {/* remove button */}
                       <button

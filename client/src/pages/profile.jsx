@@ -284,39 +284,43 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-center text-4xl font-bold text-gray-800 mb-6">Profile</h2>
-          <div className="flex items-center gap-2">
-            {!isEditing && (
-              <button
-                onClick={() => {
-                  setFormData({
-                    full_name: profile?.full_name || '',
-                    address: profile?.address || '',
-                    contact_number: profile?.contact_number || '09'
-                  });
-                  setContactError('');
-                  setIsEditing(true);
-                }}
-                className="md:hidden p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                title="Edit Profile"
-              >
-                <Edit className="w-5 h-5" />
-              </button>
-            )}
-            {/* logout */}
-            {user && (
-              <button
-                onClick={handleLogout}
-                className="hidden md:flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-10 py-2 rounded-lg transition-all duration-200"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className='font-medium'>Logout</span>
-              </button>
-            )}
-          </div>
-        </div>
+<div className="flex justify-between items-center mb-6">
+  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Profile</h2>
+
+  <div className="flex items-center gap-2">
+    {/* edit button on mobile - aligned to profile title */}
+    {!isEditing && (
+      <button
+        onClick={() => {
+          setFormData({
+            full_name: profile?.full_name || '',
+            address: profile?.address || '',
+            contact_number: profile?.contact_number || '09'
+          });
+          setContactError('');
+          setIsEditing(true);
+        }}
+        className="md:hidden p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+        title="Edit Profile"
+      >
+        <Edit className="w-5 h-5" />
+      </button>
+    )}
+
+    {/* logout (desktop only) */}
+    {user && (
+      <button
+        onClick={handleLogout}
+        className="hidden md:flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-6 py-2 rounded-lg transition-all duration-200"
+        title="Logout"
+      >
+        <LogOut className="w-5 h-5" />
+        <span className="font-medium">Logout</span>
+      </button>
+    )}
+  </div>
+</div>
+
 
         {/* profile section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-6 sm:mb-8">
@@ -481,7 +485,7 @@ export default function Profile() {
             </h2>
             <button
               onClick={handleAddProductClick}
-              className={`p-3 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base flex-shrink-0 transition-all duration-200 ${
+              className={`px-2 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base flex-shrink-0 transition-all duration-200 ${
                 isProfileComplete 
                   ? 'bg-green-700 text-white hover:bg-green-800' 
                   : 'bg-yellow-600 text-white hover:bg-yellow-700'

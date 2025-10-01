@@ -351,7 +351,7 @@ export default function LandingPage() {
                 
                 <div className="group">
                   <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
-                    Our mission
+                    Our <br/> mission
                   </h3>
                   <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
                     To deliver real-time market prices, empowering farmers to make smarter choices.

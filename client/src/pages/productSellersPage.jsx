@@ -13,6 +13,64 @@ export default function ProductSellersPage() {
   const [selectedSeller, setSelectedSeller] = useState(null);
   const navigate = useNavigate();
 
+  const productImages = {
+    //vegetables
+    "Eggplant": "/images/eggplant.png",
+    "Tomato": "/images/tomato.png",
+    "Cabbage": "/images/cabbage.png",
+    "Carrot": "/images/carrots.png",
+    "Potato": "/images/potato.png",
+    "Squash": "/images/squash.png",
+    "String Beans": "/images/54EDF324AD7242CA.png!c750x0.jpeg",
+    "Ampalaya": "/images/107992536.webp",
+    "Okra": "/images/okra.webp",
+    "Pechay": "/images/pechay.webp",
+    "Bell Pepper": "/images/bellpepper.png",
+    "Broccoli" : "/images/broccoli.jpg",
+    "Lettuce (Green Ice)": "/images/lettuce_green.png",
+    "Lettuce (Iceberg)": "/images/lettuce_iceberg.jpg",
+    "Lettuce (Romaine)": "/images/lettuce_romaine.jpg",
+    "Sitao": "/images/sitao.jpg",
+
+    //fruits
+    "Mango": "/images/mango.png",
+    "Banana (Lakatan)": "",
+    "Banana (Latundan)": "",
+    "Banana (Saba)": "",
+    "Calamansi": "/images/calamansi.jpg",
+    "Papaya": "/images/papaya.jpg",
+    "Pineapple": "/images/pineapple.avif",
+    "Watermelon": "/images/watermelon.jpg",
+    "Lanzones": "/images/lanzones.jpg",
+    "Rambutan": "/images/rambutan.webp",
+    "Durian": "/images/durian.png",
+    "Guyabano": "/images/guyabano.avif",
+    "Avocado": "/images/avocado.jpg",
+    "Melon": "",
+    "Pomelo": "",
+    //grains
+    "Rice (Local Fancy White)": "",
+    "Rice (Local Premium 5% broken)": "",
+    "Rice (Local Well Milled)": "",
+    "Rice (Local Regular Milled)": "",
+    "Corn (White Cob, Glutinous)": "",
+    "Corn (Yellow Cob, Sweet)": "",
+    "Corn Grits (White, Food Grade)": "",
+    "Corn Grits (Yellow, Food Grade)": "",
+    "Corn Cracked (Yellow, Feed Grade)": "",
+    "Corn Grits (Feed Grade)": "",
+    "Sorghum": "/images/sorghum.jpg",
+    "Millet": "/images/millet.avif",
+    //herbs & spices
+    "Ginger": "/images/ginger.jpg",
+    "Garlic": "/images/garlic.jpg",
+    "Onion": "/images/onion.avif",
+    "Chili": "/images/chili.png",
+    "Lemongrass": "/images/lemongrass.webp",
+    "Basil": "/images/basil.webp",
+    "Turmeric": "/images/turmeric.webp"
+  };
+
   useEffect(() => {
     if (productName) {
       generateProductAndSellers();
@@ -39,8 +97,8 @@ export default function ProductSellersPage() {
         name: firstProduct.name,
         category: firstProduct.category,
         price: firstProduct.price,
-        image_url: firstProduct.image_url,
-        description: firstProduct.description || `Fresh ${firstProduct.name.toLowerCase()} from local farmers`
+        image_url: productImages[name] || `https://via.placeholder.com/300x300?text=${encodeURIComponent(name)}`,
+        description: `Fresh ${name.toLowerCase()} available for purchase`,
       });
 
       //set all sellers
@@ -55,8 +113,8 @@ export default function ProductSellersPage() {
             name: productName,
             category: category,
             price: items[productName],
-            image_url: `https://via.placeholder.com/400x300?text=${encodeURIComponent(productName)}`,
-            description: `Fresh ${productName.toLowerCase()} from local farmers`
+            image_url: productImages[name] || `https://via.placeholder.com/300x300?text=${encodeURIComponent(name)}`,
+            description: `Fresh ${name.toLowerCase()} available for purchase`,
           };
           categoryFound = category;
         }
