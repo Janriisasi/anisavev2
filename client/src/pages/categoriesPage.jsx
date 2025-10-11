@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import ProductCard from '../components/productCard';
@@ -14,9 +14,46 @@ export default function CategoriesPage() {
   const [showSellers, setShowSellers] = useState(false);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const contentRef = useRef(null);
+
+  //GSAP smooth scroll
+  const SmoothScroll = ({ children }) => {
+    const scrollRef = useRef(null);
+  
+    useEffect(() => {
+      let scrollY = 0;
+      let currentY = 0;
+      const speed = 0.08;
+  
+      const smoothScroll = () => {
+        scrollY = window.pageYOffset;
+        currentY += (scrollY - currentY) * speed;
+        
+        if (scrollRef.current) {
+          scrollRef.current.style.transform = `translateY(-${currentY}px)`;
+        }
+        
+        requestAnimationFrame(smoothScroll);
+      };
+  
+      smoothScroll();
+  
+      return () => {
+        if (scrollRef.current) {
+          scrollRef.current.style.transform = 'translateY(0)';
+        }
+      };
+    }, []);
+  
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', willChange: 'transform' }} ref={scrollRef}>
+        {children}
+      </div>
+    );
+  };
 
   const productImages = {
-  //vegetables
+    //vegetables
     "Eggplant": "/images/eggplant.png",
     "Tomato": "/images/tomato.png",
     "Cabbage": "/images/cabbage.png",
@@ -28,18 +65,17 @@ export default function CategoriesPage() {
     "Okra": "/images/okra.webp",
     "Pechay": "/images/pechay.webp",
     "Bell Pepper": "/images/bellpepper.png",
-    "Bell Pepper (Red)": "",
-    "Broccoli" : "",
-    "Lettuce (Green Ice)": "",
-    "Lettuce (Iceberg)": "",
-    "Lettuce (Romaine)": "",
-    "Sitao": "",
+    "Broccoli" : "/images/broccoli.jpg",
+    "Lettuce (Green Ice)": "/images/lettuce_green.png",
+    "Lettuce (Iceberg)": "/images/lettuce_iceberg.jpg",
+    "Lettuce (Romaine)": "/images/lettuce_romaine.jpg",
+    "Sitao": "/images/sitao.jpg",
 
     //fruits
-    "Mango": "/images/mango.webp",
-    "Banana (Lakatan)": "",
-    "Banana (Latundan)": "",
-    "Banana (Saba)": "",
+    "Mango": "/images/mango.png",
+    "Banana (Lakatan)": "/images/lakatan.png",
+    "Banana (Latundan)": "/images/latundan.png",
+    "Banana (Saba)": "/images/saba.jpg",
     "Calamansi": "/images/calamansi.jpg",
     "Papaya": "/images/papaya.jpg",
     "Pineapple": "/images/pineapple.avif",
@@ -48,31 +84,31 @@ export default function CategoriesPage() {
     "Rambutan": "/images/rambutan.webp",
     "Durian": "/images/durian.png",
     "Guyabano": "/images/guyabano.avif",
-    "Avocado": "",
-    "Melon": "",
-    "Pomelo": "",
+    "Avocado": "/images/avocado.jpg",
+    "Melon": "/images/melon.jpg",
+    "Pomelo": "/images/pomelo.jpg",
     //grains
-    "Rice (Local Fancy White)": "",
-    "Rice (Local Premium 5% broken)": "",
-    "Rice (Local Well Milled)": "",
-    "Rice (Local Regular Milled)": "",
-    "Corn (White Cob, Glutinous)": "",
-    "Corn (Yellow Cob, Sweet)": "",
-    "Corn Grits (White, Food Grade)": "",
-    "Corn Grits (Yellow, Food Grade)": "",
-    "Corn Cracked (Yellow, Feed Grade)": "",
-    "Corn Grits (Feed Grade)": "",
+    "Rice (Local Fancy White)": "/images/rice_fancywhite.jpg",
+    "Rice (Local Premium 5% broken)": "/images/rice_premium.jpg",
+    "Rice (Local Well Milled)": "/images/will_milled_rice.jpg",
+    "Rice (Local Regular Milled)": "/images/rice_wellmilled.jpg",
+    "Corn (White Cob, Glutinous)": "/images/white_cob_corn.jpg",
+    "Corn (Yellow Cob, Sweet)": "/images/yellowcob_cornsweet.jpg",
+    "Corn Grits (White, Food Grade)": "/images/whitecorn_grits_foodgrade.jpg",
+    "Corn Grits (Yellow, Food Grade)": "/images/yellowcorn_grits_foodgrade.jpg",
+    "Corn Cracked (Yellow, Feed Grade)": "/images/yellowcob_corn_feedgrade.jpg",
+    "Corn Grits (Feed Grade)": "/images/corngrits.jpg",
     "Sorghum": "/images/sorghum.jpg",
     "Millet": "/images/millet.avif",
     //herbs & spices
     "Ginger": "/images/ginger.jpg",
     "Garlic": "/images/garlic.jpg",
-    "Onion": "/images/onion.avif",
+    "Red Onion": "/images/onion.avif",
     "Chili": "/images/chili.png",
     "Lemongrass": "/images/lemongrass.webp",
     "Basil": "/images/basil.webp",
     "Turmeric": "/images/turmeric.webp"
-};
+  };
 
   const categories = ['Vegetables', 'Fruits', 'Grains', 'HerbsAndSpices'];
 
@@ -249,205 +285,224 @@ export default function CategoriesPage() {
     }
   };
 
+  // Set body height for smooth scroll
+  useEffect(() => {
+    if (contentRef.current) {
+      document.body.style.height = `${contentRef.current.offsetHeight}px`;
+    }
+
+    return () => {
+      document.body.style.height = '';
+    };
+  }, [products, filteredProducts().length, showSellers, loading]); // Re-calculate when content changes
+
 if (showSellers && selectedProduct) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <button
-          onClick={() => setShowSellers(false)}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Products
-        </button>
+    <>
+      <SmoothScroll>
+        <div ref={contentRef} className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6 pt-24">
+          <div className="max-w-7xl mx-auto">
+            <button
+              onClick={() => setShowSellers(false)}
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Products
+            </button>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* product details */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 h-fit">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">Product Details</h2>
-            <img
-              src={selectedProduct.image_url || '/placeholder.jpg'}
-              alt={selectedProduct.name}
-              className="w-full h-64 object-cover rounded-xl mb-4"
-            />
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">{selectedProduct.name}</h3>
-            <p className="text-gray-600 mb-2">Category: {selectedProduct.category}</p>
-            <p className="text-green-600 font-bold text-lg mb-2">
-              Market Price: ₱{selectedProduct.price}/kg
-            </p>
-            <p className="text-gray-700">{selectedProduct.description}</p>
-          </div>
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* product details */}
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 h-fit">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">Product Details</h2>
+                <img
+                  src={selectedProduct.image_url || '/placeholder.jpg'}
+                  alt={selectedProduct.name}
+                  className="w-full h-64 object-cover rounded-xl mb-4"
+                />
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800">{selectedProduct.name}</h3>
+                <p className="text-gray-600 mb-2">Category: {selectedProduct.category}</p>
+                <p className="text-green-600 font-bold text-lg mb-2">
+                  Market Price: ₱{selectedProduct.price}/kg
+                </p>
+                <p className="text-gray-700">{selectedProduct.description}</p>
+              </div>
 
-          {/* sellers list */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
-              Available Sellers ({sellers.length})
-            </h2>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {sellers.map((seller, index) => (
-                <div
-                  key={`${seller.id}-${index}`}
-                  className="bg-white rounded-xl p-4 shadow border border-gray-100"
-                >
-                  {seller.profiles ? (
-                    <>
-                      <div className="flex items-center gap-4 mb-3">
-                        <img
-                          src={seller.profiles.avatar_url || '/default-avatar.png'}
-                          alt="Seller"
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800">
-                            {seller.profiles.username || seller.profiles.full_name}
-                          </h4>
-                          {seller.profiles.address && (
-                            <p className="text-sm text-gray-600">{seller.profiles.address}</p>
+              {/* sellers list */}
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
+                  Available Sellers ({sellers.length})
+                </h2>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {sellers.map((seller, index) => (
+                    <div
+                      key={`${seller.id}-${index}`}
+                      className="bg-white rounded-xl p-4 shadow border border-gray-100"
+                    >
+                      {seller.profiles ? (
+                        <>
+                          <div className="flex items-center gap-4 mb-3">
+                            <img
+                              src={seller.profiles.avatar_url || '/default-avatar.png'}
+                              alt="Seller"
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-800">
+                                {seller.profiles.username || seller.profiles.full_name}
+                              </h4>
+                              {seller.profiles.address && (
+                                <p className="text-sm text-gray-600">{seller.profiles.address}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                            <div>
+                              <span className="text-gray-500">Price:</span>
+                              <span className="font-semibold text-green-600 ml-1">
+                                ₱{seller.price}/kg
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Available:</span>
+                              <span className="font-semibold ml-1">{seller.quantity_kg} kg</span>
+                            </div>
+                          </div>
+
+                          {seller.profiles.contact_number && (
+                            <div className="text-sm text-gray-600 mb-3">
+                              Contact: {seller.profiles.contact_number}
+                            </div>
                           )}
-                        </div>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-                        <div>
-                          <span className="text-gray-500">Price:</span>
-                          <span className="font-semibold text-green-600 ml-1">
-                            ₱{seller.price}/kg
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Available:</span>
-                          <span className="font-semibold ml-1">{seller.quantity_kg} kg</span>
-                        </div>
-                      </div>
-
-                      {seller.profiles.contact_number && (
-                        <div className="text-sm text-gray-600 mb-3">
-                          Contact: {seller.profiles.contact_number}
+                          <button
+                            onClick={() => handleSaveContact(seller.profiles.id)}
+                            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                          >
+                            Save Contact
+                          </button>
+                        </>
+                      ) : (
+                        <div className="text-center py-4">
+                          <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                            <div>
+                              <span className="text-gray-500">Market Price:</span>
+                              <span className="font-semibold text-green-600 ml-1">₱{seller.price}/kg</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Available:</span>
+                              <span className="font-semibold ml-1">{seller.quantity_kg} kg</span>
+                            </div>
+                          </div>
+                          <p className="text-gray-500">Template Product - No specific seller</p>
                         </div>
                       )}
-
-                      <button
-                        onClick={() => handleSaveContact(seller.profiles.id)}
-                        className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium"
-                      >
-                        Save Contact
-                      </button>
-                    </>
-                  ) : (
-                    <div className="text-center py-4">
-                      <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-                        <div>
-                          <span className="text-gray-500">Market Price:</span>
-                          <span className="font-semibold text-green-600 ml-1">₱{seller.price}/kg</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Available:</span>
-                          <span className="font-semibold ml-1">{seller.quantity_kg} kg</span>
-                        </div>
-                      </div>
-                      <p className="text-gray-500">Template Product - No specific seller</p>
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </SmoothScroll>
+    </>
   );
 }
 
 return (
-  <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
-    <div className="max-w-7xl mx-auto">
-      {name ? (
-        <div className="mb-6">
-          <div className="block sm:hidden">
-            <button
-              onClick={() => navigate('/categories')}
-              className="flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-center text-2xl font-bold text-gray-800">
-              {name === 'HerbsAndSpices' ? 'Herbs & Spices' : name} Products
-            </h1>
-          </div>
-          <div className="hidden sm:flex items-center justify-between">
-            <button
-              onClick={() => navigate('/categories')}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Categories</span>
-            </button>
-            <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 flex-1 text-center">
-              {name === 'HerbsAndSpices' ? 'Herbs & Spices' : name} Products
-            </h1>
-            <div className="w-[160px]"></div>
-          </div>
-        </div>
-      ) : (
-        <h1 className="text-center text-2xl sm:text-4xl font-bold text-gray-800 mb-6">
-          Categories
-        </h1>
-      )}
-
-      {!name && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10">
-          {categories.map((category) => {
-            const displayName = category === 'HerbsAndSpices' ? 'Herbs & Spices' : category;
-
-            return (
-              <Link
-                key={category}
-                to={`/categories/${category}`}
-                className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-md border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:bg-green-800 text-center group"
-              >
-                <h3 className="font-semibold text-gray-800 group-hover:text-white">
-                  {displayName}
-                </h3>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search products..."
-          className="w-full p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white backdrop-blur-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-        </div>
-      ) : filteredProducts().length === 0 ? (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center">
-          <p className="text-gray-500 text-lg">
-            {search ? 'No products found matching your search.' : 'No products found in this category.'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {filteredProducts().map((product) => (
-            <div key={product.id} className="relative">
-              <ProductCard
-                product={product}
-                onViewSellers={() => handleViewSellers(product)}
-                showSaveButton={false}
-              />
+  <>
+    <SmoothScroll>
+      <div ref={contentRef} className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6 pt-24">
+        <div className="max-w-7xl mx-auto">
+          {name ? (
+            <div className="mb-6">
+              <div className="block sm:hidden">
+                <button
+                  onClick={() => navigate('/categories')}
+                  className="flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <h1 className="text-center text-2xl font-bold text-gray-800">
+                  {name === 'HerbsAndSpices' ? 'Herbs & Spices' : name} Products
+                </h1>
+              </div>
+              <div className="hidden sm:flex items-center justify-between">
+                <button
+                  onClick={() => navigate('/categories')}
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span>Back to Categories</span>
+                </button>
+                <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 flex-1 text-center">
+                  {name === 'HerbsAndSpices' ? 'Herbs & Spices' : name} Products
+                </h1>
+                <div className="w-[160px]"></div>
+              </div>
             </div>
-          ))}
+          ) : (
+            <h1 className="text-center text-2xl sm:text-4xl font-bold text-gray-800 mb-6">
+              Categories
+            </h1>
+          )}
+
+          {!name && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10">
+              {categories.map((category) => {
+                const displayName = category === 'HerbsAndSpices' ? 'Herbs & Spices' : category;
+
+                return (
+                  <Link
+                    key={category}
+                    to={`/categories/${category}`}
+                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-md border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:bg-green-800 text-center group"
+                  >
+                    <h3 className="font-semibold text-gray-800 group-hover:text-white">
+                      {displayName}
+                    </h3>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="mb-6">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="w-full p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white backdrop-blur-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+            </div>
+          ) : filteredProducts().length === 0 ? (
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center">
+              <p className="text-gray-500 text-lg">
+                {search ? 'No products found matching your search.' : 'No products found in this category.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {filteredProducts().map((product) => (
+                <div key={product.id} className="relative">
+                  <ProductCard
+                    product={product}
+                    onViewSellers={() => handleViewSellers(product)}
+                    showSaveButton={false}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  </div>
+      </div>
+    </SmoothScroll>
+  </>
 );
 }

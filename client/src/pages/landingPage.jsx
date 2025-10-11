@@ -1,8 +1,43 @@
-//charlesCastillano
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { Facebook, Instagram, Linkedin } from 'lucide-react';
 import TrueFocus from '../components/trueFocus.jsx';
+
+//GSAP smooth scroll
+const SmoothScroll = ({ children }) => {
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    let scrollY = 0;
+    let currentY = 0;
+    const speed = 0.08;
+
+    const smoothScroll = () => {
+      scrollY = window.pageYOffset;
+      currentY += (scrollY - currentY) * speed;
+      
+      if (scrollRef.current) {
+        scrollRef.current.style.transform = `translateY(-${currentY}px)`;
+      }
+      
+      requestAnimationFrame(smoothScroll);
+    };
+
+    smoothScroll();
+
+    return () => {
+      if (scrollRef.current) {
+        scrollRef.current.style.transform = 'translateY(0)';
+      }
+    };
+  }, []);
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', willChange: 'transform' }} ref={scrollRef}>
+      {children}
+    </div>
+  );
+};
 
 //button components
 const Button = ({ className, variant = "default", size = "md", children, onClick, ...props }) => {
@@ -78,13 +113,12 @@ const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
 //logo
 const Logo = ({ isScrolled = false }) => {
   return (
-    <Link to="/landing" className="flex items-center gap-2 sm:gap-3 transition-all duration-300 cursor-pointer">
+    <a href="#home" className="flex items-center gap-2 sm:gap-3 transition-all duration-300 cursor-pointer">
       <span className={`text-lg sm:text-xl lg:text-[31px] font-extrabold tracking-tight transition-colors duration-300 ${
         isScrolled ? 'text-[#00573C]' : 'text-white'
       }`}>
         anisave
       </span>
-      {/* wheat logo */}
       <div className="relative">
         <img 
           src="/images/ani_logo.svg" 
@@ -92,7 +126,7 @@ const Logo = ({ isScrolled = false }) => {
           className="w-6 h-6 sm:w-8 sm:h-8 lg:w-[41px] lg:h-[44px] object-contain"
         />
       </div>
-    </Link>
+    </a>
   );
 };
 
@@ -100,14 +134,27 @@ const Logo = ({ isScrolled = false }) => {
 const scrollToId = (id) => {
   const el = document.getElementById(id);
   if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  const offsetTop = el.offsetTop;
+  window.scrollTo({ top: offsetTop, behavior: "smooth" });
 };
 
 //main landing page
 export default function LandingPage() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
-  const navigate = useNavigate(); // Add this hook
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    // Set body height for scrolling
+    if (contentRef.current) {
+      document.body.style.height = `${contentRef.current.offsetHeight}px`;
+    }
+
+    return () => {
+      document.body.style.height = '';
+    };
+  }, []);
 
   //handle scroll effects
   useEffect(() => {
@@ -140,58 +187,59 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* navbar */}
-      <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
-      }`}>
-        <nav className={`max-w-7xl mx-auto px-4 sm:px-6 h-12 sm:h-14 lg:h-18 flex items-center justify-between ${
-          isScrolled ? 'mt-1 sm:mt-2' : 'mt-1 sm:mt-2'
-        }`}>
-          {/* logo */}
-          <Logo isScrolled={isScrolled} />
+    <>
+      <SmoothScroll>
+        <div ref={contentRef} className="min-h-screen bg-white">
+          {/* navbar */}
+          <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+            isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
+          }`} style={{ position: 'absolute' }}>
+            <nav className={`max-w-7xl mx-auto px-4 sm:px-6 h-12 sm:h-14 lg:h-18 flex items-center justify-between ${
+              isScrolled ? 'mt-1 sm:mt-2' : 'mt-1 sm:mt-2'
+            }`}>
+              <Logo isScrolled={isScrolled} />
 
-          {/* links */}
-          <div className="hidden lg:flex items-center gap-12">
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => scrollToId(link.id)}
-                className={`font-medium text-lg transition-all duration-300 relative group ${
-                  isScrolled ? 'text-gray-700 hover:text-[#00573C]' : 'text-white hover:text-gray-200'
-                } ${activeSection === link.id ? (isScrolled ? 'text-[#00573C]' : 'text-white') : ''}`}
-              >
-                {link.label}
-                <span className={`absolute -bottom-1 left-0 h-0.5 bg-current transition-all duration-300 ${
-                  activeSection === link.id ? 'w-full' : 'w-0 group-hover:w-full'
-                }`} />
-              </button>
-            ))}
-          </div>
+              {/* links */}
+              <div className="hidden lg:flex items-center gap-12">
+                {navLinks.map((link) => (
+                  <button
+                    key={link.id}
+                    onClick={() => scrollToId(link.id)}
+                    className={`font-medium text-lg transition-all duration-300 relative group ${
+                      isScrolled ? 'text-gray-700 hover:text-[#00573C]' : 'text-white hover:text-gray-200'
+                    } ${activeSection === link.id ? (isScrolled ? 'text-[#00573C]' : 'text-white') : ''}`}
+                  >
+                    {link.label}
+                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-current transition-all duration-300 ${
+                      activeSection === link.id ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`} />
+                  </button>
+                ))}
+              </div>
 
-          {/* buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="min-w-[60px] sm:min-w-[80px] lg:min-w-[120px]"
-              onClick={() => navigate('/login')}
-            >
-              Log in
-            </Button>
-            <Button 
-              variant="default" 
-              size="sm"
-              className="min-w-[70px] sm:min-w-[100px] lg:min-w-[140px] gap-1 sm:gap-2"
-              onClick={() => navigate('/signup')}
-            >
-              Sign Up
-            </Button>
-          </div>
-        </nav>
-      </header>
+              {/* buttons */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="min-w-[60px] sm:min-w-[80px] lg:min-w-[120px]"
+                  onClick={() => navigate('/login')}
+                >
+                  Log in
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="min-w-[70px] sm:min-w-[100px] lg:min-w-[140px] gap-1 sm:gap-2"
+                  onClick={() => navigate('/signup')}
+                >
+                  Sign Up
+                </Button>
+              </div>
+            </nav>
+          </header>
 
-      {/* hero */}
+          {/* hero */}
       <section
         id="home"
         className="relative min-h-screen flex items-center overflow-hidden"
@@ -238,232 +286,230 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* features section */}
-      <section 
-        id="features" 
-        className="relative py-12 sm:py-16 lg:py-24 overflow-hidden"
-        style={{
-          backgroundImage: "url('/images/Notif.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundColor: '#00573C'
-        }}
-      >
+          {/* features section */}
+          <section 
+            id="features" 
+            className="relative py-12 sm:py-16 lg:py-24 overflow-hidden"
+            style={{
+              backgroundImage: "url('/images/Notif.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundColor: '#00573C'
+            }}
+          >
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
+                <div className="text-white">
+                  <h2 className="text-2xl sm:text-3xl lg:text-5xl xl:text-[48px] font-bold mb-6 sm:mb-8 lg:mb-12">
+                    Features
+                  </h2>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
-            {/* feature list (left) */}
-            <div className="text-white">
-              <h2 className="text-2xl sm:text-3xl lg:text-5xl xl:text-[48px] font-bold mb-6 sm:mb-8 lg:mb-12">
-                Features
-              </h2>
-
-              <div className="space-y-6 sm:space-y-8 lg:space-y-10">
-                {[
-                  {
-                    title: "Real-time Prices",
-                    description: "Displays real-time prices for up-to-date market information."
-                  },
-                  {
-                    title: "Categorized",
-                    description: "Organizes products into clear, easy-to-browse categories."
-                  },
-                  {
-                    title: "Showcase",
-                    description: "Allows users to post and showcase their products quickly and effortlessly."
-                  },
-                  {
-                    title: "Contact Farmers",
-                    description: "Communicate with farmers for inquiries and deals."
-                  }
-                ].map((feature, index) => (
-                  <div 
-                    key={index}
-                    className="group cursor-pointer transition-all duration-300"
-                  >
-                    <h3 className="text-lg sm:text-xl lg:text-[37px] font-extrabold mb-1 sm:mb-2 group-hover:text-green-300 transition-colors duration-300">
-                      {feature.title}
-                    </h3>
-                    <p className="text-white/80 text-sm sm:text-base lg:text-[20px] leading-relaxed group-hover:text-white transition-colors duration-300">
-                      {feature.description}
-                    </p>
+                  <div className="space-y-6 sm:space-y-8 lg:space-y-10">
+                    {[
+                      {
+                        title: "Real-time Prices",
+                        description: "Displays real-time prices for up-to-date market information."
+                      },
+                      {
+                        title: "Categorized",
+                        description: "Organizes products into clear, easy-to-browse categories."
+                      },
+                      {
+                        title: "Showcase",
+                        description: "Allows users to post and showcase their products quickly and effortlessly."
+                      },
+                      {
+                        title: "Contact Farmers",
+                        description: "Communicate with farmers for inquiries and deals."
+                      }
+                    ].map((feature, index) => (
+                      <div 
+                        key={index}
+                        className="group cursor-pointer transition-all duration-300"
+                      >
+                        <h3 className="text-lg sm:text-xl lg:text-[37px] font-extrabold mb-1 sm:mb-2 group-hover:text-green-300 transition-colors duration-300">
+                          {feature.title}
+                        </h3>
+                        <p className="text-white/80 text-sm sm:text-base lg:text-[20px] leading-relaxed group-hover:text-white transition-colors duration-300">
+                          {feature.description}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            {/* feature image (right) */}
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative max-w-lg lg:max-w-2xl w-full">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl cursor-pointer transform hover:scale-105 transition-all duration-500">
-                  <img
-                    src="/images/45202324647AM.jpg"
-                    alt="Farmer"
-                    className="w-full h-[300px] sm:h-[400px] lg:h-[600px] object-cover"
-                    onError={(e) => {
-                      e.target.parentElement.innerHTML = '<div class="w-full h-[300px] sm:h-[400px] lg:h-[600px] bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                {/* feature image (right) */}
+                <div className="flex justify-center lg:justify-end">
+                  <div className="relative max-w-lg lg:max-w-2xl w-full">
+                    <div className="relative rounded-2xl overflow-hidden shadow-2xl cursor-pointer transform hover:scale-105 transition-all duration-500">
+                      <img
+                        src="/images/45202324647AM.jpg"
+                        alt="Farmer"
+                        className="w-full h-[300px] sm:h-[400px] lg:h-[600px] object-cover"
+                        onError={(e) => {
+                          e.target.parentElement.innerHTML = '<div class="w-full h-[300px] sm:h-[400px] lg:h-[600px] bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* about section */}
-      <section id="about" className="py-12 sm:py-16 lg:py-24 bg-[#F5F5F5]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center mb-12 sm:mb-16 lg:mb-24">
-            <div className="flex justify-center lg:justify-start">
-              <div className="relative max-w-lg lg:max-w-xl w-full">
-                <img
-                  src="/images/pexels-sorapong-chaipanya-4530766-1.jpg"
-                  alt="Farmer carrying seedlings"
-                  className="w-full aspect-square object-cover rounded-lg shadow-xl transform hover:scale-105 transition-all duration-500"
-                  onError={(e) => {
-                    e.target.parentElement.innerHTML = '<div class="w-full aspect-square bg-green-200 flex items-center justify-center text-green-800 text-xl font-semibold rounded-lg shadow-xl">About Image</div>';
-                  }}
+          {/* about section */}
+          <section id="about" className="py-12 sm:py-16 lg:py-24 bg-[#F5F5F5]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center mb-12 sm:mb-16 lg:mb-24">
+                <div className="flex justify-center lg:justify-start">
+                  <div className="relative max-w-lg lg:max-w-xl w-full">
+                    <img
+                      src="/images/pexels-sorapong-chaipanya-4530766-1.jpg"
+                      alt="Farmer carrying seedlings"
+                      className="w-full aspect-square object-cover rounded-lg shadow-xl transform hover:scale-105 transition-all duration-500"
+                      onError={(e) => {
+                        e.target.parentElement.innerHTML = '<div class="w-full aspect-square bg-green-200 flex items-center justify-center text-green-800 text-xl font-semibold rounded-lg shadow-xl">About Image</div>';
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-2xl sm:text-3xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-6 lg:mb-8">
+                    About Anisave
+                  </h2>
+                  
+                  <p className="text-[#726767] text-sm sm:text-base lg:text-[20px] leading-relaxed mb-6 sm:mb-8 lg:mb-12">
+                    To empower farmers with real-time, accessible, and accurate market pricing information, 
+                    enabling them to make informed decisions, improve their profitability, and thrive in an 
+                    ever-changing agricultural landscape.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+                    <div className="group">
+                      <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
+                        Our <br/> vision
+                      </h3>
+                      <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
+                        Creating solutions that are capable of adapting to the changing needs of the agricultural community.
+                      </p>
+                    </div>
+                    
+                    <div className="group">
+                      <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
+                        Our <br/> mission
+                      </h3>
+                      <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
+                        To deliver real-time market prices, empowering farmers to make smarter choices.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* why use section */}
+          <section className="py-16 sm:py-20 lg:py-24 bg-[#F5F5F5]">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="text-center mb-12 lg:mb-16">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4">
+                  Why Use Anisave
+                </h2>
+                <p className="text-[#767474] text-lg sm:text-xl lg:text-[24px] max-w-3xl mx-auto">
+                  Get today's market prices, grow tomorrow's profit.
+                </p>
+              </div>
+
+              {/* cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                <FeatureCard
+                  image="/images/52022106060_bb8f26ba3f_4k.jpg"
+                  title="Strategic crop planning"
+                  description="Access to future price trends to improving profitability and reducing risk."
+                />
+                
+                <FeatureCard
+                  image="/images/two-happy-farmers-holding-hands-field_993599-21007.jpg"
+                  title="Seamless Market Access"
+                  description="Real time price feeds reduce middlemen influence and enhance market efficiency."
+                />
+                
+                <FeatureCard
+                  image="/images/Department-of-Agriculture-DA.png"
+                  title="DA's price protection program"
+                  description="Guarantees stable pricing for cooperatives, working closely with buyers."
+                  isHighlighted={true}
                 />
               </div>
             </div>
-            <div>
-              <h2 className="text-2xl sm:text-3xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-6 lg:mb-8">
-                About Anisave
-              </h2>
-              
-              <p className="text-[#726767] text-sm sm:text-base lg:text-[20px] leading-relaxed mb-6 sm:mb-8 lg:mb-12">
-                To empower farmers with real-time, accessible, and accurate market pricing information, 
-                enabling them to make informed decisions, improve their profitability, and thrive in an 
-                ever-changing agricultural landscape.
-              </p>
+          </section>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
-                <div className="group">
-                  <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
-                    Our <br/> vision
-                  </h3>
-                  <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
-                    Creating solutions that are capable of adapting to the changing needs of the agricultural community.
-                  </p>
+          {/* footer */}
+          <footer className="bg-[#D5E9D6] border-t border-black/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 mb-6 sm:mb-8">
+                <div>
+                  <ul className="space-y-3 sm:space-y-4">
+                    {navLinks.map((link) => (
+                      <li key={link.id}>
+                        <button 
+                          onClick={() => scrollToId(link.id)}
+                          className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg font-medium"
+                        >
+                          {link.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                
-                <div className="group">
-                  <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
-                    Our <br/> mission
-                  </h3>
-                  <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
-                    To deliver real-time market prices, empowering farmers to make smarter choices.
-                  </p>
+
+                <div>
+                  <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Legal</h4>
+                  <ul className="space-y-3 sm:space-y-4">
+                    <li><a href="#privacy" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">Privacy Policy</a></li>
+                    <li><a href="#terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">Terms of service</a></li>
+                  </ul>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* why use section */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-[#F5F5F5]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4">
-              Why Use Anisave
-            </h2>
-            <p className="text-[#767474] text-lg sm:text-xl lg:text-[24px] max-w-3xl mx-auto">
-              Get today's market prices, grow tomorrow's profit.
-            </p>
-          </div>
-
-          {/* cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            <FeatureCard
-              image="/images/52022106060_bb8f26ba3f_4k.jpg"
-              title="Strategic crop planning"
-              description="Access to future price trends to improving profitability and reducing risk."
-            />
-            
-            <FeatureCard
-              image="/images/two-happy-farmers-holding-hands-field_993599-21007.jpg"
-              title="Seamless Market Access"
-              description="Real time price feeds reduce middlemen influence and enhance market efficiency."
-            />
-            
-            <FeatureCard
-              image="/images/Department-of-Agriculture-DA.png"
-              title="DA's price protection program"
-              description="Guarantees stable pricing for cooperatives, working closely with buyers."
-              isHighlighted={true}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* footer */}
-      <footer className="bg-[#D5E9D6] border-t border-black/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 mb-6 sm:mb-8">
-            {/* nav links */}
-            <div>
-              <ul className="space-y-3 sm:space-y-4">
-                {navLinks.map((link) => (
-                  <li key={link.id}>
-                    <button 
-                      onClick={() => scrollToId(link.id)}
-                      className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg font-medium"
+                <div>
+                  <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Follow us</h4>
+                  <div className="flex items-center gap-4 sm:gap-6">
+                    <a
+                      href="https://facebook.com"
+                      aria-label="Facebook"
+                      className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
                     >
-                      {link.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Legal</h4>
-              <ul className="space-y-3 sm:space-y-4">
-                <li><a href="#privacy" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">Privacy Policy</a></li>
-                <li><a href="#terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">Terms of service</a></li>
-              </ul>
-            </div>
-
-            {/* social links */}
-            <div>
-              <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Follow us</h4>
-              <div className="flex items-center gap-4 sm:gap-6">
-                <a
-                  href="https://facebook.com"
-                  aria-label="Facebook"
-                  className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                >
-                  <Facebook size={20} className="sm:w-6 sm:h-6" />
-                </a>
-                <a
-                  href="https://instagram.com"
-                  aria-label="Instagram"
-                  className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                >
-                  <Instagram size={20} className="sm:w-6 sm:h-6" />
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  aria-label="LinkedIn"
-                  className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                >
-                  <Linkedin size={20} className="sm:w-6 sm:h-6" />
-                </a>
+                      <Facebook size={20} className="sm:w-6 sm:h-6" />
+                    </a>
+                    <a
+                      href="https://instagram.com"
+                      aria-label="Instagram"
+                      className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
+                    >
+                      <Instagram size={20} className="sm:w-6 sm:h-6" />
+                    </a>
+                    <a
+                      href="https://linkedin.com"
+                      aria-label="LinkedIn"
+                      className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
+                    >
+                      <Linkedin size={20} className="sm:w-6 sm:h-6" />
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+            <div className="bg-[#ECEFF2] border-t border-black/20">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+                <p className="text-center text-black text-sm sm:text-base lg:text-lg">
+                  © 2025 Anisave. All rights reserved.
+                </p>
+              </div>
+            </div>
+          </footer>
         </div>
-        <div className="bg-[#ECEFF2] border-t border-black/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-            <p className="text-center text-black text-sm sm:text-base lg:text-lg">
-              © 2025 Anisave. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </SmoothScroll>
+    </>
   );
 }
