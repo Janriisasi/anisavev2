@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import { Menu, X, Search } from 'lucide-react';
 import { useAuth } from '../contexts/authContext';
@@ -54,12 +54,21 @@ export default function Navbar() {
     }
   };
 
+  const handleLogoClick = () => {
+    window.location.reload();
+  };
+
   const links = [
     { label: 'Homepage', to: '/homepage' },
     { label: 'Categories', to: '/categories' },
     { label: 'Contacts', to: '/contacts' },
     { label: 'Profile', to: '/profile' },
   ];
+
+  const handleNavigation = (to) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate(to);
+  };
 
   //if no user the navbar will not appear
   if (!user) return null;
@@ -83,30 +92,30 @@ export default function Navbar() {
         }
       `}</style>
       
-      <nav className="bg-green-800 text-white shadow-lg backdrop-blur-sm relative z-50">
+      <nav className="bg-green-800 text-white shadow-lg backdrop-blur-sm sticky top-0 z-50">
         <div className="px-4 py-3">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             {/* our logo */}
-            <Link to="/homepage" className="flex items-center">
+            <button onClick={handleLogoClick} className="flex items-center hover:opacity-80 transition-opacity cursor-pointer">
               <img 
                 src="/images/anisave_logo.png"
                 alt="Logo"
                 className="h-10 w-auto"
               />
-            </Link>
+            </button>
 
             {/* navigation - desktop */}
             <div className="hidden md:flex gap-7 items-center">
               {links.map(({ label, to }) => (
-                <Link
+                <button
                   key={to}
-                  to={to}
+                  onClick={() => handleNavigation(to)}
                   className={`hover:text-gray-300 transition-colors duration-200 font-medium ${
                     location.pathname.startsWith(to) ? 'text-white border-b-2 border-white' : ''
                   }`}
                 >
                   {label}
-                </Link>
+                </button>
               ))}
             </div>
 
@@ -148,7 +157,7 @@ export default function Navbar() {
                         >
                           <div className="flex items-center gap-3">
                             <img 
-                              src={user.avatar_url || '/default-avatar.png'} 
+                              src={user.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${user.username || user.id}`} 
                               alt="" 
                               className="w-8 h-8 rounded-full object-cover flex-shrink-0" 
                             />
@@ -243,16 +252,18 @@ export default function Navbar() {
             
             {/* navigation links */}
             {links.map(({ label, to }, index) => (
-              <Link
+              <button
                 key={to}
-                to={to}
-                className={`block text-white hover:text-gray-300 py-3 font-medium text-lg transition-all duration-500 delay-${(index + 2) * 100} hover:translate-x-1 hover:drop-shadow-lg ${
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleNavigation(to);
+                }}
+                className={`block text-white hover:text-gray-300 py-3 font-medium text-lg transition-all duration-500 delay-${(index + 2) * 100} hover:translate-x-1 hover:drop-shadow-lg w-full text-left ${
                   menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
                 }`}
-                onClick={() => setMenuOpen(false)}
               >
                 {label}
-              </Link>
+              </button>
             ))}
             
             {/* logout button */}
