@@ -11,6 +11,7 @@ import ProductSellers from './pages/productSellersPage';
 import Contacts from './pages/contactPage';
 import Farmer from './pages/farmersProfile';
 import AdminDashboard from './pages/adminDashboard';
+import PrivacyPolicy from './pages/privacyPolicy';
 
 export default function Routes() {
   const { user } = useAuth();
@@ -34,6 +35,8 @@ export default function Routes() {
       <Route path="/signup" element={
         user ? <Navigate to="/homepage" replace /> : <SignUp />
       } />
+
+      <Route path="/privacy" element={<PrivacyPolicy />} />
 
       {/* protected routes */}
       <Route path="/admin" element={
