@@ -84,9 +84,13 @@ export default function SellerDetailsPopup({ seller, product, onClose }) {
       <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-xl">
         <div className="relative">
           <img
-            src={product.image_url}
+            src={seller.image_url || '/placeholder.jpg'}
             alt={product.name}
             className="w-full h-48 object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/placeholder.jpg';
+            }}
           />
         </div>
 
@@ -94,7 +98,7 @@ export default function SellerDetailsPopup({ seller, product, onClose }) {
           {/* seller info */}
           <div className="flex items-center gap-4 mb-6">
             <img
-              src={seller.profiles.avatar_url || '/default-avatar.png'}
+              src={seller.profiles.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${seller.profiles.username || seller.profiles.farmer.id}`}
               alt="Seller"
               className="w-16 h-16 rounded-full object-cover border-2 border-green-200"
             />
@@ -144,8 +148,8 @@ export default function SellerDetailsPopup({ seller, product, onClose }) {
               disabled={saving}
               className={`flex-1 ${
                 isContactSaved 
-                  ? 'bg-red-500 hover:bg-red-600' 
-                  : 'bg-green-500 hover:bg-green-600'
+                  ? 'bg-red-800 hover:bg-red-900' 
+                  : 'bg-green-800 hover:bg-green-900'
               } text-white py-2 px-4 rounded-lg transition-colors font-medium`}
             >
               {saving ? 'Processing...' : isContactSaved ? 'Remove Contact' : 'Save Contact'}
