@@ -50,7 +50,7 @@ export default function ProductCard({ product, onSaveContact, showSaveButton = t
             {category === 'HerbsAndSpices' ? 'Herbs & Spices' : category}
           </div>
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-800">{name}</h2>
+            <h2 className="text-xl font-bold text-gray-800 truncate flex-1">{name}</h2>
             <div className="text-right ml-4">
               <p className="text-2xl font-bold text-green-800">₱{price}/kg</p>
               {marketPrice > price && (
