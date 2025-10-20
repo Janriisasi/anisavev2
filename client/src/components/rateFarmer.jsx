@@ -185,7 +185,7 @@ export default function RateFarmer({ farmerId, onRatingSubmitted }) {
       <button
         onClick={submit}
         disabled={submitting || rating === 0}
-        className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full bg-gradient-to-r from-green-800 to-green-800 text-white py-3 px-4 rounded-lg font-medium hover:from-green-800 hover:to-green-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform"
       >
         {submitting ? 'Submitting...' : hasRated ? 'Update Rating' : 'Submit Rating'}
       </button>
