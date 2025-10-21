@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from 'react-router-dom';
-import { Facebook, Instagram, Linkedin } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, ChevronUp } from 'lucide-react';
 import TrueFocus from '../components/trueFocus.jsx';
 
 //GSAP smooth scroll
@@ -114,18 +114,13 @@ const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
 const Logo = ({ isScrolled = false }) => {
   return (
     <a href="#home" className="flex items-center gap-2 sm:gap-3 transition-all duration-300 cursor-pointer">
-      <span className={`text-lg sm:text-xl lg:text-[31px] font-extrabold tracking-tight transition-colors duration-300 ${
-        isScrolled ? 'text-[#00573C]' : 'text-white'
-      }`}>
-        anisave
-      </span>
-      <div className="relative">
+      <button className="flex items-center hover:opacity-80 transition-opacity cursor-pointer">
         <img 
-          src="/images/ani_logo.svg" 
-          alt="Wheat Logo" 
-          className="w-6 h-6 sm:w-8 sm:h-8 lg:w-[41px] lg:h-[44px] object-contain"
+          src="/images/anisave_logo.png"
+          alt="Logo"
+                className="h-12 w-auto"
         />
-      </div>
+      </button>
     </a>
   );
 };
@@ -138,11 +133,16 @@ const scrollToId = (id) => {
   window.scrollTo({ top: offsetTop, behavior: "smooth" });
 };
 
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
 //main landing page
 export default function LandingPage() {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const contentRef = useRef(null);
 
   useEffect(() => {
@@ -160,6 +160,7 @@ export default function LandingPage() {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      setShowScrollTop(window.scrollY > 300);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -240,16 +241,16 @@ export default function LandingPage() {
           </header>
 
           {/* hero */}
-      <section
-        id="home"
-        className="relative min-h-screen flex items-center overflow-hidden"
-        style={{
-          backgroundImage: "url('/images/bg_feat.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundColor: '#1a4d35'
-        }}
-      >
+          <section
+            id="home"
+            className="relative min-h-screen flex items-center overflow-hidden"
+            style={{
+              backgroundImage: "url('/images/bg_feat.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundColor: '#024310'
+            }}
+          >
         {/* overlay */}
         <div className="absolute inset-0 bg-black/40" />
         
@@ -300,7 +301,7 @@ export default function LandingPage() {
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
                 <div className="text-white">
-                  <h2 className="text-2xl sm:text-3xl lg:text-5xl xl:text-[48px] font-bold mb-6 sm:mb-8 lg:mb-12">
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold mb-6 sm:mb-8 lg:mb-12">
                     Features
                   </h2>
 
@@ -375,19 +376,20 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-2xl sm:text-3xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-6 lg:mb-8">
-                    About Anisave
-                  </h2>
-                  
-                  <p className="text-[#726767] text-sm sm:text-base lg:text-[20px] leading-relaxed mb-6 sm:mb-8 lg:mb-12">
-                    To empower farmers with real-time, accessible, and accurate market pricing information, 
-                    enabling them to make informed decisions, improve their profitability, and thrive in an 
-                    ever-changing agricultural landscape.
-                  </p>
+                  <div className="group mb-8 sm:mb-10 lg:mb-12">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-0">
+                      About Anisave
+                    </h2>
+                    <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
+                      To empower farmers with real-time, accessible, and accurate market pricing information, 
+                      enabling them to make informed decisions, improve their profitability, and thrive in an 
+                      ever-changing agricultural landscape.
+                    </p>
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
                     <div className="group">
-                      <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
+                      <h3 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-0">
                         Our <br/> vision
                       </h3>
                       <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
@@ -396,7 +398,7 @@ export default function LandingPage() {
                     </div>
                     
                     <div className="group">
-                      <h3 className="text-xl sm:text-2xl lg:text-[48px] font-bold text-[#00573C] mb-3 sm:mb-4">
+                      <h3 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-0">
                         Our <br/> mission
                       </h3>
                       <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
@@ -467,8 +469,19 @@ export default function LandingPage() {
                 <div>
                   <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Legal</h4>
                   <ul className="space-y-3 sm:space-y-4">
-                    <li><a href="#privacy" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">Privacy Policy</a></li>
-                    <li><a href="#terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">Terms of service</a></li>
+                    <li>
+                      <Link 
+                        to="/privacy" 
+                        className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </li>
+                    <li>
+                      <a href="#terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">
+                        Terms of service
+                      </a>
+                    </li>
                   </ul>
                 </div>
 
@@ -508,6 +521,17 @@ export default function LandingPage() {
               </div>
             </div>
           </footer>
+
+          {/* scroll to top button */}
+          {showScrollTop && (
+            <button
+              onClick={scrollToTop}
+              className="fixed bottom-8 right-8 bg-[#024310] hover:bg-[#035815] text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 z-40"
+              aria-label="Scroll to top"
+            >
+              <ChevronUp size={24} />
+            </button>
+          )}
         </div>
       </SmoothScroll>
     </>
