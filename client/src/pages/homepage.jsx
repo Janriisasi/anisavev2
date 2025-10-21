@@ -3,7 +3,7 @@ import supabase from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '../components/productCard';
 import productPrices from '../data/productPrices.json';
-import { TrendingUp, Package, ShoppingCart, Star, Plus } from 'lucide-react';
+import { TrendingUp, Package, ShoppingCart, Star, ChevronUp } from 'lucide-react';
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -12,43 +12,24 @@ const Home = () => {
   const [search, setSearch] = useState('');
   const [myRating, setMyRating] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const navigate = useNavigate();
   const contentRef = useRef(null);
 
-  //GSAP smooth scroll
-  const SmoothScroll = ({ children }) => {
-    const scrollRef = useRef(null);
-  
-    useEffect(() => {
-      let scrollY = 0;
-      let currentY = 0;
-      const speed = 0.08;
-  
-      const smoothScroll = () => {
-        scrollY = window.pageYOffset;
-        currentY += (scrollY - currentY) * speed;
-        
-        if (scrollRef.current) {
-          scrollRef.current.style.transform = `translateY(-${currentY}px)`;
-        }
-        
-        requestAnimationFrame(smoothScroll);
-      };
-  
-      smoothScroll();
-  
-      return () => {
-        if (scrollRef.current) {
-          scrollRef.current.style.transform = 'translateY(0)';
-        }
-      };
-    }, []);
-  
-    return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', willChange: 'transform' }} ref={scrollRef}>
-        {children}
-      </div>
-    );
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   const productImages = {
@@ -213,21 +194,9 @@ const Home = () => {
 
   const totalSales = myProducts.reduce((acc, product) => acc + (product.price * 10), 0);
 
-  // Set body height for smooth scroll
-  useEffect(() => {
-    if (contentRef.current) {
-      document.body.style.height = `${contentRef.current.offsetHeight}px`;
-    }
-
-    return () => {
-      document.body.style.height = '';
-    };
-  }, [allProducts, filteredProducts.length]); // Re-calculate when products change
-
   return (
     <>
-      <SmoothScroll>
-        <div ref={contentRef} className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Title */}
           <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6">
@@ -339,9 +308,19 @@ const Home = () => {
               ))}
             </div>
           )}
-          </div>
         </div>
-      </SmoothScroll>
+      </div>
+
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-4 sm:right-6 md:right-8 lg:right-32 bg-green-800 hover:bg-green-700 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 z-50"
+          aria-label="Scroll to top"
+          title="Scroll to top"
+        >
+          <ChevronUp size={24} />
+        </button>
+      )}
     </>
   );
 };
