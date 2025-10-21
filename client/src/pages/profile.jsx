@@ -19,7 +19,13 @@ export default function Profile() {
     address: '',
     contact_number: ''
   });
+  const [tempFormData, setTempFormData] = useState({
+    full_name: '',
+    address: '',
+    contact_number: ''
+  });
   const [contactError, setContactError] = useState('');
+  const [tempAvatarUrl, setTempAvatarUrl] = useState(null);
 
   useEffect(() => {
     getUser();
@@ -116,91 +122,53 @@ export default function Profile() {
   };
 
   const handleUpload = async (e) => {
-  try {
-    const file = e.target.files[0];
-    if (!file) return;
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
 
-    //validate the file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
+      //store the current avatar URL before uploading
+      setTempAvatarUrl(profile?.avatar_url);
+      setUploading(true);
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image must be less than 2MB');
-      return;
-    }
+      //validate the file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
 
-    //checks the user id
-    console.log('User ID:', user.id, 'Type:', typeof user.id);
-    
-    if (!user?.id) {
-      toast.error('User not authenticated');
-      return;
-    }
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Image must be less than 2MB');
+        return;
+      }
 
-    setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `avatar-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `avatar-${Date.now()}.${fileExt}`;
-    const filePath = `${user.id}/${fileName}`;
+      const { data, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
-    console.log('Upload path:', filePath);
+      if (uploadError) throw uploadError;
 
-    //upload image to db
-    const { data, error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      throw uploadError;
-    }
+      //only update the temporary state, not the database yet
+      setProfile(prev => ({ ...prev, tempAvatarUrl: publicUrl }));
+      setTempFormData(prev => ({ ...prev, avatar_url: publicUrl }));
 
-    console.log('Upload successful:', data);
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath);
-
-    console.log('Public URL:', publicUrl);
-
-    //update profile in db
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        avatar_url: publicUrl,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Database update error:', updateError);
-      throw updateError;
-    }
-
-    //update local state
-    setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
-    toast.success('Profile picture updated!');
-
-  } catch (error) {
-    console.error('Error:', error);
-    
-    //error messages
-    if (error.message?.includes('uuid')) {
-      toast.error('Authentication error. Please try logging out and back in.');
-    } else if (error.message?.includes('storage')) {
-      toast.error('Storage error. Please try again.');
-    } else {
+    } catch (error) {
+      console.error('Error:', error);
       toast.error('Failed to update profile picture');
+    } finally {
+      setUploading(false);
     }
-  } finally {
-    setUploading(false);
-  }
-};
+  };
 
   const deleteProduct = async (productId) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -239,218 +207,239 @@ export default function Profile() {
     navigate('/');
   };
 
+  const handleCancel = () => {
+    //restore the original avatar URL
+    if (tempAvatarUrl) {
+      setProfile(prev => ({ ...prev, avatar_url: tempAvatarUrl }));
+    }
+    setFormData(tempFormData);
+    setIsEditing(false);
+    setContactError('');
+    setTempAvatarUrl(null);
+  };
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     
-    // Validate contact number before submission
-    if (formData.contact_number && formData.contact_number.length !== 11) {
-      toast.error('Contact number must be exactly 11 digits starting with 09');
-      return;
-    }
-    
-    if (formData.contact_number && !formData.contact_number.startsWith('09')) {
-      toast.error('Contact number must start with 09');
-      return;
-    }
-    
     try {
+      //update profile with all changes including avatar
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: formData.full_name,
           address: formData.address,
           contact_number: formData.contact_number,
+          avatar_url: profile.tempAvatarUrl || profile.avatar_url,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      setProfile(prev => ({
-        ...prev,
-        full_name: formData.full_name,
-        address: formData.address,
-        contact_number: formData.contact_number
+      //ppdate local state with new avatar
+      setProfile(prev => ({ 
+        ...prev, 
+        avatar_url: prev.tempAvatarUrl || prev.avatar_url,
+        tempAvatarUrl: null 
       }));
+      setTempAvatarUrl(null);
       setIsEditing(false);
       setContactError('');
       toast.success('Profile updated successfully!');
+
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     }
   };
 
+  //generate default avatar URL
+const getDefaultAvatar = (userId) => {
+  return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${userId}`;
+};
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
-<div className="flex justify-between items-center mb-6">
-  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Profile</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Profile</h2>
 
-  <div className="flex items-center gap-2">
-    {/* edit button on mobile - aligned to profile title */}
-    {!isEditing && (
-      <button
-        onClick={() => {
-          setFormData({
-            full_name: profile?.full_name || '',
-            address: profile?.address || '',
-            contact_number: profile?.contact_number || '09'
-          });
-          setContactError('');
-          setIsEditing(true);
-        }}
-        className="md:hidden p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-        title="Edit Profile"
-      >
-        <Edit className="w-5 h-5" />
-      </button>
-    )}
+          <div className="flex items-center gap-2">
+            {!isEditing && (
+              <button
+                onClick={() => {
+                  setTempFormData({
+                    full_name: profile?.full_name || '',
+                    address: profile?.address || '',
+                    contact_number: profile?.contact_number || '09'
+                  });
+                  setFormData({
+                    full_name: profile?.full_name || '',
+                    address: profile?.address || '',
+                    contact_number: profile?.contact_number || '09'
+                  });
+                  setContactError('');
+                  setIsEditing(true);
+                }}
+                className="md:hidden p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                title="Edit Profile"
+              >
+                <Edit className="w-5 h-5" />
+              </button>
+            )}
 
-    {/* logout (desktop only) */}
-    {user && (
-      <button
-        onClick={handleLogout}
-        className="hidden md:flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-6 py-2 rounded-lg transition-all duration-200"
-        title="Logout"
-      >
-        <LogOut className="w-5 h-5" />
-        <span className="font-medium">Logout</span>
-      </button>
-    )}
-  </div>
-</div>
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="hidden md:flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-6 py-2 rounded-lg transition-all duration-200"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-medium">Logout</span>
+              </button>
+            )}
+          </div>
+        </div>
 
-
-        {/* profile section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-6 sm:mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
             <div className="relative flex-shrink-0">
-              {profile?.avatar_url ? (
+              <div className="relative group">
                 <img
-                  src={profile.avatar_url}
+                  src={isEditing ? (profile?.tempAvatarUrl || profile?.avatar_url || getDefaultAvatar(user?.id)) 
+    : (profile?.avatar_url || getDefaultAvatar(user?.id))}
                   className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-lg"
                   alt="Profile"
                 />
-              ) : (
-                <label>
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-green-700 flex items-center justify-center border-4 border-white shadow-lg hover:bg-green-800 cursor-pointer transition-colors duration-200">
-                  <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                  <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUpload}
-                  disabled={uploading}
-                  className="hidden"
-                />
+                {isEditing && (
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-200">
+                    <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              {uploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                 </div>
-                </label>
               )}
             </div>
 
-            <div className="flex-1 text-center md:text-left w-full relative">
-              {/* edit */}
-              {!isEditing && (
-                <button
-                  onClick={() => {
-                    setFormData({
-                      full_name: profile?.full_name || '',
-                      address: profile?.address || '',
-                      contact_number: profile?.contact_number || '09'
-                    });
-                    setContactError('');
-                    setIsEditing(true);
-                  }}
-                  className="hidden md:block absolute top-0 right-0 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                  title="Edit Profile"
-                >
-                  <Edit className="w-5 h-5" />
-                </button>
-              )}
-
+            <div className="flex-1 text-center md:text-left w-full">
               {isEditing ? (
                 <div className="space-y-4 md:pr-12">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Profile</h3>
-                    <form onSubmit={handleUpdateProfile} className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                        <input
-                          type="text"
-                          placeholder="Enter your full name"
-                          value={formData.full_name}
-                          onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 text-sm sm:text-base"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Address</label>
-                        <input
-                          type="text"
-                          placeholder="Enter your address"
-                          value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 text-sm sm:text-base"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Contact Number 
-                          <span className="text-xs text-gray-500 ml-1">(11 digits required. Enter 9 more digits)</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="09XXXXXXXXX"
-                          value={formData.contact_number}
-                          onChange={handleContactNumberChange}
-                          onFocus={(e) => {
-                            //09
-                            if (!formData.contact_number) {
-                              setFormData({ ...formData, contact_number: '09' });
-                            }
-                          }}
-                          maxLength={11}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all duration-200 text-sm sm:text-base ${
-                            contactError 
-                              ? 'border-red-300 focus:ring-red-200 focus:border-red-500' 
-                              : 'border-gray-300 focus:ring-green-200 focus:border-green-500'
-                          }`}
-                        />
-                        {contactError && (
-                          <p className="text-red-500 text-xs mt-1">{contactError}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                        <button
-                          type="submit"
-                          disabled={contactError || (formData.contact_number && formData.contact_number.length !== 11)}
-                          className={`flex-1 py-3 px-4 rounded-lg transition-colors font-medium text-sm sm:text-base ${
-                            contactError || (formData.contact_number && formData.contact_number.length !== 11)
-                              ? 'bg-gray-400 text-white cursor-not-allowed'
-                              : 'bg-green-700 text-white hover:bg-green-800'
-                          }`}
-                        >
-                          Save Changes
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsEditing(false);
-                            setContactError('');
-                          }}
-                          className="px-8 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Profile</h3>
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                      <input
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={formData.full_name}
+                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 text-sm sm:text-base"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Address</label>
+                      <input
+                        type="text"
+                        placeholder="Enter your address"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 text-sm sm:text-base"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Contact Number 
+                        <span className="text-xs text-gray-500 ml-1">(11 digits required. Enter 9 more digits)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="09XXXXXXXXX"
+                        value={formData.contact_number}
+                        onChange={handleContactNumberChange}
+                        onFocus={(e) => {
+                          if (!formData.contact_number) {
+                            setFormData({ ...formData, contact_number: '09' });
+                          }
+                        }}
+                        maxLength={11}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all duration-200 ${
+                          contactError 
+                            ? 'border-red-300 focus:ring-red-200 focus:border-red-500' 
+                            : 'border-gray-300 focus:ring-green-200 focus:border-green-500'
+                        }`}
+                      />
+                      {contactError && (
+                        <p className="text-red-500 text-xs mt-1">{contactError}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                      <button
+                        type="submit"
+                        disabled={contactError || (formData.contact_number && formData.contact_number.length !== 11)}
+                        className={`flex-1 py-3 px-4 rounded-lg transition-colors font-medium text-sm sm:text-base ${
+                          contactError || (formData.contact_number && formData.contact_number.length !== 11)
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : 'bg-green-700 text-white hover:bg-green-800'
+                        }`}
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(tempFormData);
+                          setIsEditing(false);
+                          setContactError('');
+                        }}
+                        className="px-8 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
                 </div>
               ) : (
                 <>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 md:pr-12">
-                    {profile?.full_name || 'Anonymous'}
-                  </h2>
-                  <p className="text-gray-600 mb-2 text-sm sm:text-base">@{profile?.username}</p>
-                  <p className="text-gray-600 mb-4 text-sm sm:text-base">{user?.email}</p>
+                  <div className="flex flex-col md:flex-row items-center md:items-start justify-between mb-0">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
+                      {profile?.full_name || 'Verifying status...'}
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setTempFormData({
+                          full_name: profile?.full_name || '',
+                          address: profile?.address || '',
+                          contact_number: profile?.contact_number || '09'
+                        });
+                        setFormData({
+                          full_name: profile?.full_name || '',
+                          address: profile?.address || '',
+                          contact_number: profile?.contact_number || '09'
+                        });
+                        setContactError('');
+                        setIsEditing(true);
+                      }}
+                      className="hidden md:flex items-center gap-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                      title="Edit Profile"
+                    >
+                      <Edit className="w-5 h-5" />
+                      <span className="font-medium">Edit Profile</span>
+                    </button>
+                  </div>
+                  <div className="text-center md:text-left">
+                    <p className="text-gray-600 mb-2 text-sm sm:text-base">@{profile?.username || 'Loading your username'}</p>
+                    <p className="text-gray-600 mb-4 text-sm sm:text-base">{user?.email || 'Loading your email'}</p>
+                  </div>
                   
                   <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4 justify-center md:justify-start text-xs sm:text-sm">
                     {profile?.address && (
@@ -476,7 +465,6 @@ export default function Profile() {
           </div>
         </div>
         
-        {/* products section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -499,7 +487,6 @@ export default function Profile() {
             </button>
           </div>
 
-          {/* profile completion notice */}
           {!isProfileComplete && (
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-start gap-3">
