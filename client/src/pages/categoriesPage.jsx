@@ -402,26 +402,25 @@ return (
         </h1>
       )}
 
-      {!name && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10">
-          {categories.map((category) => {
-            const displayName = category === 'HerbsAndSpices' ? 'Herbs & Spices' : category;
+     {!name && (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-10">
+        {categories.map((category) => {
+          const displayName = category === 'HerbsAndSpices' ? 'Herbs & Spices' : category;
 
-            return (
-              <Link
-                key={category}
-                to={`/categories/${category}`}
-                className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-md border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:bg-green-800 text-center group"
-              >
-                <h3 className="font-semibold text-gray-800 group-hover:text-white">
-                  {displayName}
-                </h3>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-
+          return (
+            <Link
+              key={category}
+              to={`/categories/${category}`}
+              className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-sm border border-white/20 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 hover:bg-green-800 text-center group h-16 sm:h-24 flex items-center justify-center"
+            >
+              <h3 className="font-semibold text-xs sm:text-sm text-gray-800 group-hover:text-white line-clamp-2">
+                {displayName}
+              </h3>
+            </Link>
+          );
+        })}
+      </div>
+    )}
       <div className="mb-6">
         <input
           type="text"

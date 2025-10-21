@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import Loader from '../components/loader';
 import { useUser } from '../hooks/useUser';
-import { Copy, Star, Trash2, User, Eye } from 'lucide-react';
+import { Copy, Star, Trash2, User, Eye, MoreVertical } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function SavedContacts() {
@@ -11,6 +11,7 @@ export default function SavedContacts() {
   const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -21,7 +22,6 @@ export default function SavedContacts() {
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      //verify user profile exists first
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -35,7 +35,6 @@ export default function SavedContacts() {
         return;
       }
 
-      //updated the query
       const { data, error } = await supabase
         .from('saved_contacts')
         .select(`
@@ -56,7 +55,6 @@ export default function SavedContacts() {
 
       const contactsWithRatings = await Promise.all(
         data.map(async (contact) => {
-          //fetch ratings for this farmer
           const { data: ratingsData, error: ratingsError } = await supabase
             .from('ratings')
             .select('rating')
@@ -118,7 +116,7 @@ export default function SavedContacts() {
       if (error) throw error;
 
       toast.success('Contact removed successfully');
-      fetchContacts(); //refresh the contacts
+      fetchContacts();
     } catch (error) {
       console.error('Error removing contact:', error);
       toast.error('Failed to remove contact');
@@ -202,7 +200,7 @@ export default function SavedContacts() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {contacts.map((contact) => (
                 <div
                   key={contact.id}
@@ -210,6 +208,55 @@ export default function SavedContacts() {
                 >
                   {/* header */}
                   <div className="p-6 pb-4 relative">
+                    {/* Mobile menu button - top right */}
+                    <div className="sm:hidden absolute top-2 right-3 z-50">
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === contact.id ? null : contact.id)}
+                        className="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                      
+                      {openMenuId === contact.id && (
+                        <div className="absolute right-0 -mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                          <button
+                            onClick={() => {
+                              viewFarmerProfile(contact.farmer.id);
+                              setOpenMenuId(null);
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-3 text-green-800 hover:bg-green-50 transition-colors text-sm border-b border-gray-100"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Profile
+                          </button>
+                          
+                          {contact.farmer.contact_number && (
+                            <button
+                              onClick={() => {
+                                copyToClipboard(contact.farmer.contact_number);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 transition-colors text-sm border-b border-gray-100"
+                            >
+                              <Copy className="w-4 h-4" />
+                              Copy Number
+                            </button>
+                          )}
+                          
+                          <button
+                            onClick={() => {
+                              removeContact(contact.id, contact.farmer.full_name || contact.farmer.username);
+                              setOpenMenuId(null);
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex items-start gap-4 mb-4">
                       {/* profile */}
                       <div className="flex-shrink-0">
@@ -220,7 +267,7 @@ export default function SavedContacts() {
                         />
                       </div>
                       
-                      {/* cinfo */}
+                      {/* info */}
                       <div className="flex-1 min-w-0">
                         {/* rating*/}
                         <div className="mb-2">
@@ -254,37 +301,36 @@ export default function SavedContacts() {
                     </div>
 
                     {/* buttons */}
-                    <div className="flex items-center mt-4 pt-4 border-t border-gray-100 gap-4 justify-between">
-                    {/* view profile button */}
-                    <button
-                      onClick={() => viewFarmerProfile(contact.farmer.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-800 rounded-lg hover:bg-green-100 transition-colors text-sm whitespace-nowrap"
-                      title="View profile"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View Profile
-                    </button>
-                      {/* copy button */}
-                      {contact.farmer.contact_number && (
+                    <div className="mt-4 sm:pt-4 sm:border-t sm:border-gray-100">
+                      {/* Desktop buttons - hidden on mobile */}
+                      <div className="hidden sm:flex items-center gap-7 w-full">
                         <button
-                          onClick={() => copyToClipboard(contact.farmer.contact_number)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-                          title="Copy contact number"
+                          onClick={() => viewFarmerProfile(contact.farmer.id)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-800 rounded-lg hover:bg-green-100 transition-colors text-sm whitespace-nowrap"
+                          title="View profile"
                         >
-                          <Copy className="w-4 h-4" />
-                          Copy
+                          <Eye className="w-4 h-4" />
+                          View Profile
                         </button>
-                      )}
-
-                      {/* remove button */}
-                      <button
-                        onClick={() => removeContact(contact.id, contact.farmer.full_name || contact.farmer.username)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
-                        title="Remove contact"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Remove
-                      </button>
+                        {contact.farmer.contact_number && (
+                          <button
+                            onClick={() => copyToClipboard(contact.farmer.contact_number)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+                            title="Copy contact number"
+                          >
+                            <Copy className="w-4 h-4" />
+                            Copy
+                          </button>
+                        )}
+                        <button
+                          onClick={() => removeContact(contact.id, contact.farmer.full_name || contact.farmer.username)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
+                          title="Remove contact"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

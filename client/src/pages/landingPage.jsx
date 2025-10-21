@@ -118,7 +118,7 @@ const Logo = ({ isScrolled = false }) => {
         <img 
           src="/images/anisave_logo.png"
           alt="Logo"
-                className="h-12 w-auto"
+          className="h-8 sm:h-10 lg:h-12 w-auto"
         />
       </button>
     </a>

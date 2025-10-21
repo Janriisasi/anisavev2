@@ -268,13 +268,13 @@ export default function FarmerProfile() {
                       </button>
                     </div>
                   )}
-                  <div className="bg-yellow-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                  <div className="bg-yellow-100 px-2 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2">
                     <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
-                    <span>
-                      {avgRating > 0 ? avgRating : 'No ratings yet'}
+                    <span className="text-xs sm:text-sm">
+                      {avgRating > 0 ? avgRating : 'No ratings'}
                       {totalRatings > 0 && (
-                        <span className="text-gray-500 ml-1">
-                          ({totalRatings} rating{totalRatings > 1 ? 's' : ''})
+                        <span className="text-gray-500 ml-1 whitespace-nowrap">
+                          ({totalRatings})
                         </span>
                       )}
                     </span>
