@@ -94,45 +94,40 @@ export default function PrivacyPolicy() {
             </nav>
           </header>
 
-          {/* hero section with background image */}
-<section className="relative pt-28 pb-12 sm:pb-16 lg:pb-20 overflow-hidden flex items-end">
-  {/* Background image container */}
-  <div className="absolute inset-0 w-full h-full">
-    <img 
-      src="/images/bg_privacytitle.svg" // Replace with your image path
-      alt="Privacy Policy Background"
-      className="w-6/12 h-full mt-8"
-      onError={(e) => e.target.style.display = 'none'}
-    />
-  </div>
-
-  <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 w-full">
-    <div className="max-w-2xl">
-      <div className="flex items-center gap-2 mb-4 sm:mb-6">
-        <button 
-          onClick={() => window.location.href = '/'}
-          className="text-green-800 flex items-center gap-1 text-sm sm:text-base"
-          aria-label="Back to home"
-        >
-          <ArrowLeft size={18} />
-          <span>Back</span>
-        </button>
-      </div>
-
-      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-green-800 mb-2">
-        Privacy Policy
-      </h1>
-      <p className="text-green-800 text-xs sm:text-sm">
-        Last Updated: October 17, 2025
-      </p>
-    </div>
-  </div>
-</section>
+          <section className="relative pt-24 sm:pt-32 lg:pt-40 pb-12 sm:pb-16 lg:pb-24 overflow-hidden"
+            style={{
+              backgroundImage: "url('/images/bg_feat.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundColor: '#024310'
+            }}
+          >
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="max-w-3xl">
+                <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                  <button 
+                    onClick={() => window.location.href = '/'}
+                    className="text-white hover:text-white/60 transition-colors flex items-center gap-1 text-sm sm:text-base"
+                    aria-label="Back to home"
+                  >
+                    <ArrowLeft size={18} />
+                    <span>Back</span>
+                  </button>
+                </div>
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+                  Privacy Policy
+                </h1>
+                <p className="text-white/90 text-base sm:text-lg lg:text-xl">
+                  Your privacy matters to us. Here's how we protect and use your information.
+                </p>
+              </div>
+            </div>
+          </section>
 
 
           {/* main content */}
           <section className="py-12 sm:py-16 lg:py-20 bg-white relative">
-            {/* single large background decoration */}
             <div className="absolute inset-0 w-full h-full opacity-70">
               <img 
                 src="/images/bg_privacy.svg" 
@@ -143,20 +138,18 @@ export default function PrivacyPolicy() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-              {/* intro paragraph */}
               <p className="text-[#666] text-base sm:text-lg leading-relaxed mb-10">
                 AniSave ("we", "our", or "us") values your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our platform.
               </p>
 
               {/* sections */}
               <div className="space-y-10">
-                {/* Section 1 */}
                 <div>
                   <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#666] mb-3">
                     Information We Collect
                   </h2>
                   <div className="space-y-3 text-[#666] text-sm sm:text-base leading-relaxed">
-                    <p>We may collect information about you if we have a reason to do so – for example, to provide our Services, to communicate with, or to make our Services better.</p>
+                    <p>We may collect information about you if we have a reason to do so — for example, to provide our Services, to communicate with, or to make our Services better.</p>
                     <ul className="list-disc list-inside space-y-2 ml-2">
                       <li><strong>Personal Information:</strong> such as your name, email address, and contact number when you create an account or interact with our services.</li>
                       <li><strong>Usage Data:</strong> including your login activity, visited pages, and interactions within the platform.</li>
