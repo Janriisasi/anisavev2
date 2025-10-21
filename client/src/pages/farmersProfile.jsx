@@ -202,7 +202,7 @@ export default function FarmerProfile() {
       <div className="max-w-6xl mx-auto">
         <button
           onClick={handleBackNavigation}
-          className="flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4 transition-colors"
+          className="flex items-center text-green-800 font-medium mb-4 transition-colors"
         >
           <ArrowLeft className="w-5 h-5 mr-1" />
           Back
@@ -211,11 +211,14 @@ export default function FarmerProfile() {
         {/* farmer profile */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
           <div className="flex flex-col md:flex-row items-start gap-6">
-            <img
-              src={farmer.avatar_url || '/default-avatar.png'}
-              alt="Farmer Avatar"
-              className="w-32 h-32 rounded-full object-cover border-4 border-green-200"
-            />
+            <div className="relative w-32 h-32">
+              <img
+                src={farmer.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${farmer.username || farmer.id}`}
+                alt={farmer.full_name || 'Farmer Profile'}
+                className="w-full h-full rounded-full object-cover border-4 border-green-200"
+                loading="lazy"
+              />
+            </div>
             
             <div className="flex-1 w-full">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
@@ -258,7 +261,7 @@ export default function FarmerProfile() {
                       <span>{farmer.contact_number}</span>
                       <button
                         onClick={copyContact}
-                        className="ml-2 p-1 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-all duration-200"
+                        className="ml-2 p-1 text-green-800 hover:text-green-900 hover:bg-green-50 rounded transition-all duration-200"
                         title="Copy contact number"
                       >
                         <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
