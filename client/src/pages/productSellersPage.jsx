@@ -4,6 +4,7 @@ import supabase from '../lib/supabase';
 import productPrices from '../data/productPrices.json';
 import { ArrowLeft, Star, MapPin, Phone } from 'lucide-react';
 import SellerDetailsPopup from '../components/sellerDetailsPopup';
+import { useAuth } from '../contexts/authContext';
 
 export default function ProductSellersPage() {
   const { productName } = useParams();
@@ -12,6 +13,7 @@ export default function ProductSellersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSeller, setSelectedSeller] = useState(null);
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
 
   const productImages = {
     //vegetables
@@ -34,9 +36,9 @@ export default function ProductSellersPage() {
 
     //fruits
     "Mango": "/images/mango.png",
-    "Banana (Lakatan)": "",
-    "Banana (Latundan)": "",
-    "Banana (Saba)": "",
+    "Banana (Lakatan)": "/images/lakatan.png",
+    "Banana (Latundan)": "/images/latundan.png",
+    "Banana (Saba)": "/images/saba.jpg",
     "Calamansi": "/images/calamansi.jpg",
     "Papaya": "/images/papaya.jpg",
     "Pineapple": "/images/pineapple.avif",
@@ -46,25 +48,25 @@ export default function ProductSellersPage() {
     "Durian": "/images/durian.png",
     "Guyabano": "/images/guyabano.avif",
     "Avocado": "/images/avocado.jpg",
-    "Melon": "",
-    "Pomelo": "",
+    "Melon": "/images/melon.jpg",
+    "Pomelo": "/images/pomelo.jpg",
     //grains
-    "Rice (Local Fancy White)": "",
-    "Rice (Local Premium 5% broken)": "",
-    "Rice (Local Well Milled)": "",
-    "Rice (Local Regular Milled)": "",
-    "Corn (White Cob, Glutinous)": "",
-    "Corn (Yellow Cob, Sweet)": "",
-    "Corn Grits (White, Food Grade)": "",
-    "Corn Grits (Yellow, Food Grade)": "",
-    "Corn Cracked (Yellow, Feed Grade)": "",
-    "Corn Grits (Feed Grade)": "",
+    "Rice (Local Fancy White)": "/images/rice_fancywhite.jpg",
+    "Rice (Local Premium 5% broken)": "/images/rice_premium.jpg",
+    "Rice (Local Well Milled)": "/images/will_milled_rice.jpg",
+    "Rice (Local Regular Milled)": "/images/rice_wellmilled.jpg",
+    "Corn (White Cob, Glutinous)": "/images/white_cob_corn.jpg",
+    "Corn (Yellow Cob, Sweet)": "/images/yellowcob_cornsweet.jpg",
+    "Corn Grits (White, Food Grade)": "/images/whitecorn_grits_foodgrade.jpg",
+    "Corn Grits (Yellow, Food Grade)": "/images/yellowcorn_grits_foodgrade.jpg",
+    "Corn Cracked (Yellow, Feed Grade)": "/images/yellowcob_corn_feedgrade.jpg",
+    "Corn Grits (Feed Grade)": "/images/corngrits.jpg",
     "Sorghum": "/images/sorghum.jpg",
     "Millet": "/images/millet.avif",
     //herbs & spices
     "Ginger": "/images/ginger.jpg",
     "Garlic": "/images/garlic.jpg",
-    "Onion": "/images/onion.avif",
+    "Red Onion": "/images/onion.avif",
     "Chili": "/images/chili.png",
     "Lemongrass": "/images/lemongrass.webp",
     "Basil": "/images/basil.webp",
@@ -77,8 +79,17 @@ export default function ProductSellersPage() {
     }
   }, [productName]);
 
+  //modify the generateProductAndSellers function
   const generateProductAndSellers = async () => {
     setLoading(true);
+
+    //find the default price from productPrices.json
+    let defaultPrice = null;
+    Object.entries(productPrices).forEach(([category, items]) => {
+      if (items[productName]) {
+        defaultPrice = items[productName];
+      }
+    });
 
     //fetch products from db
     const { data: dbProducts, error } = await supabase
@@ -91,32 +102,29 @@ export default function ProductSellersPage() {
       .eq('status', 'Available');
 
     if (!error && dbProducts && dbProducts.length > 0) {
-      //use the first product's details but keep all sellers
       const firstProduct = dbProducts[0];
       setProduct({
         name: firstProduct.name,
         category: firstProduct.category,
-        price: firstProduct.price,
-        image_url: productImages[name] || `https://via.placeholder.com/300x300?text=${encodeURIComponent(name)}`,
-        description: `Fresh ${name.toLowerCase()} available for purchase`,
+        price: defaultPrice || firstProduct.price,
+        image_url: productImages[firstProduct.name] || firstProduct.image_url,
+        description: `Fresh and available for purchase`,
       });
 
-      //set all sellers
       setSellers(dbProducts);
-    } else {
+    } else if (defaultPrice) {
+
       let foundProduct = null;
-      let categoryFound = null;
 
       Object.entries(productPrices).forEach(([category, items]) => {
         if (items[productName]) {
           foundProduct = {
             name: productName,
             category: category,
-            price: items[productName],
-            image_url: productImages[name] || `https://via.placeholder.com/300x300?text=${encodeURIComponent(name)}`,
-            description: `Fresh ${name.toLowerCase()} available for purchase`,
+            price: defaultPrice,
+            image_url: productImages[productName],
+            description: `Fresh ${productName.toLowerCase()} available for purchase`,
           };
-          categoryFound = category;
         }
       });
 
@@ -192,7 +200,7 @@ export default function ProductSellersPage() {
       <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-800 mx-auto"></div>
             <p className="text-gray-500 mt-4">Loading sellers...</p>
           </div>
         </div>
@@ -206,7 +214,7 @@ export default function ProductSellersPage() {
         <div className="max-w-7xl mx-auto">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-medium"
+            className="flex items-center gap-2 text-green-800 mb-6 font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
             Go Back
@@ -224,7 +232,7 @@ export default function ProductSellersPage() {
       <div className="max-w-7xl mx-auto">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-medium"
+          className="flex items-center gap-2 text-green-800 mb-6 font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Products
@@ -238,7 +246,11 @@ export default function ProductSellersPage() {
               <img
                 src={product.image_url}
                 alt={product.name}
-                className="w-56 h-56 object-cover"
+                className="w-56 h-56 object-cover rounded-lg"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://via.placeholder.com/300x300?text=${encodeURIComponent(product.name)}`;
+                }}
               />
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">{product.name}</h3>
@@ -246,7 +258,7 @@ export default function ProductSellersPage() {
               <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                 {product.category}
               </span>
-              <span className="text-2xl font-bold text-green-600">
+              <span className="text-2xl font-bold text-black">
                 ₱{product.price}/kg
               </span>
             </div>
@@ -263,7 +275,6 @@ export default function ProductSellersPage() {
 
           {/* sellers list */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg border border-white/20">
-            {/* Fixed mobile-responsive header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Available Sellers</h2>
               <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium w-fit">
@@ -275,14 +286,13 @@ export default function ProductSellersPage() {
               {sellers.map((seller) => (
                 <div
                   key={seller.id}
-                  onClick={() => setSelectedSeller(seller)}
                   className="bg-white rounded-xl p-4 sm:p-5 shadow border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
                 >
                   {/* seller header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                       <img
-                        src={seller.profiles.avatar_url || '/default-avatar.png'}
+                        src={seller.profiles.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${seller.profiles.username || seller.profiles.id}`}
                         alt="Seller"
                         className="w-12 sm:w-14 h-12 sm:h-14 rounded-full object-cover flex-shrink-0"
                       />
@@ -341,14 +351,20 @@ export default function ProductSellersPage() {
                     </div>
                   )}
 
-                  {/* action buttons */}
+                  {/* action buttons - only show if not current user */}
                   <div className="flex gap-3">
-                    <button
-                      onClick={() => handleContactSeller(seller.profiles.id)}
-                      className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium text-sm sm:text-base"
-                    >
-                      View Details
-                    </button>
+                    {seller.user_id !== currentUser?.id ? (
+                      <button
+                        onClick={() => setSelectedSeller(seller)}
+                        className="flex-1 bg-green-800 text-white py-2 px-4 rounded-lg hover:bg-green-900 transition-colors font-medium text-sm sm:text-base"
+                      >
+                        View Details
+                      </button>
+                    ) : (
+                      <div className="flex-1 py-2 px-4 text-center text-gray-500 bg-gray-100 rounded-lg text-sm sm:text-base">
+                        Your Listing
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
