@@ -552,7 +552,7 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-2 md:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-8 gap-2 md:gap-4">
