@@ -214,7 +214,7 @@ export default function SavedContacts() {
                       {/* profile */}
                       <div className="flex-shrink-0">
                         <img
-                          src={contact.farmer.avatar_url || '/default-avatar.png'}
+                          src={contact.farmer.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${contact.farmer.username || contact.farmer.id}`}
                           alt="Farmer Avatar"
                           className="w-20 h-20 rounded-full object-cover border-2 border-green-200"
                         />
@@ -258,7 +258,7 @@ export default function SavedContacts() {
                     {/* view profile button */}
                     <button
                       onClick={() => viewFarmerProfile(contact.farmer.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm whitespace-nowrap"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-800 rounded-lg hover:bg-green-100 transition-colors text-sm whitespace-nowrap"
                       title="View profile"
                     >
                       <Eye className="w-4 h-4" />
