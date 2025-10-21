@@ -13,6 +13,7 @@ function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
   //redirect if already logged in
   useEffect(() => {
@@ -22,6 +23,15 @@ function Login() {
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -88,12 +98,11 @@ function Login() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative"
+      className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `url(/images/bg.png)`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundImage: isMobile 
+          ? `url(/images/bg_mobile.png)` 
+          : `url(/images/bg.png)`
       }}
     >
       
