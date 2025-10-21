@@ -309,18 +309,18 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-4xl p-6">
-        <h2 className="text-2xl font-bold mb-6">
+ return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-white rounded-xl sm:rounded-2xl w-full max-w-md sm:max-w-4xl p-3 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-lg sm:text-2xl font-bold mb-4 sm:mb-6">
           {existingProduct ? 'Edit Product' : 'Add New Product'}
         </h2>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-700">Product Image</h3>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center h-80">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
+            <div className="space-y-2 sm:space-y-4">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Image</h3>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center h-48 sm:h-80">
                 <input
                   type="file"
                   accept="image/*"
@@ -340,27 +340,28 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                     />
                   ) : (
                     <>
-                      <Upload className="w-16 h-16 text-gray-400 mb-4" />
-                      <span className="text-lg text-gray-500 font-medium">
-                        Click to upload product image
+                      <Upload className="w-8 sm:w-16 h-8 sm:h-16 text-gray-400 mb-2 sm:mb-4" />
+                      <span className="text-xs sm:text-lg text-gray-500 font-medium">
+                        Click to upload image
                       </span>
-                      <span className="text-sm text-gray-400 mt-2">
-                        Maximum file size: 5MB
+                      <span className="text-xs text-gray-400 mt-1 sm:mt-2">
+                        Max 5MB
                       </span>
                     </>
                   )}
                 </label>
               </div>
               {imageFile && (
-                <p className="text-sm text-green-600 text-center">
-                  ✓ Image selected: {imageFile.name}
+                <p className="text-xs sm:text-sm text-green-600 text-center truncate">
+                  ✓ {imageFile.name}
                 </p>
               )}
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-700">Product Details</h3>
+            <div className="space-y-2 sm:space-y-4">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Details</h3>
               
+              {/* Custom dropdowns - keep same as before but reduce padding on mobile */}
               <CustomDropdown
                 label="Category"
                 value={form.category}
@@ -369,8 +370,8 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                   setForm({
                     ...form,
                     category: category,
-                    name: '', //reset product name when category changes
-                    price: '' //reset price when category changes
+                    name: '',
+                    price: ''
                   });
                 }}
                 placeholder="Select Category"
@@ -391,29 +392,29 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 disabled={!form.category}
               />
               
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Price per kg</label>
+              <div className="space-y-1 sm:space-y-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Price per kg</label>
                 <input
                   type="number"
                   placeholder="Price per kg"
-                  className="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                  className="input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
                   value={form.price}
                   onChange={(e) => setForm({...form, price: e.target.value})}
                   required
                 />
                 {form.name && (
-                  <p className="text-sm text-gray-500">
-                    Suggested price: ₱{productPrices[form.category]?.[form.name]}/kg
+                  <p className="text-xs text-gray-500">
+                    Suggested: ₱{productPrices[form.category]?.[form.name]}/kg
                   </p>
                 )}
               </div>
               
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Quantity (kg)</label>
+              <div className="space-y-1 sm:space-y-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700">Quantity (kg)</label>
                 <input
                   type="number"
-                  placeholder="Quantity in kilograms"
-                  className="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                  placeholder="Quantity in kg"
+                  className="input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
                   value={form.quantity_kg}
                   onChange={(e) => setForm({...form, quantity_kg: e.target.value})}
                   required
@@ -422,37 +423,24 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
             </div>
           </div>
           
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-green-700 text-white py-3 rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50 font-medium"
+              className="flex-1 bg-green-700 text-white py-2 sm:py-3 rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base"
             >
-              {loading ? 'Processing...' : existingProduct ? 'Update Product' : 'Add Product'}
+              {loading ? 'Processing...' : existingProduct ? 'Update' : 'Add P'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-8 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
             >
               Cancel
             </button>
           </div>
         </form>
       </div>
-      
-      <style jsx>{`
-        @keyframes slideInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
-};
+}
