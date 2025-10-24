@@ -252,7 +252,7 @@ if (showSellers && selectedProduct) {
       <div className="max-w-7xl mx-auto">
         <button
           onClick={() => setShowSellers(false)}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-medium"
+          className="flex items-center gap-2 text-green-800 mb-6 font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Products
@@ -374,9 +374,10 @@ return (
           <div className="block sm:hidden">
             <button
               onClick={() => navigate('/categories')}
-              className="flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4"
+              className="flex items-center text-green-800 font-medium mb-4"
             >
               <ArrowLeft className="w-5 h-5" />
+              Back
             </button>
             <h1 className="text-center text-2xl font-bold text-gray-800">
               {name === 'HerbsAndSpices' ? 'Herbs & Spices' : name} Products

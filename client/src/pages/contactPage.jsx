@@ -185,7 +185,7 @@ export default function SavedContacts() {
                 Start exploring products and save contacts from farmers you'd like to connect with.
               </p>
               <button
-                onClick={() => navigate('/home')}
+                onClick={() => navigate('/homepage')}
                 className="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 transition-colors"
               >
                 Explore Products

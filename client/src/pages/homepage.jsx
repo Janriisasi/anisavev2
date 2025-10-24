@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
 import supabase from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +14,7 @@ const Home = () => {
   const [myRating, setMyRating] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const contentRef = useRef(null);
 
@@ -92,14 +94,21 @@ const Home = () => {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/');
-      } else {
-        setUser(user);
-        fetchMyProducts(user.id);
-        fetchMyRating(user.id);
-        generateProductsFromPrices();
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate('/');
+        } else {
+          setUser(user);
+          await fetchMyProducts(user.id);
+          await fetchMyRating(user.id);
+          generateProductsFromPrices();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -149,20 +158,25 @@ const Home = () => {
     let productId = 1;
 
     Object.entries(productPrices).forEach(([category, items]) => {
-      Object.entries(items).forEach(([name, price]) => {
+      Object.entries(items).forEach(([name, priceData]) => {
+        // Check if priceData is an object and has a price property
+        const price = typeof priceData === 'object' ? priceData.price : priceData;
+        
         products.push({
           id: productId++,
           name: name,
           category: category,
           price: price,
           quantity_kg: Math.floor(Math.random() * 100) + 10,
-          image_url: productImages[name] || `https://via.placeholder.com/300x300?text=${encodeURIComponent(name)}`,
+          image_url: productImages[name] || `/images/placeholder.jpg`,
           description: `Fresh ${name.toLowerCase()} available for purchase`,
           profiles: null
         });
       });
     });
 
+    // Debug log to check products
+    console.log('Generated products:', products);
     setAllProducts(products);
   };
 
@@ -195,17 +209,37 @@ const Home = () => {
   const totalSales = myProducts.reduce((acc, product) => acc + (product.price * 10), 0);
 
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Title */}
-          <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6">
+          <motion.h2 
+            className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             Dashboard
-          </h2>
+          </motion.h2>
           
-          {/* dashboard */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300">
+          {/* dashboard cards */}
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {/* Best Seller Card */}
+            <motion.div 
+              className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500 font-medium">Best Seller</p>
@@ -215,9 +249,14 @@ const Home = () => {
                 </div>
                 <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300">
+            {/* Sales Summary Card */}
+            <motion.div 
+              className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500 font-medium">Sales Summary</p>
@@ -227,9 +266,14 @@ const Home = () => {
                 </div>
                 <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300">
+            {/* Rating Card */}
+            <motion.div 
+              className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500 font-medium">Your Rating</p>
@@ -258,9 +302,14 @@ const Home = () => {
                 </div>
                 <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300">
+            {/* Products Card */}
+            <motion.div 
+              className="bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl p-4 sm:p-6 border hover:shadow-xl transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500 font-medium">Your Products</p>
@@ -268,60 +317,114 @@ const Home = () => {
                 </div>
                 <Package className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500" />
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          {/* explore products */}
-          <div className="mb-6">
+          {/* Explore Products Title */}
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
             <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6">
               Explore Products
             </h2>
-          </div>
+          </motion.div>
 
-          {filteredProducts.length === 0 ? (
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center">
-              <div className="text-gray-400 mb-4">
-                <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
-              </div>
-              <p className="text-gray-500 text-base sm:text-lg">
-                {search ? 'No products found matching your search.' : 'No products found.'}
-              </p>
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="mt-2 text-blue-500 hover:text-blue-600 underline"
+          {/* Products Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            {loading ? (
+              <div className="text-center py-12">
+                <motion.div 
+                  className="inline-block"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 >
-                  Clear search
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {filteredProducts.map((product) => (
-                <div key={product.id} className="relative">
-                  <ProductCard
-                    product={product}
-                    onSaveContact={() => handleSaveContact(product.profiles?.id)}
-                    showSaveButton={false}
-                  />
+                  <Package className="w-8 h-8 text-green-600" />
+                </motion.div>
+                <p className="mt-4 text-gray-600">Loading products...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <motion.div 
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center"
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-gray-400 mb-4">
+                  <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
                 </div>
-              ))}
-            </div>
-          )}
+                <p className="text-gray-500 text-base sm:text-lg">
+                  {search ? 'No products found matching your search.' : 'No products found.'}
+                </p>
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="mt-2 text-blue-500 hover:text-blue-600 underline"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+                variants={{
+                  show: {
+                    transition: {
+                      staggerChildren: 0.1
+                    }
+                  }
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {filteredProducts.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    className="relative"
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      show: { opacity: 1, y: 0 }
+                    }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <ProductCard
+                      product={product}
+                      onSaveContact={() => handleSaveContact(product.profiles?.id)}
+                      showSaveButton={false}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </motion.div>
         </div>
       </div>
 
-      {showScrollTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-8 right-4 sm:right-6 md:right-8 lg:right-32 bg-green-800 hover:bg-green-700 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 z-50"
-          aria-label="Scroll to top"
-          title="Scroll to top"
-        >
-          <ChevronUp size={24} />
-        </button>
-      )}
-    </>
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            onClick={scrollToTop}
+            className="fixed bottom-8 right-4 sm:right-6 md:right-8 lg:right-32 bg-green-800 hover:bg-green-700 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 z-50"
+            aria-label="Scroll to top"
+            title="Scroll to top"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <ChevronUp size={24} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
