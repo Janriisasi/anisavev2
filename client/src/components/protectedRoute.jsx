@@ -10,8 +10,8 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!user) {
-    //redirect to login while saving the attempted location
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    //redirect to landing while saving the attempted location
+    return <Navigate to="/landing" state={{ from: location }} replace />;
   }
 
   return children;

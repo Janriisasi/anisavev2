@@ -3,15 +3,23 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import { Menu, X, Search } from 'lucide-react';
 import { useAuth } from '../contexts/authContext';
+import AboutModal from './aboutModal';
 
 export default function Navbar() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setShowSearchResults(false);
+    setSearchQuery('');
+  };
 
   const handleSearch = async (query) => {
     if (!query.trim()) {
@@ -40,22 +48,20 @@ export default function Navbar() {
   const handleUserClick = (userId) => {
     console.log('Clicking on user:', userId);
     navigate(`/farmer/${userId}`);
-    setShowSearchResults(false);
-    setSearchQuery('');
-    setMenuOpen(false);
+    closeMenu();
   };
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/login');
+      navigate('/landing');
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
   const handleLogoClick = () => {
-    window.location.reload();
+    setShowAbout(true);
   };
 
   const links = [
@@ -68,6 +74,7 @@ export default function Navbar() {
   const handleNavigation = (to) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     navigate(to);
+    closeMenu();
   };
 
   //if no user the navbar will not appear
@@ -92,11 +99,11 @@ export default function Navbar() {
         }
       `}</style>
       
-      <nav className="bg-green-800 text-white shadow-lg backdrop-blur-sm sticky top-0 z-50">
+      <nav className="bg-green-800 text-white shadow-lg backdrop-blur-sm sticky top-0 z-30">
         <div className="px-4 py-3">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             {/* our logo */}
-            <button onClick={handleLogoClick} className="flex items-center hover:opacity-80 transition-opacity cursor-pointer">
+            <button onClick={handleLogoClick} className="flex items-center hover:opacity-80 transition-opacity cursor-pointer" title="About AniSave">
               <img 
                 src="/images/anisave_logo.png"
                 alt="Logo"
@@ -189,15 +196,16 @@ export default function Navbar() {
 
         {/* mobile menu animation */}
         <div 
-          className={`md:hidden absolute top-full left-0 w-full bg-green-800 shadow-2xl z-40 overflow-hidden transition-all duration-500 ease-in-out ${
+          className={`md:hidden absolute top-full left-0 w-full bg-green-800 shadow-2xl z-20 overflow-visible transition-all duration-500 ease-in-out ${
             menuOpen 
-              ? 'max-h-[500px] opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-4'
+              ? 'max-h-screen opacity-100 transform translate-y-0' 
+              : 'max-h-0 opacity-0 transform -translate-y-4 pointer-events-none'
           }`}
         >
           <div className="px-4 py-6 space-y-4">
             {/* mobile search */}
             <div 
-              className={`relative transition-all duration-700 delay-100 ${
+              className={`relative transition-all duration-700 delay-100 z-50 ${
                 menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
               }`}
             >
@@ -219,9 +227,9 @@ export default function Navbar() {
               
               {/* mobile search results */}
               {showSearchResults && searchResults.users?.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[9999] max-h-60 overflow-y-auto animate-fadeIn">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[60] max-h-60 overflow-y-auto animate-fadeIn">
                   <div>
-                    <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0">Users</div>
+                    <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0 z-[60]">Users</div>
                     {searchResults.users.map((user, index) => (
                       <div
                         key={user.id}
@@ -234,7 +242,7 @@ export default function Navbar() {
                       >
                         <div className="flex items-center gap-3">
                           <img 
-                            src={user.avatar_url || '/default-avatar.png'} 
+                            src={user.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${user.username || user.id}`} 
                             alt="" 
                             className="w-6 h-6 rounded-full object-cover flex-shrink-0" 
                           />
@@ -254,13 +262,14 @@ export default function Navbar() {
             {links.map(({ label, to }, index) => (
               <button
                 key={to}
-                onClick={() => {
-                  setMenuOpen(false);
-                  handleNavigation(to);
-                }}
-                className={`block text-white hover:text-gray-300 py-3 font-medium text-lg transition-all duration-500 delay-${(index + 2) * 100} hover:translate-x-1 hover:drop-shadow-lg w-full text-left ${
+                onClick={() => handleNavigation(to)}
+                className={`block text-white hover:text-gray-300 py-3 font-medium text-lg transition-all duration-500 hover:translate-x-1 hover:drop-shadow-lg w-full text-left ${
                   menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
                 }`}
+                style={{
+                  transitionDelay: menuOpen ? `${(index + 2) * 100}ms` : '0ms',
+                  pointerEvents: menuOpen ? 'auto' : 'none'
+                }}
               >
                 {label}
               </button>
@@ -269,12 +278,16 @@ export default function Navbar() {
             {/* logout button */}
             <button
               onClick={() => {
-                setMenuOpen(false);
                 handleLogout();
+                closeMenu();
               }}
-              className={`w-full bg-red-500 hover:bg-red-600 px-4 py-3 rounded-full text-lg text-white font-medium transition-all duration-700 delay-600 hover:scale-105 hover:shadow-xl ${
+              className={`w-full bg-red-500 hover:bg-red-600 px-4 py-3 rounded-full text-lg text-white font-medium transition-all duration-700 hover:scale-105 hover:shadow-xl ${
                 menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
               }`}
+              style={{
+                transitionDelay: menuOpen ? '600ms' : '0ms',
+                pointerEvents: menuOpen ? 'auto' : 'none'
+              }}
             >
               Logout
             </button>
@@ -284,11 +297,14 @@ export default function Navbar() {
         {/* backdrop */}
         {menuOpen && (
           <div 
-            className="md:hidden fixed inset-0 z-30 transition-opacity duration-300"
-            onClick={() => setMenuOpen(false)}
+            className="md:hidden fixed inset-0 z-10 bg-black/20 transition-opacity duration-300"
+            onClick={closeMenu}
           />
         )}
       </nav>
+
+      {/* About Modal */}
+      <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 }

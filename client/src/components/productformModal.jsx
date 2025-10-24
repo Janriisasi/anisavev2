@@ -4,6 +4,7 @@ import { Upload, ChevronDown, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import productPrices from '../data/productPrices.json';
 import { useAuth } from '../contexts/authContext';
+import { motion, AnimatePresence } from 'framer-motion'; // Add this import
 
 export default function ProductFormModal({ onClose, onSuccess, existingProduct, userProfile }) {
   const { user } = useAuth();
@@ -255,192 +256,250 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     }
   };
 
-  //if profile is not complete, show warning message
+  // If profile is not complete, show warning message with animation
   if (!isProfileComplete) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl w-full max-w-md p-6">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
-              <AlertTriangle className="w-8 h-8 text-yellow-600" />
+      <AnimatePresence>
+        <motion.div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div 
+            className="bg-white rounded-2xl w-full max-w-md p-6"
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.95, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+                <AlertTriangle className="w-8 h-8 text-yellow-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                Complete Your Profile
+              </h2>
+              <p className="text-gray-600 mb-6">
+                To add products, you need to complete your profile with:
+              </p>
+              <div className="text-left bg-gray-50 rounded-lg p-4 mb-6">
+                <ul className="space-y-2">
+                  {!userProfile?.address && (
+                    <li className="flex items-center text-red-600">
+                      <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                      Address information
+                    </li>
+                  )}
+                  {!userProfile?.contact_number && (
+                    <li className="flex items-center text-red-600">
+                      <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                      Phone number
+                    </li>
+                  )}
+                </ul>
+              </div>
+              <p className="text-sm text-gray-500 mb-6">
+                This information helps buyers contact you and arrange deliveries.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="flex-1 bg-green-700 text-white py-3 rounded-lg hover:bg-green-800 transition-colors font-medium"
+                >
+                  Update Profile
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-6 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Complete Your Profile
-            </h2>
-            <p className="text-gray-600 mb-6">
-              To add products, you need to complete your profile with:
-            </p>
-            <div className="text-left bg-gray-50 rounded-lg p-4 mb-6">
-              <ul className="space-y-2">
-                {!userProfile?.address && (
-                  <li className="flex items-center text-red-600">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
-                    Address information
-                  </li>
-                )}
-                {!userProfile?.contact_number && (
-                  <li className="flex items-center text-red-600">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
-                    Phone number
-                  </li>
-                )}
-              </ul>
-            </div>
-            <p className="text-sm text-gray-500 mb-6">
-              This information helps buyers contact you and arrange deliveries.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 bg-green-700 text-white py-3 rounded-lg hover:bg-green-800 transition-colors font-medium"
-              >
-                Update Profile
-              </button>
-              <button
-                onClick={onClose}
-                className="px-6 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
     );
   }
 
- return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
-      <div className="bg-white rounded-xl sm:rounded-2xl w-full max-w-md sm:max-w-4xl p-3 sm:p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg sm:text-2xl font-bold mb-4 sm:mb-6">
-          {existingProduct ? 'Edit Product' : 'Add New Product'}
-        </h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
-            <div className="space-y-2 sm:space-y-4">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Image</h3>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center h-48 sm:h-80">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                  id="image-upload"
-                />
-                <label 
-                  htmlFor="image-upload"
-                  className="cursor-pointer flex flex-col items-center h-full justify-center"
-                >
-                  {imagePreview ? (
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <>
-                      <Upload className="w-8 sm:w-16 h-8 sm:h-16 text-gray-400 mb-2 sm:mb-4" />
-                      <span className="text-xs sm:text-lg text-gray-500 font-medium">
-                        Click to upload image
-                      </span>
-                      <span className="text-xs text-gray-400 mt-1 sm:mt-2">
-                        Max 5MB
-                      </span>
-                    </>
-                  )}
-                </label>
-              </div>
-              {imageFile && (
-                <p className="text-xs sm:text-sm text-green-600 text-center truncate">
-                  ✓ {imageFile.name}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2 sm:space-y-4">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Details</h3>
-              
-              {/* Custom dropdowns - keep same as before but reduce padding on mobile */}
-              <CustomDropdown
-                label="Category"
-                value={form.category}
-                options={categories}
-                onSelect={(category) => {
-                  setForm({
-                    ...form,
-                    category: category,
-                    name: '',
-                    price: ''
-                  });
-                }}
-                placeholder="Select Category"
-                isOpen={categoryOpen}
-                setIsOpen={setCategoryOpen}
-                dropdownRef={categoryRef}
-              />
-              
-              <CustomDropdown
-                label="Product Name"
-                value={form.name}
-                options={availableProducts}
-                onSelect={handleProductSelect}
-                placeholder="Select Product"
-                isOpen={productOpen}
-                setIsOpen={setProductOpen}
-                dropdownRef={productRef}
-                disabled={!form.category}
-              />
-              
-              <div className="space-y-1 sm:space-y-2">
-                <label className="block text-xs sm:text-sm font-medium text-gray-700">Price per kg</label>
-                <input
-                  type="number"
-                  placeholder="Price per kg"
-                  className="input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
-                  value={form.price}
-                  onChange={(e) => setForm({...form, price: e.target.value})}
-                  required
-                />
-                {form.name && (
-                  <p className="text-xs text-gray-500">
-                    Suggested: ₱{productPrices[form.category]?.[form.name]}/kg
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          className="bg-white rounded-xl sm:rounded-2xl w-full max-w-md sm:max-w-4xl p-3 sm:p-6 max-h-[90vh] overflow-y-auto"
+          initial={{ scale: 0.95, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.95, y: 20 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <motion.h2 
+            className="text-lg sm:text-2xl font-bold mb-4 sm:mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            {existingProduct ? 'Edit Product' : 'Add New Product'}
+          </motion.h2>
+          
+          <motion.form 
+            onSubmit={handleSubmit} 
+            className="space-y-3 sm:space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
+              <motion.div 
+                className="space-y-2 sm:space-y-4"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Image</h3>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center h-48 sm:h-80">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label 
+                    htmlFor="image-upload"
+                    className="cursor-pointer flex flex-col items-center h-full justify-center"
+                  >
+                    {imagePreview ? (
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <>
+                        <Upload className="w-8 sm:w-16 h-8 sm:h-16 text-gray-400 mb-2 sm:mb-4" />
+                        <span className="text-xs sm:text-lg text-gray-500 font-medium">
+                          Click to upload image
+                        </span>
+                        <span className="text-xs text-gray-400 mt-1 sm:mt-2">
+                          Max 5MB
+                        </span>
+                      </>
+                    )}
+                  </label>
+                </div>
+                {imageFile && (
+                  <p className="text-xs sm:text-sm text-green-600 text-center truncate">
+                    ✓ {imageFile.name}
                   </p>
                 )}
-              </div>
-              
-              <div className="space-y-1 sm:space-y-2">
-                <label className="block text-xs sm:text-sm font-medium text-gray-700">Quantity (kg)</label>
-                <input
-                  type="number"
-                  placeholder="Quantity in kg"
-                  className="input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
-                  value={form.quantity_kg}
-                  onChange={(e) => setForm({...form, quantity_kg: e.target.value})}
-                  required
+              </motion.div>
+
+              <motion.div 
+                className="space-y-2 sm:space-y-4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Details</h3>
+                
+                {/* Custom dropdowns - keep same as before but reduce padding on mobile */}
+                <CustomDropdown
+                  label="Category"
+                  value={form.category}
+                  options={categories}
+                  onSelect={(category) => {
+                    setForm({
+                      ...form,
+                      category: category,
+                      name: '',
+                      price: ''
+                    });
+                  }}
+                  placeholder="Select Category"
+                  isOpen={categoryOpen}
+                  setIsOpen={setCategoryOpen}
+                  dropdownRef={categoryRef}
                 />
-              </div>
+                
+                <CustomDropdown
+                  label="Product Name"
+                  value={form.name}
+                  options={availableProducts}
+                  onSelect={handleProductSelect}
+                  placeholder="Select Product"
+                  isOpen={productOpen}
+                  setIsOpen={setProductOpen}
+                  dropdownRef={productRef}
+                  disabled={!form.category}
+                />
+                
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Price per kg</label>
+                  <input
+                    type="number"
+                    placeholder="Price per kg"
+                    className="input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
+                    value={form.price}
+                    onChange={(e) => setForm({...form, price: e.target.value})}
+                    required
+                  />
+                  {form.name && (
+                    <p className="text-xs text-gray-500">
+                      Suggested: ₱{productPrices[form.category]?.[form.name]}/kg
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Quantity (kg)</label>
+                  <input
+                    type="number"
+                    placeholder="Quantity in kg"
+                    className="input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
+                    value={form.quantity_kg}
+                    onChange={(e) => setForm({...form, quantity_kg: e.target.value})}
+                    required
+                  />
+                </div>
+              </motion.div>
             </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-green-700 text-white py-2 sm:py-3 rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base"
+            
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
             >
-              {loading ? 'Processing...' : existingProduct ? 'Update' : 'Add P'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              <motion.button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-green-700 text-white py-2 sm:py-3 rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {loading ? 'Processing...' : existingProduct ? 'Update' : 'Add Product'}
+              </motion.button>
+              <motion.button
+                type="button"
+                onClick={onClose}
+                className="flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Cancel
+              </motion.button>
+            </motion.div>
+          </motion.form>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
