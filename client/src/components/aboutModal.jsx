@@ -67,16 +67,6 @@ export default function AboutModal({ isOpen, onClose }) {
               transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
-              <motion.button
-                onClick={onClose}
-                className="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-700 p-2 rounded-lg transition-colors duration-200 z-10"
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <X size={20} className="sm:w-6 sm:h-6" />
-              </motion.button>
 
               {/* Header with centered logo and title */}
               <motion.div
