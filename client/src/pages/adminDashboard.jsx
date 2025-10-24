@@ -44,7 +44,7 @@ export default function AdminDashboard() {
   //adminpass
   const ADMIN_CODE = 'admin';
   //admins
-  const ADMIN_EMAILS = ['adminjanri0255@gmail.com', "kath@gmail.com", "ashleyadmin@gmail.com"];
+  const ADMIN_EMAILS = ['adminjanri0255@gmail.com', "caromayashleymarie@gmail.com", "castillanocharles405@gmail.com", "bellezakathereen96@gmail.com", "lawrencefrankmantiquilla15@gmail.com", "catajoannahmarie@gmail.com", "paolojohnlatorilla711@gmail.com"];
 
   useEffect(() => {
     checkAdminAuth();
