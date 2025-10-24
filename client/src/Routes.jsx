@@ -12,6 +12,7 @@ import Contacts from './pages/contactPage';
 import Farmer from './pages/farmersProfile';
 import AdminDashboard from './pages/adminDashboard';
 import PrivacyPolicy from './pages/privacyPolicy';
+import TermsOfService from './pages/terms';
 
 export default function Routes() {
   const { user } = useAuth();
@@ -37,6 +38,7 @@ export default function Routes() {
       } />
 
       <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
 
       {/* protected routes */}
       <Route path="/admin" element={
