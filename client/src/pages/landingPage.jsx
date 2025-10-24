@@ -477,7 +477,7 @@ export default function LandingPage() {
                     </Link>
                   </li>
                   <li>
-                    <a href="#terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">
+                    <a href="/terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">
                       Terms of service
                     </a>
                   </li>
