@@ -129,7 +129,7 @@ export default function SellerDetailsPopup({ seller, product, onClose }) {
               transition={{ delay: 0.4 }}
             >
               <img
-                src={seller.profiles.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${seller.profiles.username || seller.profiles.farmer.id}`}
+                src={seller.profiles.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller.profiles.username || seller.profiles.farmer.id}`}
                 alt="Seller"
                 className="w-16 h-16 rounded-full object-cover border-2 border-green-200"
               />
