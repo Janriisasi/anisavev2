@@ -377,7 +377,6 @@ return (
               className="flex items-center text-green-800 font-medium mb-4"
             >
               <ArrowLeft className="w-5 h-5" />
-              Back
             </button>
             <h1 className="text-center text-2xl font-bold text-gray-800">
               {name === 'HerbsAndSpices' ? 'Herbs & Spices' : name} Products
