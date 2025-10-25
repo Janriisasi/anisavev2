@@ -1,10 +1,13 @@
-import { useEffect, useState, useNavigate } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import ProductFormModal from '../components/productformModal';
+import DeleteConfirmationModal from '../components/deleteConfirmation';
 import toast from 'react-hot-toast';
 import { Camera, Star, Package, Edit3, Trash2, Plus, MapPin, Phone, LogOut, Edit } from 'lucide-react';
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [products, setProducts] = useState([]);
@@ -14,6 +17,8 @@ export default function Profile() {
   const [avgRating, setAvgRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     address: '',
@@ -171,18 +176,26 @@ export default function Profile() {
   };
 
   const deleteProduct = async (productId) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      setIsDeleting(true);
+      
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
 
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', productId);
-
-    if (error) {
-      toast.error('Error deleting product');
-    } else {
-      toast.success('Product deleted');
-      fetchUserProducts(user.id);
+      if (error) {
+        toast.error('Error deleting product');
+      } else {
+        toast.success('Product deleted');
+        setDeleteConfirm(null);
+        fetchUserProducts(user.id);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to delete product');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -236,7 +249,7 @@ export default function Profile() {
 
       if (error) throw error;
 
-      //ppdate local state with new avatar
+      //update local state with new avatar
       setProfile(prev => ({ 
         ...prev, 
         avatar_url: prev.tempAvatarUrl || prev.avatar_url,
@@ -254,9 +267,9 @@ export default function Profile() {
   };
 
   //generate default avatar URL
-const getDefaultAvatar = (userId) => {
-  return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${userId}`;
-};
+  const getDefaultAvatar = (userId) => {
+    return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${userId}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
@@ -542,7 +555,7 @@ const getDefaultAvatar = (userId) => {
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => deleteProduct(product.id)}
+                        onClick={() => setDeleteConfirm(product)}
                         className="bg-white/90 backdrop-blur-sm text-red-500 hover:text-red-600 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200"
                         title="Delete Product"
                       >
@@ -593,6 +606,14 @@ const getDefaultAvatar = (userId) => {
           userProfile={profile}
         />
       )}
+
+      <DeleteConfirmationModal
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => deleteProduct(deleteConfirm.id)}
+        productName={deleteConfirm?.name}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
