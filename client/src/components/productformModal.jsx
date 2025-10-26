@@ -4,7 +4,7 @@ import { Upload, ChevronDown, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import productPrices from '../data/productPrices.json';
 import { useAuth } from '../contexts/authContext';
-import { motion, AnimatePresence } from 'framer-motion'; // Add this import
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProductFormModal({ onClose, onSuccess, existingProduct, userProfile }) {
   const { user } = useAuth();
@@ -19,23 +19,20 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(existingProduct?.image_url || null);
+  const [errors, setErrors] = useState({});
   
-  //dropdown
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [productOpen, setProductOpen] = useState(false);
   const categoryRef = useRef(null);
   const productRef = useRef(null);
 
-  //check if user profile is complete
   const isProfileComplete = userProfile?.address && userProfile?.contact_number;
 
-  //get available products based on selected category
   const availableProducts = useMemo(() => {
     if (!form.category) return [];
     return Object.keys(productPrices[form.category] || {});
   }, [form.category]);
 
-  //set suggested price when product is selected
   const handleProductSelect = (productName) => {
     const suggestedPrice = productPrices[form.category][productName];
     setForm(prev => ({
@@ -43,11 +40,11 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
       name: productName,
       price: suggestedPrice
     }));
+    setErrors(prev => ({ ...prev, name: '' }));
   };
 
   const categories = Object.keys(productPrices);
 
-  //close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (categoryRef.current && !categoryRef.current.contains(event.target)) {
@@ -62,7 +59,33 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  //dropdown component
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!imagePreview && !imageFile) {
+      newErrors.image = 'Product image is required';
+    }
+
+    if (!form.category || form.category.trim() === '') {
+      newErrors.category = 'Category is required';
+    }
+
+    if (!form.name || form.name.trim() === '') {
+      newErrors.name = 'Product name is required';
+    }
+
+    if (!form.price || form.price === '' || parseFloat(form.price) <= 0) {
+      newErrors.price = 'Valid price is required';
+    }
+
+    if (!form.quantity_kg || form.quantity_kg === '' || parseFloat(form.quantity_kg) <= 0) {
+      newErrors.quantity_kg = 'Valid quantity is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const CustomDropdown = ({ 
     label, 
     value, 
@@ -72,7 +95,8 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     isOpen, 
     setIsOpen, 
     dropdownRef, 
-    disabled = false 
+    disabled = false,
+    error = null
   }) => {
     return (
       <div className="space-y-2" ref={dropdownRef}>
@@ -87,7 +111,9 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
                 : 'hover:border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-200 cursor-pointer'
             } ${
-              isOpen 
+              error
+                ? 'border-red-500 ring-2 ring-red-200'
+                : isOpen 
                 ? 'border-green-500 ring-2 ring-green-200 shadow-lg' 
                 : 'border-gray-300'
             }`}
@@ -134,6 +160,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
             </div>
           </div>
         </div>
+        {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
     );
   };
@@ -141,21 +168,20 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { //limit for image upload
-        toast.error('Image must be less than 2MB');
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
         return;
       }
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
+      setErrors(prev => ({ ...prev, image: '' }));
     }
   };
 
-  //upload image to Supabase storage
   const uploadImage = async (file) => {
     if (!file) return null;
 
     try {
-      //create unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `products/${user.id}/${fileName}`;
@@ -172,7 +198,6 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
         throw uploadError;
       }
 
-      //get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('product-images')
         .getPublicUrl(filePath);
@@ -187,9 +212,13 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    //check if profile is complete
     if (!isProfileComplete) {
       toast.error('Please complete your profile with address and phone number before adding products.');
+      return;
+    }
+
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields correctly');
       return;
     }
 
@@ -205,7 +234,6 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
         }
       }
 
-      //updates the existing product of the farmer
       if (existingProduct) {
         const { error } = await supabase
           .from('products')
@@ -223,7 +251,6 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
         if (error) throw error;
         toast.success('Product updated successfully!');
       } else {
-        //creates a new product for the farmer
         const { error } = await supabase
           .from('products')
           .insert([
@@ -256,7 +283,6 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     }
   };
 
-  // If profile is not complete, show warning message with animation
   if (!isProfileComplete) {
     return (
       <AnimatePresence>
@@ -363,8 +389,12 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Image</h3>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center h-48 sm:h-80">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-700">
+                  Product Image <span className="text-red-500">*</span>
+                </h3>
+                <div className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center h-48 sm:h-80 ${
+                  errors.image ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}>
                   <input
                     type="file"
                     accept="image/*"
@@ -395,6 +425,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                     )}
                   </label>
                 </div>
+                {errors.image && <p className="text-sm text-red-500">{errors.image}</p>}
                 {imageFile && (
                   <p className="text-xs sm:text-sm text-green-600 text-center truncate">
                     ✓ {imageFile.name}
@@ -410,7 +441,6 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
               >
                 <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Details</h3>
                 
-                {/* Custom dropdowns - keep same as before but reduce padding on mobile */}
                 <CustomDropdown
                   label="Category"
                   value={form.category}
@@ -422,11 +452,13 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                       name: '',
                       price: ''
                     });
+                    setErrors(prev => ({ ...prev, category: '' }));
                   }}
                   placeholder="Select Category"
                   isOpen={categoryOpen}
                   setIsOpen={setCategoryOpen}
                   dropdownRef={categoryRef}
+                  error={errors.category}
                 />
                 
                 <CustomDropdown
@@ -439,19 +471,29 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                   setIsOpen={setProductOpen}
                   dropdownRef={productRef}
                   disabled={!form.category}
+                  error={errors.name}
                 />
                 
                 <div className="space-y-1 sm:space-y-2">
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Price per kg</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Price per kg <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="number"
                     placeholder="Price per kg"
-                    className="input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
+                    className={`input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
+                      errors.price
+                        ? 'border-red-500 focus:ring-red-200 focus:border-red-500'
+                        : 'border-gray-300 focus:ring-2 focus:ring-green-200 focus:border-green-500'
+                    }`}
                     value={form.price}
-                    onChange={(e) => setForm({...form, price: e.target.value})}
-                    required
+                    onChange={(e) => {
+                      setForm({...form, price: e.target.value});
+                      setErrors(prev => ({ ...prev, price: '' }));
+                    }}
                   />
-                  {form.name && (
+                  {errors.price && <p className="text-sm text-red-500">{errors.price}</p>}
+                  {form.name && !errors.price && (
                     <p className="text-xs text-gray-500">
                       Suggested: ₱{productPrices[form.category]?.[form.name]}/kg
                     </p>
@@ -459,15 +501,24 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 </div>
                 
                 <div className="space-y-1 sm:space-y-2">
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Quantity (kg)</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Quantity (kg) <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="number"
                     placeholder="Quantity in kg"
-                    className="input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
+                    className={`input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
+                      errors.quantity_kg
+                        ? 'border-red-500 focus:ring-red-200 focus:border-red-500'
+                        : 'border-gray-300 focus:ring-2 focus:ring-green-200 focus:border-green-500'
+                    }`}
                     value={form.quantity_kg}
-                    onChange={(e) => setForm({...form, quantity_kg: e.target.value})}
-                    required
+                    onChange={(e) => {
+                      setForm({...form, quantity_kg: e.target.value});
+                      setErrors(prev => ({ ...prev, quantity_kg: '' }));
+                    }}
                   />
+                  {errors.quantity_kg && <p className="text-sm text-red-500">{errors.quantity_kg}</p>}
                 </div>
               </motion.div>
             </div>
