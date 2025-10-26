@@ -613,6 +613,7 @@ export default function Profile() {
         onConfirm={() => deleteProduct(deleteConfirm.id)}
         productName={deleteConfirm?.name}
         isDeleting={isDeleting}
+        type="product"
       />
     </div>
   );

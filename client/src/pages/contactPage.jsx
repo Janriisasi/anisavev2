@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import Loader from '../components/loader';
+import DeleteConfirmationModal from '../components/deleteConfirmation';
 import { useUser } from '../hooks/useUser';
 import { Copy, Star, Trash2, User, Eye, MoreVertical } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -12,6 +13,8 @@ export default function SavedContacts() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -102,12 +105,10 @@ export default function SavedContacts() {
     }
   };
 
-  const removeContact = async (contactId, farmerName) => {
-    if (!confirm(`Are you sure you want to remove ${farmerName} from your contacts?`)) {
-      return;
-    }
-
+  const removeContact = async (contactId) => {
     try {
+      setIsDeleting(true);
+      
       const { error } = await supabase
         .from('saved_contacts')
         .delete()
@@ -116,10 +117,13 @@ export default function SavedContacts() {
       if (error) throw error;
 
       toast.success('Contact removed successfully');
+      setDeleteConfirm(null);
       fetchContacts();
     } catch (error) {
       console.error('Error removing contact:', error);
       toast.error('Failed to remove contact');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -245,7 +249,7 @@ export default function SavedContacts() {
                           
                           <button
                             onClick={() => {
-                              removeContact(contact.id, contact.farmer.full_name || contact.farmer.username);
+                              setDeleteConfirm(contact);
                               setOpenMenuId(null);
                             }}
                             className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm"
@@ -323,7 +327,7 @@ export default function SavedContacts() {
                           </button>
                         )}
                         <button
-                          onClick={() => removeContact(contact.id, contact.farmer.full_name || contact.farmer.username)}
+                          onClick={() => setDeleteConfirm(contact)}
                           className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
                           title="Remove contact"
                         >
@@ -339,6 +343,15 @@ export default function SavedContacts() {
           </>
         )}
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => removeContact(deleteConfirm.id)}
+        productName={deleteConfirm?.farmer?.full_name || deleteConfirm?.farmer?.username}
+        isDeleting={isDeleting}
+        type="contact"
+      />
     </div>
   );
 }
