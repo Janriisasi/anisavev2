@@ -5,7 +5,8 @@ export default function DeleteConfirmationModal({
   onClose, 
   onConfirm, 
   isDeleting = false,
-  productName = 'this product'
+  productName = 'this product',
+  type = 'product'
 }) {
   if (!isOpen) return null;
 
@@ -31,12 +32,15 @@ export default function DeleteConfirmationModal({
 
           {/* Title with fade-in animation */}
           <h3 className="text-xl font-bold text-gray-900 text-center mb-2 animate-in fade-in duration-500" style={{animationDelay: '150ms'}}>
-            Delete Product?
+            {type === 'product' ? 'Delete Product?' : 'Remove Contact?'}
           </h3>
 
           {/* Description with fade-in animation */}
           <p className="text-gray-600 text-center mb-6 text-sm animate-in fade-in duration-500" style={{animationDelay: '200ms'}}>
-            Are you sure you want to delete <span className="font-semibold text-gray-900">"{productName}"</span>? This action cannot be undone and all product information will be permanently removed.
+            {type === 'product' 
+              ? `Are you sure you want to delete "${productName}"? This action cannot be undone and all product information will be permanently removed.`
+              : `Are you sure you want to remove "${productName}" from your contacts? This action cannot be undone.`
+            }
           </p>
 
           {/* Buttons with fade-in animation */}
@@ -56,12 +60,12 @@ export default function DeleteConfirmationModal({
               {isDeleting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Deleting...</span>
+                  <span>{type === 'product' ? 'Deleting...' : 'Removing...'}</span>
                 </>
               ) : (
                 <>
                   <Trash2 className="w-4 h-4" />
-                  <span>Delete</span>
+                  <span>{type === 'product' ? 'Delete' : 'Remove'}</span>
                 </>
               )}
             </button>
