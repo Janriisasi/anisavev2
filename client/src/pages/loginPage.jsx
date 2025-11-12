@@ -101,8 +101,8 @@ function Login() {
       className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage: isMobile 
-          ? `url(/images/bg_mobile.png)` 
-          : `url(/images/bg.png)`
+          ? `url(/images/bg_mobile.webp)` 
+          : `url(/images/bg.webp)`
       }}
     >
       

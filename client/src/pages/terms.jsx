@@ -38,7 +38,7 @@ const SmoothScroll = ({ children }) => {
 const Logo = () => (
   <a href="/" className="flex items-center gap-2 transition-all duration-300 cursor-pointer">
     <button className="flex items-center hover:opacity-80 transition-opacity cursor-pointer">
-      <img src="/images/invertedcolor_logo.svg" alt="Logo" className="h-12 w-auto" />
+      <img src="/images/invertedcolor_logo.webp" alt="Logo" className="h-12 w-auto" />
     </button>
   </a>
 );
@@ -134,7 +134,7 @@ export default function TermsOfService() {
           <section
             className="relative pt-24 sm:pt-32 lg:pt-40 pb-12 sm:pb-16 lg:pb-24 overflow-hidden"
             style={{
-              backgroundImage: "url('/images/bg_feat.png')",
+              backgroundImage: "url('/images/bg_feat.webp')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundColor: "#024310"
@@ -167,7 +167,7 @@ export default function TermsOfService() {
           <section className="py-12 sm:py-16 lg:py-20 bg-white relative">
             <div className="absolute inset-0 w-full h-full opacity-70">
               <img
-                src="/images/bg_privacy.svg"
+                src="/images/bg_privacy.webp"
                 alt="Terms background"
                 className="w-full h-full object-cover"
                 onError={(e) => (e.target.style.display = "none")}
