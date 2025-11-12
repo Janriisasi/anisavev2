@@ -105,7 +105,7 @@ export default function Navbar() {
             {/* our logo */}
             <button onClick={handleLogoClick} className="flex items-center hover:opacity-80 transition-opacity cursor-pointer" title="About AniSave">
               <img 
-                src="/images/anisave_logo.png"
+                src="/images/anisave_logo.webp"
                 alt="Logo"
                 className="h-10 w-auto"
               />
