@@ -1,4 +1,4 @@
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/authContext';
 import Navbar from './components/navbar';
 import Routes from './Routes';
@@ -7,8 +7,10 @@ import { Toaster } from 'react-hot-toast';
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const isPublicPage = ['/landing', '/login', '/signup', '/privacy', '/terms'].includes(location.pathname);
 
-  if (loading) {
+  if (loading && !isPublicPage) {
     return <Loader />;
   }
 
