@@ -2,8 +2,6 @@
 
 ![AniSave Logo](client/public/images/anisave_logo.webp)
 
-# 🌾 AniSave
-
 ### Bridging the gap between farmers and buyers through modern agricultural commerce
 
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -84,8 +82,8 @@ graph TD
     subgraph "🧑‍💼 Admin Dashboard"
         Q[Manage Users & Roles]
         R[Upload Daily Price PDFs]
-        S[System Automatically Converts to JSON]
-        T[Update Market Prices in Platform]
+        S[Convert PDF to JSON Automatically]
+        T[Update Market Prices on Platform]
         U[Post Global Announcements]
         V[Monitor Activities]
         R --> S --> T
@@ -99,11 +97,12 @@ graph TD
     Q --> M
     U --> K
 
-    style A fill:#90EE90,stroke:#2E8B57,stroke-width:2px
-    style J fill:#87CEEB,stroke:#1E90FF,stroke-width:2px
-    style Q fill:#FFD700,stroke:#DAA520,stroke-width:2px
-    style R fill:#FFD700,stroke:#DAA520,stroke-width:2px
-    style U fill:#FFD700,stroke:#DAA520,stroke-width:2px
+    %% COLORS (brighter and readable)
+    style A fill:#2ecc71,stroke:#145a32,stroke-width:2px,color:#ffffff
+    style J fill:#3498db,stroke:#1b4f72,stroke-width:2px,color:#ffffff
+    style Q fill:#f1c40f,stroke:#9a7d0a,stroke-width:2px,color:#000000
+    style R fill:#f1c40f,stroke:#9a7d0a,stroke-width:2px,color:#000000
+    style U fill:#f1c40f,stroke:#9a7d0a,stroke-width:2px,color:#000000
 ```
 
 ---
