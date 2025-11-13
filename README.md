@@ -1,8 +1,10 @@
 <div align="center">
 
-![AniSave Logo](client/public/images/anisave_logo.png)
+![AniSave Logo](client/public/images/anisave_logo.webp)
 
-**Bridging the gap between farmers and buyers through modern agricultural commerce**
+# 🌾 AniSave
+
+### Bridging the gap between farmers and buyers through modern agricultural commerce
 
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
@@ -25,10 +27,84 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 
 ### 🌟 Why AniSave?
 
-- **Direct Trade**: Connect farmers directly with buyers, eliminating unnecessary middlemen
-- **Fair Pricing**: Real-time market data ensures transparent and competitive pricing
-- **Community Building**: Foster relationships between producers and consumers
-- **Sustainability Focus**: Promote environmentally responsible farming practices
+<table>
+<tr>
+<td align="center" width="25%">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Link.png" width="60" />
+<br><b>Direct Trade</b>
+<br>Connect farmers directly with buyers, eliminating unnecessary middlemen
+</td>
+<td align="center" width="25%">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Money%20Bag.png" width="60" />
+<br><b>Fair Pricing</b>
+<br>Real-time market data ensures transparent pricing
+</td>
+<td align="center" width="25%">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Handshake.png" width="60" />
+<br><b>Community</b>
+<br>Foster relationships between producers and consumers
+</td>
+<td align="center" width="25%">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Seedling.png" width="60" />
+<br><b>Sustainability</b>
+<br>Promote eco-friendly farming practices
+</td>
+</tr>
+</table>
+
+---
+
+## 🔄 Platform Workflow
+
+```mermaid
+graph TD
+    %% FARMER FLOW
+    subgraph "👨‍🌾 Farmer Journey"
+        A[Sign Up / Login] --> B[Set Up Profile]
+        B --> C[Add Product Listing]
+        C --> D[Set Product Price & Category]
+        D --> E[Publish Product to Marketplace]
+        E --> F[Receive Buyer Inquiries]
+        F --> G[Negotiate / Confirm Order]
+        G --> H[Mark as Sold or Update Stock]
+        H --> I[View Ratings & Feedback]
+    end
+
+    %% BUYER FLOW
+    subgraph "🛒 Buyer Journey"
+        J[Sign Up / Login] --> K[Browse or Search Products]
+        K --> L[View Farmer Profile & Product Details]
+        L --> M[Check Real-time Prices]
+        M --> N[Contact Farmer Directly]
+        N --> O[Place Order or Save Product]
+        O --> P[Rate Farmer & Product]
+    end
+
+    %% ADMIN FLOW
+    subgraph "🧑‍💼 Admin Dashboard"
+        Q[Manage Users & Roles]
+        R[Upload Daily Price PDFs]
+        S[System Automatically Converts to JSON]
+        T[Update Market Prices in Platform]
+        U[Post Global Announcements]
+        V[Monitor Activities]
+        R --> S --> T
+    end
+
+    %% CONNECTIONS
+    C --> T
+    M --> T
+    F --> P
+    P --> I
+    Q --> M
+    U --> K
+
+    style A fill:#90EE90,stroke:#2E8B57,stroke-width:2px
+    style J fill:#87CEEB,stroke:#1E90FF,stroke-width:2px
+    style Q fill:#FFD700,stroke:#DAA520,stroke-width:2px
+    style R fill:#FFD700,stroke:#DAA520,stroke-width:2px
+    style U fill:#FFD700,stroke:#DAA520,stroke-width:2px
+```
 
 ---
 
@@ -39,37 +115,43 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 <td width="50%">
 
 ### 🔐 **Authentication & Security**
-- Secure user authentication with Supabase
-- Role-based access control (Farmers & Buyers)
-- Protected routes and data privacy
+- 🛡️ Secure authentication with Supabase
+- 👥 Role-based access (Farmers & Buyers)
+- 🔒 Protected routes and data privacy
+- ✅ Email verification system
 
 ### 📊 **Market Intelligence**
-- Real-time price monitoring
-- Market trend analysis
-- Competitive pricing insights
+- 📈 Real-time price monitoring
+- 📉 Market trend analysis
+- 💹 Competitive pricing insights
+- 📱 Price alerts and notifications
 
 ### 🛍️ **Product Management**
-- Intuitive product listing interface
-- Rich media support (images, descriptions)
-- Inventory tracking and management
+- ✏️ Intuitive listing interface
+- 🖼️ Rich media support
+- 📦 Inventory tracking
+- 🏷️ Smart categorization
 
 </td>
 <td width="50%">
 
 ### 👥 **User Experience**
-- Customizable farmer and buyer profiles
-- Advanced search and filtering
-- Mobile-responsive design
+- 🎨 Customizable profiles
+- 🔍 Advanced search & filters
+- 📱 Mobile-responsive design
+- 🌐 Multi-language support
 
 ### ⭐ **Trust & Safety**
-- Verified ratings and reviews system
-- Seller verification process
-- Secure transaction handling
+- ⭐ Verified ratings system
+- ✅ Seller verification
+- 🔐 Secure transactions
+- 🛡️ Fraud protection
 
 ### 🤝 **Networking**
-- Save and contact favorite sellers
-- Direct messaging system
-- Community forums and discussions
+- ❤️ Save favorite sellers
+- 💬 Direct messaging
+- 👥 Community forums
+- 📧 Email notifications
 
 </td>
 </tr>
@@ -81,11 +163,22 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 
 <div align="center">
 
-| Frontend | Backend & Database | Deployment |
-|----------|-------------------|------------|
-| ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat&logo=supabase&logoColor=white) | ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white) |
-| ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white) | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=flat&logo=postgresql&logoColor=white) | |
-| ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white) | ![Auth](https://img.shields.io/badge/Authentication-3ECF8E?style=flat&logo=supabase&logoColor=white) | |
+### Frontend Architecture
+[![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![React Router](https://img.shields.io/badge/React_Router-CA4245?style=flat-square&logo=react-router&logoColor=white)](https://reactrouter.com/)
+
+### Backend & Database
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=flat-square&logo=postgresql&logoColor=white)](https://postgresql.org/)
+[![Authentication](https://img.shields.io/badge/Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/auth)
+[![Storage](https://img.shields.io/badge/Storage-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/storage)
+
+### Deployment & Tools
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
+[![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=flat-square&logo=eslint&logoColor=white)](https://eslint.org/)
+[![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white)](https://git-scm.com/)
 
 </div>
 
@@ -94,36 +187,31 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 ## 📁 Project Structure
 
 ```
-
 ANISAVE2.0/
-├── .vscode/
-├── client/
-├── node_modules/
-├── public/
-│   └── images/
-├── src/
-│   ├── components/
-│   ├── contexts/
-│   ├── data/
-│   ├── hooks/
-│   ├── lib/
-│   ├── pages/
-│   ├── App.css
-│   ├── App.jsx
-│   ├── index.css
-│   ├── main.jsx
-│   └── Routes.jsx
-├── .env
-├── .gitignore
-├── eslint.config.js
-├── index.html
-├── package-lock.json
-├── package.json
-├── postcss.config.js
-├── README.md
-├── tailwind.config.js
-└── vite.config.js
-
+├── 📁 client/
+│   └── 📁 public/
+│       └── 🖼️ images/
+├── 📁 src/
+│   ├── 🧩 components/      # Reusable UI components
+│   ├── 🎯 contexts/        # React Context providers
+│   ├── 📊 data/            # Static data and constants
+│   ├── 🪝 hooks/           # Custom React hooks
+│   ├── 📚 lib/             # Utility functions & configs
+│   ├── 📄 pages/           # Page components
+│   ├── 🎨 App.css          # Global styles
+│   ├── ⚛️ App.jsx          # Main App component
+│   ├── 🎨 index.css        # Base styles
+│   ├── 🚀 main.jsx         # App entry point
+│   └── 🛣️ Routes.jsx       # Route definitions
+├── ⚙️ .env                 # Environment variables
+├── 🚫 .gitignore           # Git ignore rules
+├── 📋 eslint.config.js     # ESLint configuration
+├── 🌐 index.html           # HTML entry point
+├── 📦 package.json         # Dependencies
+├── 🎨 postcss.config.js    # PostCSS configuration
+├── 📖 README.md            # This file
+├── 🎨 tailwind.config.js   # Tailwind configuration
+└── ⚡ vite.config.js       # Vite configuration
 ```
 
 ---
@@ -132,57 +220,70 @@ ANISAVE2.0/
 
 ### Prerequisites
 
-Ensure you have the following installed:
-- **Node.js** (v18 or higher)
-- **npm** or **yarn**
-- **Git**
+<table>
+<tr>
+<td align="center" width="33%">
+<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/nodejs/nodejs-original.svg" width="48" />
+<br><b>Node.js v18+</b>
+</td>
+<td align="center" width="33%">
+<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/npm/npm-original-wordmark.svg" width="48" />
+<br><b>npm or yarn</b>
+</td>
+<td align="center" width="33%">
+<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/git/git-original.svg" width="48" />
+<br><b>Git</b>
+</td>
+</tr>
+</table>
 
-### Installation
+### 🎬 Quick Start
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/anisave/anisave.git
-   cd anisave
-   ```
+```bash
+# 1️⃣ Clone the repository
+git clone https://github.com/anisave/anisave.git
+cd anisave
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+# 2️⃣ Install dependencies
+npm install
 
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   # Edit .env.local with your Supabase credentials
-   ```
+# 3️⃣ Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
 
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
+# 4️⃣ Run the development server
+npm run dev
 
-5. **Open your browser**
-   Navigate to [http://localhost:5173](http://localhost:5173)
+# 5️⃣ Open your browser
+# Navigate to http://localhost:5173
+```
 
-### Environment Variables
+### 🔑 Environment Variables
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
+# Supabase Configuration
+VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Optional: Additional Configuration
+VITE_APP_NAME=AniSave
+VITE_API_ENDPOINT=your_api_endpoint
 ```
+
+> 💡 **Pro Tip**: Get your Supabase credentials from your [Supabase Dashboard](https://app.supabase.com/)
 
 ---
 
 ## 📋 Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint errors |
-| `npm test` | Run test suite |
+| Command | Description | When to Use |
+|---------|-------------|-------------|
+| `npm run dev` | 🚀 Start development server | Daily development |
+| `npm run build` | 🏗️ Build for production | Before deployment |
+| `npm run preview` | 👀 Preview production build | Test production locally |
+| `npm run lint` | 🔍 Run ESLint | Check code quality |
+| `npm run lint:fix` | 🔧 Fix ESLint errors | Auto-fix issues |
+| `npm test` | 🧪 Run test suite | Before committing |
 
 ---
 
@@ -190,54 +291,211 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 We love contributions! Here's how you can help make AniSave better:
 
-1. **Fork the repository**
-2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
-3. **Commit your changes** (`git commit -m 'Add some amazing feature'`)
-4. **Push to the branch** (`git push origin feature/amazing-feature`)
-5. **Open a Pull Request**
+### 📝 Contribution Workflow
 
-Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+```mermaid
+graph LR
+    A[🍴 Fork Repo] --> B[📋 Create Branch]
+    B --> C[💻 Make Changes]
+    C --> D[✅ Test Changes]
+    D --> E[📝 Commit]
+    E --> F[🚀 Push Branch]
+    F --> G[🔄 Create PR]
+    G --> H{👀 Review}
+    H -->|Approved| I[✅ Merge]
+    H -->|Changes Needed| C
+    I --> J[🎉 Celebrate!]
+    
+    style A fill:#e1f5ff
+    style G fill:#fff3e0
+    style I fill:#e8f5e9
+    style J fill:#f3e5f5
+```
+
+### 🔧 Step-by-Step Guide
+
+1. **🍴 Fork the repository**
+2. **📋 Create a feature branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **💻 Commit your changes**
+   ```bash
+   git commit -m '✨ Add some amazing feature'
+   ```
+4. **🚀 Push to the branch**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+5. **🔄 Open a Pull Request**
+
+### 📜 Guidelines
+
+- 📖 Read our [Contributing Guidelines](CONTRIBUTING.md)
+- 🤝 Follow our [Code of Conduct](CODE_OF_CONDUCT.md)
+- ✍️ Use [conventional commits](https://www.conventionalcommits.org/)
+- ✅ Ensure all tests pass before submitting
 
 ---
 
 ## 📖 Documentation
 
-- [📚 Full Documentation](https://docs.anisave.com)
-- [🎯 API Reference](https://docs.anisave.com/api)
-- [🎨 Design System](https://docs.anisave.com/design)
-- [🔧 Deployment Guide](https://docs.anisave.com/deployment)
+<div align="center">
+
+| Resource | Description |
+|----------|-------------|
+| [📚 Full Documentation](https://docs.anisave.com) | Complete platform guide |
+| [🎯 API Reference](https://docs.anisave.com/api) | API endpoints and usage |
+| [🎨 Design System](https://docs.anisave.com/design) | UI components and patterns |
+| [🚀 Deployment Guide](https://docs.anisave.com/deployment) | Hosting and deployment |
+| [🔧 Troubleshooting](https://docs.anisave.com/troubleshooting) | Common issues and fixes |
+
+</div>
 
 ---
 
-## 🐛 Issues & Support
+## 🛟 Issues & Support
 
-- [🐛 Report a Bug](https://github.com/anisave/anisave/issues/new?template=bug_report.md)
-- [💡 Request a Feature](https://github.com/anisave/anisave/issues/new?template=feature_request.md)
-- [💬 Join our Discord](https://discord.gg/anisave)
-- [📧 Email Support](mailto:support@anisave.com)
+<table>
+<tr>
+<td align="center" width="25%">
+<a href="https://github.com/anisave/anisave/issues/new?template=bug_report.md">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Bug.png" width="60" />
+<br><b>Report Bug</b>
+</a>
+</td>
+<td align="center" width="25%">
+<a href="https://github.com/anisave/anisave/issues/new?template=feature_request.md">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" width="60" />
+<br><b>Request Feature</b>
+</a>
+</td>
+<td align="center" width="25%">
+<a href="https://discord.gg/anisave">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Waving%20Hand.png" width="60" />
+<br><b>Join Discord</b>
+</a>
+</td>
+<td align="center" width="25%">
+<a href="mailto:support@anisave.com">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Envelope.png" width="60" />
+<br><b>Email Support</b>
+</a>
+</td>
+</tr>
+</table>
+
+---
+
+## 🎯 Roadmap
+
+<details>
+<summary><b>🚀 Version 2.1 (Q1 2025)</b></summary>
+
+- [ ] 📱 Mobile app (iOS & Android)
+- [ ] 💬 Real-time chat system
+- [ ] 📊 Advanced analytics dashboard
+- [ ] 🌍 Multi-language support
+- [ ] 🔔 Push notifications
+
+</details>
+
+<details>
+<summary><b>✨ Version 2.2 (Q2 2025)</b></summary>
+
+- [ ] 🤖 AI-powered price recommendations
+- [ ] 📸 Image recognition for produce quality
+- [ ] 🚚 Integrated logistics tracking
+- [ ] 💳 Multiple payment gateways
+- [ ] 🎁 Loyalty rewards program
+
+</details>
+
+<details>
+<summary><b>🌟 Version 3.0 (Q3 2025)</b></summary>
+
+- [ ] 🌐 Blockchain integration for transparency
+- [ ] 🎮 Gamification features
+- [ ] 📈 Predictive market analytics
+- [ ] 🤝 B2B marketplace
+- [ ] 🌱 Carbon footprint tracking
+
+</details>
+
+---
+
+## 📊 Project Stats
+
+<div align="center">
+
+![GitHub stars](https://img.shields.io/github/stars/anisave/anisave?style=social)
+![GitHub forks](https://img.shields.io/github/forks/anisave/anisave?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/anisave/anisave?style=social)
+![GitHub contributors](https://img.shields.io/github/contributors/anisave/anisave)
+![GitHub last commit](https://img.shields.io/github/last-commit/anisave/anisave)
+![GitHub repo size](https://img.shields.io/github/repo-size/anisave/anisave)
+
+</div>
 
 ---
 
 ## 📜 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+```
+MIT License - feel free to use this project for personal or commercial purposes
+```
 
 ---
 
 ## 🙏 Acknowledgments
 
-- Thanks to all [contributors](https://github.com/anisave/anisave/contributors) who have helped shape AniSave
-- Built with amazing open-source technologies
-- Inspired by the need to support local farmers and sustainable agriculture
+<table>
+<tr>
+<td align="center">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Clapping%20Hands.png" width="40" />
+<br><b>Contributors</b>
+<br>Thanks to all who helped!
+</td>
+<td align="center">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" width="40" />
+<br><b>Open Source</b>
+<br>Built with amazing tools
+</td>
+<td align="center">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Food/Ear%20of%20Corn.png" width="40" />
+<br><b>Farmers</b>
+<br>Our inspiration
+</td>
+<td align="center">
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Globe%20Showing%20Asia-Australia.png" width="40" />
+<br><b>Community</b>
+<br>Supporting sustainability
+</td>
+</tr>
+</table>
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by the AniSave Team**
+## 💚 Made with Love
 
-[⭐ Star us on GitHub](https://github.com/anisave/anisave) • [🐦 Follow on Twitter](https://twitter.com/anisave) • [💼 Connect on LinkedIn](https://linkedin.com/company/anisave)
+**Empowering farmers, connecting communities, building sustainable food systems.**
 
-*Empowering farmers, connecting communities, building sustainable food systems.*
+[![Star on GitHub](https://img.shields.io/github/stars/anisave/anisave?style=social)](https://github.com/anisave/anisave)
+[![Follow on Twitter](https://img.shields.io/twitter/follow/anisave?style=social)](https://twitter.com/anisave)
+[![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=social&logo=linkedin)](https://linkedin.com/company/anisave)
+
+---
+
+### 🌟 Star us on GitHub — it motivates us a lot!
+
+[⬆ Back to Top](#-anisave)
+
+---
+
+*Built with ❤️ by the AniSave Team | © 2025 AniSave. All rights reserved.*
 
 </div>
