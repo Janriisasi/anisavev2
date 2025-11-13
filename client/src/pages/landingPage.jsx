@@ -3,31 +3,33 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Facebook, Instagram, Linkedin, ChevronUp } from 'lucide-react';
 import TrueFocus from '../components/trueFocus.jsx';
 
-//GSAP smooth scroll
+// Optimized smooth scroll with RAF throttling
 const SmoothScroll = ({ children }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
     let scrollY = 0;
     let currentY = 0;
+    let rafId = null;
     const speed = 0.08;
 
     const smoothScroll = () => {
       scrollY = window.pageYOffset;
       currentY += (scrollY - currentY) * speed;
       
-      if (scrollRef.current) {
-        scrollRef.current.style.transform = `translateY(-${currentY}px)`;
+      if (scrollRef.current && Math.abs(scrollY - currentY) > 0.1) {
+        scrollRef.current.style.transform = `translate3d(0, -${currentY}px, 0)`;
       }
       
-      requestAnimationFrame(smoothScroll);
+      rafId = requestAnimationFrame(smoothScroll);
     };
 
-    smoothScroll();
+    rafId = requestAnimationFrame(smoothScroll);
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       if (scrollRef.current) {
-        scrollRef.current.style.transform = 'translateY(0)';
+        scrollRef.current.style.transform = 'translate3d(0, 0, 0)';
       }
     };
   }, []);
@@ -39,7 +41,7 @@ const SmoothScroll = ({ children }) => {
   );
 };
 
-//button components
+// Button component
 const Button = ({ className, variant = "default", size = "md", children, onClick, ...props }) => {
   const base = "inline-flex items-center justify-center font-semibold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
   
@@ -66,9 +68,10 @@ const Button = ({ className, variant = "default", size = "md", children, onClick
   );
 };
 
-//card components
-const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
+// Optimized feature card with lazy loading
+const FeatureCard = ({ image, title, description, isHighlighted = false, width, height }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   
   return (
     <div 
@@ -82,10 +85,16 @@ const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
         <div className={`w-full h-[180px] sm:h-[220px] lg:h-[280px] bg-gray-200 flex items-center justify-center transition-transform duration-500 ${
           isHovered ? 'scale-110' : 'scale-100'
         }`}>
+          {!imgLoaded && <div className="text-gray-400">Loading...</div>}
           <img
             src={image}
             alt={title}
-            className="w-full h-full object-cover"
+            width={width}
+            height={height}
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImgLoaded(true)}
             onError={(e) => {
               e.target.style.display = 'none';
               e.target.parentElement.innerHTML = `<div class="text-gray-500 text-center font-medium">${title}<br/>Image</div>`;
@@ -110,7 +119,7 @@ const FeatureCard = ({ image, title, description, isHighlighted = false }) => {
   );
 };
 
-//logo
+// Logo with explicit dimensions
 const Logo = ({ isScrolled = false }) => {
   return (
     <a href="" className="flex items-center gap-2 sm:gap-3 transition-all duration-300 cursor-pointer">
@@ -118,6 +127,8 @@ const Logo = ({ isScrolled = false }) => {
         <img 
           src="/images/anisave_logo.webp"
           alt="Logo"
+          width="162"
+          height="56"
           className="h-8 sm:h-10 lg:h-12 w-auto"
         />
       </button>
@@ -125,11 +136,11 @@ const Logo = ({ isScrolled = false }) => {
   );
 };
 
-//scroll function
+// Optimized scroll function using passive listeners
 const scrollToId = (id) => {
   const el = document.getElementById(id);
   if (!el) return;
-  const offsetTop = el.offsetTop;
+  const offsetTop = el.getBoundingClientRect().top + window.pageYOffset;
   window.scrollTo({ top: offsetTop, behavior: "smooth" });
 };
 
@@ -137,7 +148,7 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-//main landing page
+// Main landing page
 export default function LandingPage() {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -146,27 +157,51 @@ export default function LandingPage() {
   const contentRef = useRef(null);
 
   useEffect(() => {
-    // Set body height for scrolling
-    if (contentRef.current) {
-      document.body.style.height = `${contentRef.current.offsetHeight}px`;
-    }
+    // Set body height for scrolling - batch DOM reads
+    const updateHeight = () => {
+      if (contentRef.current) {
+        const height = contentRef.current.offsetHeight;
+        document.body.style.height = `${height}px`;
+      }
+    };
+    
+    updateHeight();
+    // Debounce resize
+    let resizeTimer;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(updateHeight, 150);
+    };
+    
+    window.addEventListener('resize', handleResize, { passive: true });
 
     return () => {
       document.body.style.height = '';
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
-  //handle scroll effects
+  // Handle scroll effects with throttling
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-      setShowScrollTop(window.scrollY > 300);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollY = window.pageYOffset;
+          setIsScrolled(scrollY > 50);
+          setShowScrollTop(scrollY > 300);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
+    
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  //detect active section
+  // Detect active section
   useEffect(() => {
     const sections = document.querySelectorAll("section[id]");
     const observer = new IntersectionObserver(
@@ -175,7 +210,7 @@ export default function LandingPage() {
           if (entry.isIntersecting) setActiveSection(entry.target.id);
         });
       },
-      { threshold: 0.3 }
+      { threshold: 0.3, rootMargin: '-50px' }
     );
     sections.forEach((s) => observer.observe(s));
     return () => sections.forEach((s) => observer.unobserve(s));
@@ -250,10 +285,8 @@ export default function LandingPage() {
             backgroundColor: '#024310'
           }}
         >
-          {/* overlay */}
           <div className="absolute inset-0 bg-black/40" />
           
-          {/* content */}
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 w-full">
             <div className="max-w-4xl mx-auto text-center">
               <TrueFocus 
@@ -279,6 +312,8 @@ export default function LandingPage() {
                 <img 
                   src="/images/ani_logo.webp" 
                   alt="Wheat" 
+                  width="24"
+                  height="24"
                   className="w-4 h-4 sm:w-6 sm:h-6 object-contain"
                 />
               </Button>
@@ -338,13 +373,17 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* feature image (right) */}
+              {/* feature image */}
               <div className="flex justify-center lg:justify-end">
                 <div className="relative max-w-lg lg:max-w-2xl w-full">
                   <div className="relative rounded-2xl overflow-hidden shadow-2xl cursor-pointer transform hover:scale-105 transition-all duration-500">
                     <img
                       src="/images/45202324647AM.webp"
                       alt="Farmer"
+                      width="1013"
+                      height="800"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-[300px] sm:h-[400px] lg:h-[600px] object-cover"
                       onError={(e) => {
                         e.target.parentElement.innerHTML = '<div class="w-full h-[300px] sm:h-[400px] lg:h-[600px] bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
@@ -367,6 +406,10 @@ export default function LandingPage() {
                   <img
                     src="/images/pexels-sorapong-chaipanya-4530766-1.webp"
                     alt="Farmer carrying seedlings"
+                    width="1203"
+                    height="1202"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full aspect-square object-cover rounded-lg shadow-xl transform hover:scale-105 transition-all duration-500"
                     onError={(e) => {
                       e.target.parentElement.innerHTML = '<div class="w-full aspect-square bg-green-200 flex items-center justify-center text-green-800 text-xl font-semibold rounded-lg shadow-xl">About Image</div>';
@@ -428,18 +471,24 @@ export default function LandingPage() {
                 image="/images/52022106060_bb8f26ba3f_4k.webp"
                 title="Strategic crop planning"
                 description="Access to future price trends to improving profitability and reducing risk."
+                width="1440"
+                height="711"
               />
               
               <FeatureCard
                 image="/images/two-happy-farmers-holding-hands-field_993599-21007.webp"
                 title="Seamless Market Access"
                 description="Real time price feeds reduce middlemen influence and enhance market efficiency."
+                width="626"
+                height="417"
               />
               
               <FeatureCard
                 image="/images/Department-of-Agriculture-DA.webp"
                 title="DA's price protection program"
                 description="Guarantees stable pricing for cooperatives, working closely with buyers."
+                width="1920"
+                height="948"
                 isHighlighted={true}
               />
             </div>
