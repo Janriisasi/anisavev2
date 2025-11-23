@@ -7,34 +7,45 @@
     
     <title>AniSave</title>
     
+    <!-- DNS Prefetch & Preconnect for faster resource loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload Critical Images for LCP improvement -->
+    <link rel="preload" as="image" href="/images/bg_feat.webp">
+    <link rel="preload" as="image" href="/images/anisave_logo.webp">
+    
     <!-- Favicon -->
     <link rel="icon" type="image/webp" href="/images/ani_logo.webp" />
     <link rel="apple-touch-icon" sizes="180x180" href="/images/ani_logo.webp" />
     <link rel="icon" type="image/webp" sizes="32x32" href="/images/ani_logo.webp" />
     <link rel="icon" type="image/webp" sizes="16x16" href="/images/ani_logo.webp" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Optimized Font Loading -->
     <link 
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" 
-      rel="stylesheet" 
-      media="print" 
-      onload="this.media='all'"
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
     >
-
     <noscript>
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     </noscript>
 
+    <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="AniSave">
     <meta property="og:description" content="A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops.">
     <meta property="og:image" content="/images/anisave_logo.webp">
     <meta property="og:type" content="website">
 
+    <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="AniSave">
     <meta name="twitter:description" content="A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops.">
     
+    <!-- Critical CSS - Inlined for faster FCP -->
     <style>
       * {
         margin: 0;
@@ -42,51 +53,75 @@
         box-sizing: border-box;
       }
       
-      html, body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      html {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+      
+      html, body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         overflow-x: hidden;
+        width: 100%;
       }
       
       body {
         font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        line-height: 1.5;
       }
       
       #root {
         min-height: 100vh;
+        isolation: isolate;
       }
       
       img {
         max-width: 100%;
         height: auto;
+        display: block;
       }
       
+      /* Optimized Loading Spinner */
       .app-loading {
         position: fixed;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%);
         width: 50px;
         height: 50px;
+        margin-left: -25px;
+        margin-top: -25px;
         border: 4px solid #f3f3f3;
         border-top: 4px solid #024310;
         border-radius: 50%;
         animation: spin 1s linear infinite;
+        z-index: 9999;
       }
       
       @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
       
-      #root:not(:empty) + .app-loading {
+      /* Hide loading spinner once React mounts */
+      #root:not(:empty) ~ .app-loading {
         display: none;
+      }
+      
+      /* Prevent layout shifts */
+      button, a {
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      /* Optimize rendering */
+      * {
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
       }
     </style>
   </head>
   <body>
     <div id="root"></div>
+    <div class="app-loading"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
