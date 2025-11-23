@@ -1,24 +1,13 @@
-import React, { useEffect, useState, useRef, lazy, Suspense } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { Facebook, Instagram, Linkedin, ChevronUp } from 'lucide-react';
+import TrueFocus from '../components/trueFocus.jsx';
 
-// Lazy load TrueFocus to reduce initial bundle
-const TrueFocus = lazy(() => import('../components/trueFocus.jsx'));
-
-// Optimized smooth scroll - only activate after initial render
+// Optimized smooth scroll with RAF throttling
 const SmoothScroll = ({ children }) => {
   const scrollRef = useRef(null);
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Delay smooth scroll activation until after LCP
-    const timer = setTimeout(() => setIsReady(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!isReady) return;
-    
     let scrollY = 0;
     let currentY = 0;
     let rafId = null;
@@ -43,11 +32,7 @@ const SmoothScroll = ({ children }) => {
         scrollRef.current.style.transform = 'translate3d(0, 0, 0)';
       }
     };
-  }, [isReady]);
-
-  if (!isReady) {
-    return <div>{children}</div>;
-  }
+  }, []);
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', willChange: 'transform' }} ref={scrollRef}>
@@ -83,34 +68,13 @@ const Button = ({ className, variant = "default", size = "md", children, onClick
   );
 };
 
-// Optimized feature card with lazy loading and reduced initial render cost
+// Optimized feature card with lazy loading
 const FeatureCard = ({ image, title, description, isHighlighted = false, width, height }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef(null);
-  
-  // Only load images when card is near viewport
-  useEffect(() => {
-    if (!cardRef.current) return;
-    
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '50px' }
-    );
-    
-    observer.observe(cardRef.current);
-    return () => observer.disconnect();
-  }, []);
   
   return (
     <div 
-      ref={cardRef}
       className={`bg-white rounded-[20px] shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden group cursor-pointer transform hover:-translate-y-2 ${
         isHighlighted ? 'ring-2 ring-[#00573C] ring-opacity-50' : ''
       }`}
@@ -121,23 +85,21 @@ const FeatureCard = ({ image, title, description, isHighlighted = false, width, 
         <div className={`w-full h-[180px] sm:h-[220px] lg:h-[280px] bg-gray-200 flex items-center justify-center transition-transform duration-500 ${
           isHovered ? 'scale-110' : 'scale-100'
         }`}>
-          {!imgLoaded && isVisible && <div className="text-gray-400">Loading...</div>}
-          {isVisible && (
-            <img
-              src={image}
-              alt={title}
-              width={width}
-              height={height}
-              loading="lazy"
-              decoding="async"
-              className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => setImgLoaded(true)}
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = `<div class="text-gray-500 text-center font-medium">${title}<br/>Image</div>`;
-              }}
-            />
-          )}
+          {!imgLoaded && <div className="text-gray-400">Loading...</div>}
+          <img
+            src={image}
+            alt={title}
+            width={width}
+            height={height}
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImgLoaded(true)}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.parentElement.innerHTML = `<div class="text-gray-500 text-center font-medium">${title}<br/>Image</div>`;
+            }}
+          />
         </div>
         <div className={`absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 ${
           isHovered ? 'opacity-100' : ''
@@ -327,20 +289,14 @@ export default function LandingPage() {
           
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 w-full">
             <div className="max-w-4xl mx-auto text-center">
-              <Suspense fallback={
-                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 lg:mb-8">
-                  Know your prices like never before
-                </h1>
-              }>
-                <TrueFocus 
-                  sentence="Know your prices like never before"
-                  manualMode={false}
-                  blurAmount={5}
-                  borderColor="green"
-                  animationDuration={0.5}
-                  pauseBetweenAnimations={0.5}
-                />
-              </Suspense>
+              <TrueFocus 
+                sentence="Know your prices like never before"
+                manualMode={false}
+                blurAmount={5}
+                borderColor="green"
+                animationDuration={0.5}
+                pauseBetweenAnimations={0.5}
+              />
               <p className="text-white/90 text-sm sm:text-base lg:text-xl leading-relaxed max-w-3xl mx-auto mb-6 sm:mb-8 lg:mb-12">
                 A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops. 
                 With Anisave, every Filipino farmer gains a partner in achieving a more secure and profitable harvest.
