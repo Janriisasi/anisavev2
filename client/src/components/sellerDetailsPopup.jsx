@@ -1,4 +1,4 @@
-import { X, MapPin, Phone, Package, DollarSign } from 'lucide-react';
+import { MapPin, Phone, Package, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'; // Add this import
 import toast from 'react-hot-toast';

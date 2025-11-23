@@ -18,10 +18,10 @@
     <link rel="preload" as="image" href="/images/anisave_logo.webp">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/webp" href="/images/ani_logo.webp" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/images/ani_logo.webp" />
-    <link rel="icon" type="image/webp" sizes="32x32" href="/images/ani_logo.webp" />
-    <link rel="icon" type="image/webp" sizes="16x16" href="/images/ani_logo.webp" />
+    <link rel="icon" type="image/png" href="/images/icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/icon.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/icon.png" />
 
     <!-- Optimized Font Loading -->
     <link 
@@ -96,32 +96,6 @@
       .max-w-7xl { max-width: 80rem; }
       .max-w-4xl { max-width: 56rem; }
       .max-w-3xl { max-width: 48rem; }
-      
-      /* Optimized Loading Spinner */
-      .app-loading {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        width: 50px;
-        height: 50px;
-        margin-left: -25px;
-        margin-top: -25px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #024310;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        z-index: 9999;
-      }
-      
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      
-      /* Hide loading spinner once React mounts */
-      #root:not(:empty) ~ .app-loading {
-        display: none;
-      }
     </style>
   </head>
   <body>

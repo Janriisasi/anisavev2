@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
@@ -101,8 +100,8 @@ function Login() {
       className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage: isMobile 
-          ? `url(/images/bg_mobile.webp)` 
-          : `url(/images/bg.webp)`
+          ? `url(/images/bg_mobile.png)` 
+          : `url(/images/bg_login.png)`
       }}
     >
       

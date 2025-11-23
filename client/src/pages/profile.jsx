@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import ProductFormModal from '../components/productformModal';
+import compressImage from '../utils/imageCompression';
 import DeleteConfirmationModal from '../components/deleteConfirmation';
 import toast from 'react-hot-toast';
 import { Camera, Star, Package, Edit3, Trash2, Plus, MapPin, Phone, LogOut, Edit } from 'lucide-react';
@@ -127,53 +128,68 @@ export default function Profile() {
   };
 
   const handleUpload = async (e) => {
-    try {
-      const file = e.target.files[0];
-      if (!file) return;
+  try {
+    const file = e.target.files[0];
+    if (!file) return;
 
-      //store the current avatar URL before uploading
-      setTempAvatarUrl(profile?.avatar_url);
-      setUploading(true);
+    //store the current avatar URL before uploading
+    setTempAvatarUrl(profile?.avatar_url);
+    setUploading(true);
 
-      //validate the file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
-        return;
-      }
-
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('Image must be less than 2MB');
-        return;
-      }
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `avatar-${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { data, error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      //only update the temporary state, not the database yet
-      setProfile(prev => ({ ...prev, tempAvatarUrl: publicUrl }));
-      setTempFormData(prev => ({ ...prev, avatar_url: publicUrl }));
-
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Failed to update profile picture');
-    } finally {
-      setUploading(false);
+    //validate the file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
     }
-  };
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    //compress the image
+    let fileToUpload = file;
+    try {
+      toast.loading('Uploading image', { id: 'compress' });
+      fileToUpload = await compressImage(file);
+      toast.success(
+        `Image uploaded successfully!`,
+        { id: 'compress' }
+      );
+    } catch (compressionError) {
+      console.error('Failed uploading. Please try again or refresh the page.');
+      toast.dismiss('compress');
+      // Continue with original file if compression fails
+    }
+
+    const fileExt = fileToUpload.name.split('.').pop();
+    const fileName = `avatar-${Date.now()}.${fileExt}`;
+    const filePath = `${user.id}/${fileName}`;
+
+    const { data, error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, fileToUpload, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    // Only update the temporary state, not the database yet
+    setProfile(prev => ({ ...prev, tempAvatarUrl: publicUrl }));
+    setTempFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+
+  } catch (error) {
+    console.error('Error:', error);
+    toast.error('Failed to update profile picture');
+  } finally {
+    setUploading(false);
+  }
+};
 
   const deleteProduct = async (productId) => {
     try {

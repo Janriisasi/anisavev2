@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, Package, UserPlus, Activity, TrendingUp, ShoppingCart, Star, MapPin, AlertTriangle, Calendar, Clock, Eye, LogOut, AlertCircle, RefreshCw, Database, ChartBar } from 'lucide-react';
+import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Users, Package, UserPlus, Activity, TrendingUp, Star, MapPin, AlertTriangle, LogOut, AlertCircle, Database, ChartBar } from 'lucide-react';
 import supabase from '../lib/supabase';
 
 export default function AdminDashboard() {

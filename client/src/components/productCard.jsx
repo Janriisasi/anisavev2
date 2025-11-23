@@ -1,4 +1,3 @@
-import { Star, Bookmark } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import productPrices from '../data/productPrices.json';
 

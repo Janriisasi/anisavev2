@@ -336,8 +336,8 @@ function SignUp() {
       className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage: isMobile 
-          ? `url(/images/bg_mobile.webp)` 
-          : `url(/images/bg.webp)`
+          ? `url(/images/bg_mobile.png)` 
+          : `url(/images/bg_login.png)`
       }}
     >
       <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-10 rounded-2xl shadow-2xl w-full max-w-lg border border-white/20 relative z-10">

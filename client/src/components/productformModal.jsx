@@ -3,6 +3,7 @@ import supabase from '../lib/supabase';
 import { Upload, ChevronDown, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import productPrices from '../data/productPrices.json';
+import compressImage from '../utils/imageCompression';
 import { useAuth } from '../contexts/authContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -165,16 +166,32 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     );
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Image must be less than 5MB');
         return;
       }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      setErrors(prev => ({ ...prev, image: '' }));
+      
+      try {
+        // Show loading toast
+        const loadingToast = toast.loading('Uploading image...');
+        
+        // Compress the image
+        const compressedFile = await compressImage(file);
+        
+        // Update toast
+        toast.dismiss(loadingToast);
+        toast.success(`Image Uploaded!`);
+        
+        setImageFile(compressedFile);
+        setImagePreview(URL.createObjectURL(compressedFile));
+        setErrors(prev => ({ ...prev, image: '' }));
+      } catch (error) {
+        toast.error('Failed to upload. Please try again.');
+        console.error('Compression error:', error);
+      }
     }
   };
 
