@@ -1,39 +1,39 @@
 import React, { useEffect, useState, useRef } from "react";
 import { ChevronUp, ArrowLeft, Facebook, Instagram, Linkedin } from "lucide-react";
 
-const SmoothScroll = ({ children }) => {
-  const scrollRef = useRef(null);
+// const SmoothScroll = ({ children }) => {
+//   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    let scrollY = 0;
-    let currentY = 0;
-    const speed = 0.08;
+//   useEffect(() => {
+//     let scrollY = 0;
+//     let currentY = 0;
+//     const speed = 0.08;
 
-    const smoothScroll = () => {
-      scrollY = window.pageYOffset;
-      currentY += (scrollY - currentY) * speed;
+//     const smoothScroll = () => {
+//       scrollY = window.pageYOffset;
+//       currentY += (scrollY - currentY) * speed;
 
-      if (scrollRef.current) {
-        scrollRef.current.style.transform = `translateY(-${currentY}px)`;
-      }
+//       if (scrollRef.current) {
+//         scrollRef.current.style.transform = `translateY(-${currentY}px)`;
+//       }
 
-      requestAnimationFrame(smoothScroll);
-    };
+//       requestAnimationFrame(smoothScroll);
+//     };
 
-    smoothScroll();
-    return () => {
-      if (scrollRef.current) {
-        scrollRef.current.style.transform = "translateY(0)";
-      }
-    };
-  }, []);
+//     smoothScroll();
+//     return () => {
+//       if (scrollRef.current) {
+//         scrollRef.current.style.transform = "translateY(0)";
+//       }
+//     };
+//   }, []);
 
-  return (
-    <div style={{ position: "fixed", top: 0, left: 0, width: "100%", willChange: "transform" }} ref={scrollRef}>
-      {children}
-    </div>
-  );
-};
+//   return (
+//     <div style={{ position: "fixed", top: 0, left: 0, width: "100%", willChange: "transform" }} ref={scrollRef}>
+//       {children}
+//     </div>
+//   );
+// };
 
 const Logo = () => (
   <a href="/" className="flex items-center gap-2 transition-all duration-300 cursor-pointer">
@@ -121,7 +121,7 @@ export default function TermsOfService() {
 
   return (
     <>
-      <SmoothScroll>
+      {/* <SmoothScroll> */}
         <div ref={contentRef} className="min-h-screen bg-white">
           {/* Header */}
           <header className="fixed inset-x-0 top-0 z-50 bg-white" style={{ position: "absolute" }}>
@@ -216,16 +216,14 @@ export default function TermsOfService() {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">
-                    Legal
-                  </h4>
+                  <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Legal</h4>
                   <ul className="space-y-3 sm:space-y-4">
                     <li>
                       <a
                         href="/privacy"
                         className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg"
                       >
-                        Privacy Policy
+                        More about AniSave
                       </a>
                     </li>
                     <li>
@@ -276,7 +274,7 @@ export default function TermsOfService() {
             </button>
           )}
         </div>
-      </SmoothScroll>
+      {/* </SmoothScroll> */}
     </>
   );
 }

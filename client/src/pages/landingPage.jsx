@@ -4,42 +4,42 @@ import { Facebook, Instagram, Linkedin, ChevronUp } from 'lucide-react';
 import TrueFocus from '../components/trueFocus.jsx';
 
 // Optimized smooth scroll with RAF throttling
-const SmoothScroll = ({ children }) => {
-  const scrollRef = useRef(null);
+// const SmoothScroll = ({ children }) => {
+//   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    let scrollY = 0;
-    let currentY = 0;
-    let rafId = null;
-    const speed = 0.08;
+//   useEffect(() => {
+//     let scrollY = 0;
+//     let currentY = 0;
+//     let rafId = null;
+//     const speed = 0.08;
 
-    const smoothScroll = () => {
-      scrollY = window.pageYOffset;
-      currentY += (scrollY - currentY) * speed;
+//     const smoothScroll = () => {
+//       scrollY = window.pageYOffset;
+//       currentY += (scrollY - currentY) * speed;
       
-      if (scrollRef.current && Math.abs(scrollY - currentY) > 0.1) {
-        scrollRef.current.style.transform = `translate3d(0, -${currentY}px, 0)`;
-      }
+//       if (scrollRef.current && Math.abs(scrollY - currentY) > 0.1) {
+//         scrollRef.current.style.transform = `translate3d(0, -${currentY}px, 0)`;
+//       }
       
-      rafId = requestAnimationFrame(smoothScroll);
-    };
+//       rafId = requestAnimationFrame(smoothScroll);
+//     };
 
-    rafId = requestAnimationFrame(smoothScroll);
+//     rafId = requestAnimationFrame(smoothScroll);
 
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      if (scrollRef.current) {
-        scrollRef.current.style.transform = 'translate3d(0, 0, 0)';
-      }
-    };
-  }, []);
+//     return () => {
+//       if (rafId) cancelAnimationFrame(rafId);
+//       if (scrollRef.current) {
+//         scrollRef.current.style.transform = 'translate3d(0, 0, 0)';
+//       }
+//     };
+//   }, []);
 
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', willChange: 'transform' }} ref={scrollRef}>
-      {children}
-    </div>
-  );
-};
+//   return (
+//     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', willChange: 'transform' }} ref={scrollRef}>
+//       {children}
+//     </div>
+//   );
+// };
 
 // Button component
 const Button = ({ className, variant = "default", size = "md", children, onClick, ...props }) => {
@@ -223,7 +223,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <SmoothScroll>
+    // <SmoothScroll>
       <div ref={contentRef} className="min-h-screen bg-white">
         {/* navbar */}
         <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
@@ -518,16 +518,19 @@ export default function LandingPage() {
                 <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Legal</h4>
                 <ul className="space-y-3 sm:space-y-4">
                   <li>
-                    <Link 
-                      to="/privacy" 
+                    <a
+                      href="/privacy"
                       className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg"
                     >
                       More about AniSave
-                    </Link>
+                    </a>
                   </li>
                   <li>
-                    <a href="/terms" className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg">
-                      Terms of service
+                    <a
+                      href="/terms"
+                      className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg"
+                    >
+                      Terms of Service
                     </a>
                   </li>
                 </ul>
@@ -581,6 +584,6 @@ export default function LandingPage() {
           </button>
         )}
       </div>
-    </SmoothScroll>
+    // </SmoothScroll>
   );
 }
