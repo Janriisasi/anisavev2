@@ -1,47 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState, useRef, lazy, Suspense } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Facebook, Instagram, Linkedin, ChevronUp } from 'lucide-react';
-import TrueFocus from '../components/trueFocus.jsx';
 
-// Optimized smooth scroll with RAF throttling
-// const SmoothScroll = ({ children }) => {
-//   const scrollRef = useRef(null);
+// Lazy load TrueFocus component
+const TrueFocus = lazy(() => import('../components/trueFocus.jsx'));
 
-//   useEffect(() => {
-//     let scrollY = 0;
-//     let currentY = 0;
-//     let rafId = null;
-//     const speed = 0.08;
-
-//     const smoothScroll = () => {
-//       scrollY = window.pageYOffset;
-//       currentY += (scrollY - currentY) * speed;
-      
-//       if (scrollRef.current && Math.abs(scrollY - currentY) > 0.1) {
-//         scrollRef.current.style.transform = `translate3d(0, -${currentY}px, 0)`;
-//       }
-      
-//       rafId = requestAnimationFrame(smoothScroll);
-//     };
-
-//     rafId = requestAnimationFrame(smoothScroll);
-
-//     return () => {
-//       if (rafId) cancelAnimationFrame(rafId);
-//       if (scrollRef.current) {
-//         scrollRef.current.style.transform = 'translate3d(0, 0, 0)';
-//       }
-//     };
-//   }, []);
-
-//   return (
-//     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', willChange: 'transform' }} ref={scrollRef}>
-//       {children}
-//     </div>
-//   );
-// };
-
-// Button component
+// Inline critical CSS for buttons to avoid render blocking
 const Button = ({ className, variant = "default", size = "md", children, onClick, ...props }) => {
   const base = "inline-flex items-center justify-center font-semibold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
   
@@ -68,10 +32,69 @@ const Button = ({ className, variant = "default", size = "md", children, onClick
   );
 };
 
-// Optimized feature card with lazy loading
+// Optimized image component with native lazy loading and blur placeholder
+const OptimizedImage = ({ src, alt, className, width, height, priority = false, onError, fillContainer = false }) => {
+  const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef(null);
+
+  useEffect(() => {
+    if (priority && imgRef.current?.complete) {
+      setLoaded(true);
+    }
+  }, [priority]);
+
+  if (fillContainer) {
+    // For images that need to fill their container completely
+    return (
+      <>
+        {!loaded && (
+          <div className={`absolute inset-0 bg-gray-200 animate-pulse`} />
+        )}
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          fetchpriority={priority ? "high" : "auto"}
+          className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setLoaded(true)}
+          onError={onError}
+        />
+      </>
+    );
+  }
+
+  return (
+    <div className="relative overflow-hidden">
+      {!loaded && (
+        <div 
+          className={`absolute inset-0 bg-gray-200 animate-pulse ${className}`}
+          style={{ aspectRatio: width && height ? `${width}/${height}` : 'auto' }}
+        />
+      )}
+      <img
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+        fetchpriority={priority ? "high" : "auto"}
+        className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setLoaded(true)}
+        onError={onError}
+      />
+    </div>
+  );
+};
+
+// Simplified feature card with better performance
 const FeatureCard = ({ image, title, description, isHighlighted = false, width, height }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
   
   return (
     <div 
@@ -81,34 +104,32 @@ const FeatureCard = ({ image, title, description, isHighlighted = false, width, 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden">
-        <div className={`w-full h-[180px] sm:h-[220px] lg:h-[280px] bg-gray-200 flex items-center justify-center transition-transform duration-500 ${
+      <div className="relative overflow-hidden h-[180px] sm:h-[220px] lg:h-[280px]">
+        <div className={`absolute inset-0 transition-transform duration-500 ${
           isHovered ? 'scale-110' : 'scale-100'
         }`}>
-          {!imgLoaded && <div className="text-gray-400">Loading...</div>}
-          <img
+          <OptimizedImage
             src={image}
             alt={title}
             width={width}
             height={height}
-            loading="lazy"
-            decoding="async"
-            className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-            onLoad={() => setImgLoaded(true)}
+            fillContainer={true}
+            className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
               e.target.style.display = 'none';
-              e.target.parentElement.innerHTML = `<div class="text-gray-500 text-center font-medium">${title}<br/>Image</div>`;
+              const parent = e.target.parentElement;
+              if (parent) {
+                parent.innerHTML = `<div class="absolute inset-0 text-gray-500 text-center font-medium flex items-center justify-center bg-gray-200">${title}<br/>Image</div>`;
+              }
             }}
           />
         </div>
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 ${
+        <div className={`absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 pointer-events-none ${
           isHovered ? 'opacity-100' : ''
         }`} />
       </div>
       <div className="p-4 sm:p-6 lg:p-6">
-        <h3 className={`font-medium text-base sm:text-lg lg:text-[20px] leading-tight mb-2 sm:mb-3 transition-colors duration-300 ${
-          isHighlighted ? 'text-[#00573C]' : 'text-[#00573C]'
-        }`}>
+        <h3 className={`font-medium text-base sm:text-lg lg:text-[20px] leading-tight mb-2 sm:mb-3 transition-colors duration-300 text-[#00573C]`}>
           {title}
         </h3>
         <p className="text-[#726767] text-sm sm:text-base lg:text-[16px] leading-relaxed">
@@ -119,16 +140,16 @@ const FeatureCard = ({ image, title, description, isHighlighted = false, width, 
   );
 };
 
-// Logo with explicit dimensions
-const Logo = ({ isScrolled = false }) => {
+const Logo = () => {
   return (
     <a href="" className="flex items-center gap-2 sm:gap-3 transition-all duration-300 cursor-pointer">
       <button className="flex items-center hover:opacity-80 transition-opacity cursor-pointer">
-        <img 
+        <OptimizedImage 
           src="/images/anisave_logo.webp"
-          alt="Logo"
-          width="162"
-          height="56"
+          alt="Anisave Logo"
+          width={162}
+          height={56}
+          priority={true}
           className="h-8 sm:h-10 lg:h-12 w-auto"
         />
       </button>
@@ -136,7 +157,7 @@ const Logo = ({ isScrolled = false }) => {
   );
 };
 
-// Optimized scroll function using passive listeners
+// Optimized scroll functions
 const scrollToId = (id) => {
   const el = document.getElementById(id);
   if (!el) return;
@@ -148,40 +169,13 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-// Main landing page
 export default function LandingPage() {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const contentRef = useRef(null);
 
-  useEffect(() => {
-    // Set body height for scrolling - batch DOM reads
-    const updateHeight = () => {
-      if (contentRef.current) {
-        const height = contentRef.current.offsetHeight;
-        document.body.style.height = `${height}px`;
-      }
-    };
-    
-    updateHeight();
-    // Debounce resize
-    let resizeTimer;
-    const handleResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(updateHeight, 150);
-    };
-    
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    return () => {
-      document.body.style.height = '';
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  // Handle scroll effects with throttling
+  // Optimized scroll handler with RAF throttling
   useEffect(() => {
     let ticking = false;
     
@@ -201,7 +195,7 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Detect active section
+  // Intersection observer for active sections
   useEffect(() => {
     const sections = document.querySelectorAll("section[id]");
     const observer = new IntersectionObserver(
@@ -223,18 +217,22 @@ export default function LandingPage() {
   ];
 
   return (
-    // <SmoothScroll>
-      <div ref={contentRef} className="min-h-screen bg-white">
-        {/* navbar */}
+    <>
+      {/* Preconnect to critical origins */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+      
+      <div className="min-h-screen bg-white">
+        {/* Navbar */}
         <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
         }`} style={{ position: 'absolute' }}>
           <nav className={`max-w-7xl mx-auto px-4 sm:px-6 h-12 sm:h-14 lg:h-18 flex items-center justify-between ${
             isScrolled ? 'mt-1 sm:mt-2' : 'mt-1 sm:mt-2'
           }`}>
-            <Logo isScrolled={isScrolled} />
+            <Logo />
 
-            {/* links */}
+            {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-12">
               {navLinks.map((link) => (
                 <button
@@ -252,7 +250,7 @@ export default function LandingPage() {
               ))}
             </div>
 
-            {/* buttons */}
+            {/* Auth Buttons */}
             <div className="flex items-center gap-2 sm:gap-3">
               <Button 
                 variant="outline" 
@@ -274,30 +272,56 @@ export default function LandingPage() {
           </nav>
         </header>
 
-        {/* hero */}
+        {/* Hero Section */}
         <section
           id="home"
-          className="relative min-h-screen flex items-center overflow-hidden"
-          style={{
-            backgroundImage: "url('/images/bg_feat.webp')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundColor: '#024310'
-          }}
+          className="relative min-h-screen flex items-center overflow-hidden bg-[#024310]"
         >
-          <div className="absolute inset-0 bg-black/40" />
+          {/* Background image with better loading */}
+          <div className="absolute inset-0 w-full h-full">
+            <picture className="absolute inset-0 w-full h-full">
+              {/* Mobile: 640px wide */}
+              <source 
+                media="(max-width: 640px)" 
+                srcSet="/images/bg_feat.webp"
+              />
+              {/* Tablet: 1024px wide */}
+              <source 
+                media="(max-width: 1024px)" 
+                srcSet="/images/bg_feat.webp"
+              />
+              {/* Desktop: Full size */}
+              <OptimizedImage
+                src="/images/bg_feat.webp"
+                alt="Hero Background"
+                priority={true}
+                fillContainer={true}
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                width={1920}
+                height={1080}
+              />
+            </picture>
+            <div className="absolute inset-0 bg-black/40 z-[1]" />
+          </div>
           
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 w-full">
             <div className="max-w-4xl mx-auto text-center">
-              <TrueFocus 
-                sentence="Know your prices like never before"
-                manualMode={false}
-                blurAmount={5}
-                borderColor="green"
-                animationDuration={0.5}
-                pauseBetweenAnimations={0.5}
-              />
-              <p className="text-white/90 text-sm sm:text-base lg:text-xl leading-relaxed max-w-3xl mx-auto mb-6 sm:mb-8 lg:mb-12">
+              <Suspense fallback={
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 px-4">
+                  Know your prices like never before
+                </h1>
+              }>
+                <TrueFocus 
+                  sentence="Know your prices like never before"
+                  manualMode={false}
+                  blurAmount={5}
+                  borderColor="green"
+                  animationDuration={0.5}
+                  pauseBetweenAnimations={0.5}
+                />
+              </Suspense>
+              
+              <p className="text-white/90 text-sm sm:text-base lg:text-xl leading-relaxed max-w-3xl mx-auto mb-6 sm:mb-8 lg:mb-12 px-4">
                 A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops. 
                 With Anisave, every Filipino farmer gains a partner in achieving a more secure and profitable harvest.
               </p>
@@ -309,11 +333,12 @@ export default function LandingPage() {
                 onClick={() => navigate('/signup')}
               >
                 Get started
-                <img 
+                <OptimizedImage 
                   src="/images/ani_logo.webp" 
-                  alt="Wheat" 
-                  width="24"
-                  height="24"
+                  alt="Wheat icon" 
+                  width={24}
+                  height={24}
+                  fillContainer={false}
                   className="w-4 h-4 sm:w-6 sm:h-6 object-contain"
                 />
               </Button>
@@ -321,17 +346,22 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* features section */}
+        {/* Features Section */}
         <section 
           id="features" 
-          className="relative py-12 sm:py-16 lg:py-24 overflow-hidden"
-          style={{
-            backgroundImage: "url('/images/Notif.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundColor: '#00573C'
-          }}
+          className="relative py-12 sm:py-16 lg:py-24 overflow-hidden bg-[#00573C]"
         >
+          <div className="absolute inset-0 opacity-20 w-full h-full">
+            <OptimizedImage
+              src="/images/Notif.png"
+              alt="Background pattern"
+              fillContainer={true}
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              width={1920}
+              height={1080}
+            />
+          </div>
+          
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
               <div className="text-white">
@@ -373,23 +403,22 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* feature image */}
+              {/* Feature Image */}
               <div className="flex justify-center lg:justify-end">
                 <div className="relative max-w-lg lg:max-w-2xl w-full">
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl cursor-pointer transform hover:scale-105 transition-all duration-500">
-                    <img
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl cursor-pointer transform hover:scale-105 transition-all duration-500 h-[300px] sm:h-[400px] lg:h-[600px]">
+                    <OptimizedImage
                       src="/images/45202324647AM.webp"
-                      alt="Farmer"
-                      width="1013"
-                      height="800"
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-[300px] sm:h-[400px] lg:h-[600px] object-cover"
+                      alt="Farmer with crops"
+                      width={1013}
+                      height={800}
+                      fillContainer={true}
+                      className="absolute inset-0 w-full h-full object-cover object-center"
                       onError={(e) => {
-                        e.target.parentElement.innerHTML = '<div class="w-full h-[300px] sm:h-[400px] lg:h-[600px] bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
+                        e.target.parentElement.innerHTML = '<div class="absolute inset-0 bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -397,29 +426,30 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* about section */}
+        {/* About Section */}
         <section id="about" className="py-12 sm:py-16 lg:py-24 bg-[#F5F5F5]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center mb-12 sm:mb-16 lg:mb-24">
               <div className="flex justify-center lg:justify-start">
                 <div className="relative max-w-lg lg:max-w-xl w-full">
-                  <img
-                    src="/images/pexels-sorapong-chaipanya-4530766-1.webp"
-                    alt="Farmer carrying seedlings"
-                    width="1203"
-                    height="1202"
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full aspect-square object-cover rounded-lg shadow-xl transform hover:scale-105 transition-all duration-500"
-                    onError={(e) => {
-                      e.target.parentElement.innerHTML = '<div class="w-full aspect-square bg-green-200 flex items-center justify-center text-green-800 text-xl font-semibold rounded-lg shadow-xl">About Image</div>';
-                    }}
-                  />
+                  <div className="relative w-full aspect-square rounded-lg shadow-xl overflow-hidden transform hover:scale-105 transition-all duration-500">
+                    <OptimizedImage
+                      src="/images/pexels-sorapong-chaipanya-4530766-1.webp"
+                      alt="Farmer carrying seedlings"
+                      width={1203}
+                      height={1202}
+                      fillContainer={true}
+                      className="absolute inset-0 w-full h-full object-cover object-center"
+                      onError={(e) => {
+                        e.target.parentElement.innerHTML = '<div class="absolute inset-0 bg-green-200 flex items-center justify-center text-green-800 text-xl font-semibold rounded-lg shadow-xl">About Image</div>';
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
               <div>
-                <div className="group mb-8 sm:mb-10 lg:mb-12">
-                  <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-0">
+                <div className="mb-8 sm:mb-10 lg:mb-12">
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4">
                     About Anisave
                   </h2>
                   <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
@@ -430,8 +460,8 @@ export default function LandingPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
-                  <div className="group">
-                    <h3 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-0">
+                  <div>
+                    <h3 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4">
                       Our <br/> vision
                     </h3>
                     <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
@@ -439,8 +469,8 @@ export default function LandingPage() {
                     </p>
                   </div>
                   
-                  <div className="group">
-                    <h3 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4 sm:mb-0">
+                  <div>
+                    <h3 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4">
                       Our <br/> mission
                     </h3>
                     <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
@@ -453,7 +483,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* why use section */}
+        {/* Why Use Section */}
         <section className="py-16 sm:py-20 lg:py-24 bg-[#F5F5F5]">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12 lg:mb-16">
@@ -465,37 +495,36 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               <FeatureCard
                 image="/images/52022106060_bb8f26ba3f_4k.webp"
                 title="Strategic crop planning"
                 description="Access to future price trends to improving profitability and reducing risk."
-                width="1440"
-                height="711"
+                width={1440}
+                height={711}
               />
               
               <FeatureCard
                 image="/images/two-happy-farmers-holding-hands-field_993599-21007.webp"
                 title="Seamless Market Access"
                 description="Real time price feeds reduce middlemen influence and enhance market efficiency."
-                width="626"
-                height="417"
+                width={626}
+                height={417}
               />
               
               <FeatureCard
                 image="/images/Department-of-Agriculture-DA.webp"
                 title="DA's price protection program"
                 description="Guarantees stable pricing for cooperatives, working closely with buyers."
-                width="1920"
-                height="948"
+                width={1920}
+                height={948}
                 isHighlighted={true}
               />
             </div>
           </div>
         </section>
 
-        {/* footer */}
+        {/* Footer */}
         <footer className="bg-[#D5E9D6] border-t border-black/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 mb-6 sm:mb-8">
@@ -573,7 +602,7 @@ export default function LandingPage() {
           </div>
         </footer>
 
-        {/* scroll to top button */}
+        {/* Scroll to Top Button */}
         {showScrollTop && (
           <button
             onClick={scrollToTop}
@@ -584,6 +613,6 @@ export default function LandingPage() {
           </button>
         )}
       </div>
-    // </SmoothScroll>
+    </>
   );
 }
