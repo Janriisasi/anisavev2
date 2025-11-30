@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
-import { Menu, X, Search } from 'lucide-react';
+import { Menu, X, Search, Megaphone } from 'lucide-react';
 import { useAuth } from '../contexts/authContext';
 import AboutModal from './aboutModal';
+import AnnouncementModal from './announcementModal';
 
 export default function Navbar() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -126,8 +128,8 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* search bar - desktop */}
-            <div className="hidden md:flex items-center gap-4">
+            {/* search bar and announcement - desktop */}
+            <div className="hidden md:flex items-center gap-3">
               <div className="relative">
                 <div className="relative">
                   <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 text-white w-8 h-8 p-1 border rounded-full bg-green-800" />
@@ -178,6 +180,16 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+
+              {/* Announcement button - desktop */}
+              <button
+                onClick={() => setShowAnnouncement(true)}
+                className="relative p-2 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-200 hover:scale-110 group"
+                title="View Market Updates"
+              >
+                <Megaphone className="w-5 h-5 text-white" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+              </button>
             </div>
 
             {/* mobile menu button */}
@@ -257,6 +269,25 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+
+            {/* Announcement button - mobile */}
+            <button
+              onClick={() => {
+                setShowAnnouncement(true);
+                closeMenu();
+              }}
+              className={`w-full bg-yellow-500 hover:bg-yellow-600 px-4 py-3 rounded-full text-lg text-white font-medium transition-all duration-700 hover:scale-105 flex items-center justify-center gap-2 ${
+                menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
+              }`}
+              style={{
+                transitionDelay: menuOpen ? '200ms' : '0ms',
+                pointerEvents: menuOpen ? 'auto' : 'none'
+              }}
+            >
+              <Megaphone size={20} />
+              Market Updates 📢
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            </button>
             
             {/* navigation links */}
             {links.map(({ label, to }, index) => (
@@ -267,7 +298,7 @@ export default function Navbar() {
                   menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
                 }`}
                 style={{
-                  transitionDelay: menuOpen ? `${(index + 2) * 100}ms` : '0ms',
+                  transitionDelay: menuOpen ? `${(index + 3) * 100}ms` : '0ms',
                   pointerEvents: menuOpen ? 'auto' : 'none'
                 }}
               >
@@ -285,7 +316,7 @@ export default function Navbar() {
                 menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
               }`}
               style={{
-                transitionDelay: menuOpen ? '600ms' : '0ms',
+                transitionDelay: menuOpen ? '700ms' : '0ms',
                 pointerEvents: menuOpen ? 'auto' : 'none'
               }}
             >
@@ -305,6 +336,9 @@ export default function Navbar() {
 
       {/* About Modal */}
       <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
+
+      {/* Announcement Modal */}
+      <AnnouncementModal isOpen={showAnnouncement} onClose={() => setShowAnnouncement(false)} />
     </>
   );
 }
