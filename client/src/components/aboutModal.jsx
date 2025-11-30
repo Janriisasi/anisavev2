@@ -71,14 +71,14 @@ export default function AboutModal({ isOpen, onClose }) {
               {/* Header with centered logo and title */}
               <motion.div
                 className="pt-4 sm:pt-6 pb-4 sm:pb-6 px-4 sm:px-6 text-center border-b border-gray-100 bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: 'url(/images/bg_feat.png)' }}
+                style={{ backgroundImage: 'url(/images/bg_feat.webp)' }}
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.4 }}
               >
                 <div className="flex flex-col items-center">
                   <img
-                    src="/images/anisave_logo.png"
+                    src="/images/anisave_logo.webp"
                     alt="AniSave Logo"
                     className="h-12 sm:h-16 w-auto mb-1"
                   />
