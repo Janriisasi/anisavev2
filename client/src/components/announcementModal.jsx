@@ -4,50 +4,52 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function AnnouncementModal({ isOpen, onClose }) {
   const priceData = {
     vegetables: [
-      { name: 'Eggplant', prev: '128.56', new: '207.50', change: '+78.94', trend: 'up' },
-      { name: 'Tomato', prev: '142.89', new: '120.83', change: '-22.06', trend: 'down' },
-      { name: 'Cabbage', prev: '88.66', new: '92.50', change: '+3.84', trend: 'up' },
-      { name: 'Squash', prev: '67.53', new: '58.33', change: '-9.20', trend: 'down' },
-      { name: 'String Beans', prev: '120.86', new: '150.00', change: '+29.14', trend: 'up' },
-      { name: 'Ampalaya', prev: '130.68', new: '219.58', change: '+88.90', trend: 'up' },
-      { name: 'Pechay', prev: '121.74', new: '136.67', change: '+14.93', trend: 'up' },
-      { name: 'Carrot', prev: '161.24', new: '161.11', change: '-0.13', trend: 'down' },
-      { name: 'Bell Pepper', prev: '303.83', new: '311.11', change: '+7.28', trend: 'up' },
-      { name: 'Broccoli', prev: '194.67', new: '423.33', change: '+228.66', trend: 'up' },
-      { name: 'Potato', prev: '142.38', new: '161.82', change: '+19.44', trend: 'up' },
-      { name: 'Sitao', prev: '120.86', new: '150.00', change: '+29.14', trend: 'up' },
-      { name: 'Lettuce (Green Ice)', prev: '206.19', new: '307.78', change: '+101.59', trend: 'up' },
-      { name: 'Lettuce (Iceberg)', prev: '206.81', new: '343.33', change: '+136.52', trend: 'up' },
-      { name: 'Lettuce (Romaine)', prev: '197.50', new: '298.57', change: '+101.07', trend: 'up' }
+      { name: 'Eggplant', prev: '207.50', new: '109.08', change: '-98.42', trend: 'down' },
+      { name: 'Tomato', prev: '120.83', new: '175.42', change: '+54.59', trend: 'up' },
+      { name: 'Cabbage', prev: '92.50', new: '96.64', change: '+4.14', trend: 'up' },
+      { name: 'Squash', prev: '58.33', new: '60.15', change: '+1.82', trend: 'up' },
+      { name: 'String Beans', prev: '150.00', new: '136.98', change: '-13.02', trend: 'down' },
+      { name: 'Ampalaya', prev: '219.58', new: '116.11', change: '-103.47', trend: 'down' },
+      { name: 'Pechay', prev: '136.67', new: '99.62', change: '-37.05', trend: 'down' },
+      { name: 'Carrot', prev: '161.11', new: '109.61', change: '-51.50', trend: 'down' },
+      { name: 'Bell Pepper', prev: '466.57', new: '466.57', change: '0.00', trend: 'stable' },
+      { name: 'Broccoli', prev: '423.33', new: '267.50', change: '-155.83', trend: 'down' },
+      { name: 'Potato', prev: '161.82', new: '150.39', change: '-11.43', trend: 'down' },
+      { name: 'Sitao', prev: '150.00', new: '136.98', change: '-13.02', trend: 'down' },
+      { name: 'Lettuce (Green Ice)', prev: '307.78', new: '375.74', change: '+67.96', trend: 'up' },
+      { name: 'Lettuce (Iceberg)', prev: '343.33', new: '450.00', change: '+106.67', trend: 'up' },
+      { name: 'Lettuce (Romaine)', prev: '298.57', new: '391.30', change: '+92.73', trend: 'up' }
     ],
+
     fruits: [
-      { name: 'Mango', prev: '218.31', new: '216.36', change: '-1.95', trend: 'down' },
-      { name: 'Calamansi', prev: '146.17', new: '115.83', change: '-30.34', trend: 'down' },
-      { name: 'Papaya', prev: '70.38', new: '71.11', change: '+0.73', trend: 'up' },
-      { name: 'Watermelon', prev: '76.33', new: '76.88', change: '+0.55', trend: 'up' },
-      { name: 'Avocado', prev: '433.91', new: '333.33', change: '-100.58', trend: 'down' },
-      { name: 'Melon', prev: '104.15', new: '104.55', change: '+0.40', trend: 'up' },
-      { name: 'Pomelo', prev: '183.39', new: '175.00', change: '-8.39', trend: 'down' },
-      { name: 'Banana (Lakatan)', prev: '97.63', new: '95.42', change: '-2.21', trend: 'down' },
-      { name: 'Banana (Latundan)', prev: '75.18', new: '74.00', change: '-1.18', trend: 'down' },
-      { name: 'Banana (Saba)', prev: '53.32', new: '50.45', change: '-2.87', trend: 'down' }
+      { name: 'Mango', prev: '216.36', new: '211.64', change: '-4.72', trend: 'down' },
+      { name: 'Calamansi', prev: '115.83', new: '136.03', change: '+20.20', trend: 'up' },
+      { name: 'Papaya', prev: '71.11', new: '72.04', change: '+0.93', trend: 'up' },
+      { name: 'Watermelon', prev: '76.88', new: '76.90', change: '+0.02', trend: 'up' },
+      { name: 'Avocado', prev: '333.33', new: '378.62', change: '+45.29', trend: 'up' },
+      { name: 'Melon', prev: '104.55', new: '108.13', change: '+3.58', trend: 'up' },
+      { name: 'Pomelo', prev: '175.00', new: '177.59', change: '+2.59', trend: 'up' },
+      { name: 'Banana (Lakatan)', prev: '95.42', new: '97.33', change: '+1.91', trend: 'up' },
+      { name: 'Banana (Latundan)', prev: '74.00', new: '75.56', change: '+1.56', trend: 'up' },
+      { name: 'Banana (Saba)', prev: '50.45', new: '53.54', change: '+3.09', trend: 'up' }
     ],
+
     grains: [
-      { name: 'Rice (Fancy White)', prev: '56.92', new: '56.92', change: '0', trend: 'stable' },
-      { name: 'Rice (Premium 5%)', prev: '48.39', new: '49.75', change: '+1.36', trend: 'up' },
-      { name: 'Rice (Well Milled)', prev: '42.29', new: '43.80', change: '+1.51', trend: 'up' },
-      { name: 'Rice (Regular Milled)', prev: '37.25', new: '38.38', change: '+1.13', trend: 'up' },
-      { name: 'Corn (White Glutinous)', prev: '97.65', new: '120.00', change: '+22.35', trend: 'up' },
-      { name: 'Corn (Yellow Sweet)', prev: '78.58', new: '92.73', change: '+14.15', trend: 'up' },
-      { name: 'Corn Grits (Feed Grade)', prev: '47.50', new: '45.00', change: '-2.50', trend: 'down' }
+      { name: 'Rice (Fancy White)', prev: '56.92', new: '57.69', change: '+0.77', trend: 'up' },
+      { name: 'Rice (Premium 5%)', prev: '49.75', new: '50.48', change: '+0.73', trend: 'up' },
+      { name: 'Rice (Well Milled)', prev: '43.80', new: '43.76', change: '-0.04', trend: 'down' },
+      { name: 'Rice (Regular Milled)', prev: '38.38', new: '38.88', change: '+0.50', trend: 'up' },
+      { name: 'Corn (White Glutinous)', prev: '120.00', new: '104.62', change: '-15.38', trend: 'down' },
+      { name: 'Corn (Yellow Sweet)', prev: '92.73', new: '90.11', change: '-2.62', trend: 'down' }
     ],
+
     herbsSpices: [
-      { name: 'Ginger', prev: '193.50', new: '204.29', change: '+10.79', trend: 'up' },
-      { name: 'Garlic', prev: '414.29', new: '400.00', change: '-14.29', trend: 'down' },
-      { name: 'Red Onion', prev: '215.11', new: '304.44', change: '+89.33', trend: 'up' },
-      { name: 'Chili', prev: '422.29', new: '595.45', change: '+173.16', trend: 'up' }
+      { name: 'Ginger', prev: '204.29', new: '165.78', change: '-38.51', trend: 'down' },
+      { name: 'Garlic', prev: '400.00', new: '410.00', change: '+10.00', trend: 'up' },
+      { name: 'Red Onion', prev: '304.44', new: '227.78', change: '-76.66', trend: 'down' },
+      { name: 'Chili', prev: '595.45', new: '725.96', change: '+130.51', trend: 'up' }
     ]
-  };
+};
 
   const getTrendIcon = (trend) => {
     if (trend === 'up') return '🔺';
@@ -74,8 +76,8 @@ export default function AnnouncementModal({ isOpen, onClose }) {
           <thead className="bg-gradient-to-r from-green-600 to-green-700 text-white">
             <tr>
               <th className="py-2 sm:py-3 px-2 sm:px-4 text-left font-semibold">Product</th>
-              <th className="py-2 sm:py-3 px-2 sm:px-4 text-right font-semibold whitespace-nowrap">Prev (Nov 11)</th>
-              <th className="py-2 sm:py-3 px-2 sm:px-4 text-right font-semibold whitespace-nowrap">New (Nov 30)</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-4 text-right font-semibold whitespace-nowrap">Prev (Nov 30)</th>
+              <th className="py-2 sm:py-3 px-2 sm:px-4 text-right font-semibold whitespace-nowrap">New (Dec 26)</th>
               <th className="py-2 sm:py-3 px-2 sm:px-4 text-right font-semibold">Change</th>
             </tr>
           </thead>
@@ -153,7 +155,7 @@ export default function AnnouncementModal({ isOpen, onClose }) {
                   />
                   <h2 className="text-lg sm:text-xl font-bold text-white mb-1">📢 MARKET PRICE UPDATE</h2>
                   <p className="text-white text-xs sm:text-sm">
-                    November 30, 2025 DPI-AFC Report
+                    December 26, 2025 DPI-AFC Report
                   </p>
                 </div>
               </motion.div>
@@ -168,7 +170,9 @@ export default function AnnouncementModal({ isOpen, onClose }) {
                   transition={{ delay: 0.2 }}
                 >
                   <p className="text-gray-700 text-xs sm:text-sm font-medium">
-                    The latest market update is IN! Some prices really SHOCKED the charts!
+                    Prices have shifted once again! This update compares November 30 prices against
+                    the latest December 26 DPI-AFC report — with major drops in lowland vegetables
+                    and sharp spikes in lettuce and chili.
                   </p>
                 </motion.div>
 
@@ -208,7 +212,7 @@ export default function AnnouncementModal({ isOpen, onClose }) {
                   transition={{ delay: 0.4 }}
                 >
                   <p className="text-sm sm:text-lg font-bold text-gray-800">
-                    TOTAL PRODUCTS UPDATED: <span className="text-green-700">46 items</span>
+                    TOTAL PRODUCTS UPDATED: <span className="text-green-700">35 items</span>
                   </p>
                   <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     Stay informed with AniSave's market updates!
