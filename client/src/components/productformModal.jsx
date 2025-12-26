@@ -100,14 +100,14 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     error = null
   }) => {
     return (
-      <div className="space-y-2" ref={dropdownRef}>
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <div className="space-y-1 sm:space-y-2" ref={dropdownRef}>
+        <label className="block text-xs sm:text-sm font-medium text-gray-700">{label}</label>
         <div className="relative">
           <button
             type="button"
             onClick={() => !disabled && setIsOpen(!isOpen)}
             disabled={disabled}
-            className={`w-full px-4 py-3 text-left bg-white border rounded-lg shadow-sm transition-all duration-200 ${
+            className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-sm bg-white border rounded-lg shadow-sm transition-all duration-200 ${
               disabled 
                 ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
                 : 'hover:border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-200 cursor-pointer'
@@ -124,7 +124,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 {value || placeholder}
               </span>
               <ChevronDown 
-                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform duration-200 ${
                   isOpen ? 'transform rotate-180' : ''
                 }`} 
               />
@@ -136,7 +136,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
               ? 'opacity-100 scale-100 translate-y-0' 
               : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
           }`}>
-            <div className="max-h-60 overflow-y-auto py-1">
+            <div className="max-h-52 sm:max-h-60 overflow-y-auto py-1">
               {options.map((option, index) => (
                 <button
                   key={option.value || option}
@@ -145,7 +145,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                     onSelect(option.value || option);
                     setIsOpen(false);
                   }}
-                  className={`w-full px-4 py-3 text-left hover:bg-green-50 hover:text-green-700 transition-colors duration-150 ${
+                  className={`w-full px-4 py-2 sm:py-3 text-left text-sm hover:bg-green-50 hover:text-green-700 transition-colors duration-150 ${
                     (option.value || option) === value 
                       ? 'bg-green-100 text-green-700 font-medium' 
                       : 'text-gray-900'
@@ -161,7 +161,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
             </div>
           </div>
         </div>
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-xs sm:text-sm text-red-500">{error}</p>}
       </div>
     );
   };
@@ -175,13 +175,9 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
       }
       
       try {
-        // Show loading toast
         const loadingToast = toast.loading('Uploading image...');
-        
-        // Compress the image
         const compressedFile = await compressImage(file);
         
-        // Update toast
         toast.dismiss(loadingToast);
         toast.success(`Image Uploaded!`);
         
@@ -304,29 +300,29 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     return (
       <AnimatePresence>
         <motion.div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div 
-            className="bg-white rounded-2xl w-full max-w-md p-6"
+            className="bg-white rounded-xl sm:rounded-2xl w-full max-w-[95%] sm:max-w-md p-4 sm:p-6"
             initial={{ scale: 0.95, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.95, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
-                <AlertTriangle className="w-8 h-8 text-yellow-600" />
+              <div className="mx-auto flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4">
+                <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-4">
                 Complete Your Profile
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 To add products, you need to complete your profile with:
               </p>
-              <div className="text-left bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="text-left bg-gray-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-sm">
                 <ul className="space-y-2">
                   {!userProfile?.address && (
                     <li className="flex items-center text-red-600">
@@ -342,19 +338,19 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                   )}
                 </ul>
               </div>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
                 This information helps buyers contact you and arrange deliveries.
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 bg-green-700 text-white py-3 rounded-lg hover:bg-green-800 transition-colors font-medium"
+                  className="flex-1 bg-green-700 text-white py-2.5 sm:py-3 rounded-lg hover:bg-green-800 transition-colors font-medium text-sm sm:text-base"
                 >
                   Update Profile
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-6 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium"
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
                 >
                   Cancel
                 </button>
@@ -376,7 +372,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
         onClick={onClose}
       >
         <motion.div
-          className="bg-white rounded-xl sm:rounded-2xl w-full max-w-md sm:max-w-4xl p-3 sm:p-6 max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-xl sm:rounded-2xl w-full max-w-[95%] sm:max-w-4xl p-4 sm:p-6 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -384,7 +380,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
           onClick={(e) => e.stopPropagation()}
         >
           <motion.h2 
-            className="text-lg sm:text-2xl font-bold mb-4 sm:mb-6"
+            className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -399,17 +395,17 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <motion.div 
                 className="space-y-2 sm:space-y-4"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <h3 className="text-base sm:text-lg font-semibold text-gray-700">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-700">
                   Product Image <span className="text-red-500">*</span>
                 </h3>
-                <div className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center h-48 sm:h-80 ${
+                <div className={`border-2 border-dashed rounded-lg p-3 sm:p-6 text-center h-40 sm:h-80 ${
                   errors.image ? 'border-red-500 bg-red-50' : 'border-gray-300'
                 }`}>
                   <input
@@ -431,18 +427,18 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                       />
                     ) : (
                       <>
-                        <Upload className="w-8 sm:w-16 h-8 sm:h-16 text-gray-400 mb-2 sm:mb-4" />
+                        <Upload className="w-6 h-6 sm:w-16 sm:h-16 text-gray-400 mb-2 sm:mb-4" />
                         <span className="text-xs sm:text-lg text-gray-500 font-medium">
                           Click to upload image
                         </span>
-                        <span className="text-xs text-gray-400 mt-1 sm:mt-2">
+                        <span className="text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-2">
                           Max 5MB
                         </span>
                       </>
                     )}
                   </label>
                 </div>
-                {errors.image && <p className="text-sm text-red-500">{errors.image}</p>}
+                {errors.image && <p className="text-xs sm:text-sm text-red-500">{errors.image}</p>}
                 {imageFile && (
                   <p className="text-xs sm:text-sm text-green-600 text-center truncate">
                     ✓ {imageFile.name}
@@ -456,7 +452,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <h3 className="text-base sm:text-lg font-semibold text-gray-700">Product Details</h3>
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-700">Product Details</h3>
                 
                 <CustomDropdown
                   label="Category"
@@ -498,7 +494,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                   <input
                     type="number"
                     placeholder="Price per kg"
-                    className={`input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
+                    className={`input w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
                       errors.price
                         ? 'border-red-500 focus:ring-red-200 focus:border-red-500'
                         : 'border-gray-300 focus:ring-2 focus:ring-green-200 focus:border-green-500'
@@ -509,7 +505,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                       setErrors(prev => ({ ...prev, price: '' }));
                     }}
                   />
-                  {errors.price && <p className="text-sm text-red-500">{errors.price}</p>}
+                  {errors.price && <p className="text-xs sm:text-sm text-red-500">{errors.price}</p>}
                   {form.name && !errors.price && (
                     <p className="text-xs text-gray-500">
                       Suggested: ₱{productPrices[form.category]?.[form.name]}/kg
@@ -524,7 +520,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                   <input
                     type="number"
                     placeholder="Quantity in kg"
-                    className={`input w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
+                    className={`input w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
                       errors.quantity_kg
                         ? 'border-red-500 focus:ring-red-200 focus:border-red-500'
                         : 'border-gray-300 focus:ring-2 focus:ring-green-200 focus:border-green-500'
@@ -535,7 +531,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                       setErrors(prev => ({ ...prev, quantity_kg: '' }));
                     }}
                   />
-                  {errors.quantity_kg && <p className="text-sm text-red-500">{errors.quantity_kg}</p>}
+                  {errors.quantity_kg && <p className="text-xs sm:text-sm text-red-500">{errors.quantity_kg}</p>}
                 </div>
               </motion.div>
             </div>
@@ -549,7 +545,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
               <motion.button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-green-700 text-white py-2 sm:py-3 rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base"
+                className="flex-1 bg-green-700 text-white py-2.5 sm:py-3 rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -558,7 +554,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
               <motion.button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
+                className="flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
