@@ -66,9 +66,9 @@ export default function AnnouncementModal({ isOpen, onClose }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="mb-6"
+      className="mb-4 sm:mb-6"
     >
-      <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+      <h3 className="text-sm sm:text-lg font-bold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
         {category} — {subtitle}
       </h3>
       <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
@@ -89,16 +89,16 @@ export default function AnnouncementModal({ isOpen, onClose }) {
                   item.hot ? 'bg-yellow-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                 }`}
               >
-                <td className="py-2 sm:py-3 px-2 sm:px-4 font-medium text-gray-700">
+                <td className="py-1.5 sm:py-3 px-2 sm:px-4 font-medium text-gray-700">
                   {item.name}
                 </td>
-                <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-gray-600">
+                <td className="py-1.5 sm:py-3 px-2 sm:px-4 text-right text-gray-600">
                   ₱{item.prev}
                 </td>
-                <td className="py-2 sm:py-3 px-2 sm:px-4 text-right font-bold text-gray-800">
+                <td className="py-1.5 sm:py-3 px-2 sm:px-4 text-right font-bold text-gray-800">
                   ₱{item.new}
                 </td>
-                <td className={`py-2 sm:py-3 px-2 sm:px-4 text-right font-semibold ${getTrendColor(item.trend)}`}>
+                <td className={`py-1.5 sm:py-3 px-2 sm:px-4 text-right font-semibold ${getTrendColor(item.trend)}`}>
                   {getTrendIcon(item.trend)} {item.change}
                 </td>
               </tr>
@@ -132,7 +132,7 @@ export default function AnnouncementModal({ isOpen, onClose }) {
             transition={{ duration: 0.2 }}
           >
             <motion.div
-              className="bg-white rounded-2xl w-full max-w-[95%] sm:max-w-5xl max-h-[95vh] overflow-y-auto shadow-2xl flex flex-col pointer-events-auto"
+              className="bg-white rounded-2xl w-full max-w-[90%] sm:max-w-5xl max-h-[80vh] sm:max-h-[95vh] overflow-y-auto shadow-2xl flex flex-col pointer-events-auto"
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
@@ -141,7 +141,7 @@ export default function AnnouncementModal({ isOpen, onClose }) {
             >
               {/* Header */}
               <motion.div
-                className="pt-4 sm:pt-6 pb-4 sm:pb-6 px-4 sm:px-6 text-center border-b border-gray-100 bg-cover bg-center bg-no-repeat relative"
+                className="pt-3 sm:pt-6 pb-3 sm:pb-6 px-3 sm:px-6 text-center border-b border-gray-100 bg-cover bg-center bg-no-repeat relative"
                 style={{ backgroundImage: 'url(/images/bg_feat.webp)' }}
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -151,9 +151,9 @@ export default function AnnouncementModal({ isOpen, onClose }) {
                   <img
                     src="/images/anisave_logo.webp"
                     alt="AniSave Logo"
-                    className="h-12 sm:h-16 w-auto mb-1"
+                    className="h-10 sm:h-16 w-auto mb-1"
                   />
-                  <h2 className="text-lg sm:text-xl font-bold text-white mb-1">📢 MARKET PRICE UPDATE</h2>
+                  <h2 className="text-base sm:text-xl font-bold text-white mb-1">📢 MARKET PRICE UPDATE</h2>
                   <p className="text-white text-xs sm:text-sm">
                     December 26, 2025 DPI-AFC Report
                   </p>
@@ -161,18 +161,17 @@ export default function AnnouncementModal({ isOpen, onClose }) {
               </motion.div>
 
               {/* Content */}
-              <div className="p-3 sm:p-6 space-y-4">
+              <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
                 {/* Intro */}
                 <motion.div
-                  className="bg-yellow-50 border-l-4 border-yellow-400 p-3 sm:p-4 rounded-r-lg"
+                  className="bg-yellow-50 border-l-4 border-yellow-400 p-2.5 sm:p-4 rounded-r-lg"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
                 >
                   <p className="text-gray-700 text-xs sm:text-sm font-medium">
                     Prices have shifted once again! This update compares November 30 prices against
-                    the latest December 26 DPI-AFC report — with major drops in lowland vegetables
-                    and sharp spikes in lettuce and chili.
+                    the latest December 26 DPI-AFC report.
                   </p>
                 </motion.div>
 
@@ -206,7 +205,7 @@ export default function AnnouncementModal({ isOpen, onClose }) {
 
                 {/* Summary */}
                 <motion.div
-                  className="bg-green-100 rounded-lg p-3 sm:p-4 text-center border-2 border-green-300 mt-6"
+                  className="bg-green-100 rounded-lg p-3 sm:p-4 text-center border-2 border-green-300 mt-4 sm:mt-6"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4 }}
