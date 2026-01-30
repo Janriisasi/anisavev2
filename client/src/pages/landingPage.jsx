@@ -222,11 +222,9 @@ export default function LandingPage() {
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen">
         {/* Navbar */}
-        <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
-        }`} style={{ position: 'absolute' }}>
+        <header className={`fixed inset-x-0 top-0 z-50`} style={{ position: 'absolute' }}>
           <nav className={`max-w-7xl mx-auto px-4 sm:px-6 h-12 sm:h-14 lg:h-18 flex items-center justify-between ${
             isScrolled ? 'mt-1 sm:mt-2' : 'mt-1 sm:mt-2'
           }`}>
