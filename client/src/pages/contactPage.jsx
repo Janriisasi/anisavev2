@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
-import Loader from '../components/loader';
 import DeleteConfirmationModal from '../components/deleteConfirmation';
 import { useUser } from '../hooks/useUser';
 import { Copy, Star, Trash2, User, Eye, MoreVertical } from 'lucide-react';
@@ -16,13 +15,9 @@ export default function SavedContacts() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchContacts();
-    }
-  }, [user]);
-
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
+    if (!user) return;
+    
     setLoading(true);
     try {
       const { data: profileData, error: profileError } = await supabase
@@ -56,6 +51,7 @@ export default function SavedContacts() {
 
       if (error) throw error;
 
+      // Optimize: Fetch all ratings in parallel instead of sequential
       const contactsWithRatings = await Promise.all(
         data.map(async (contact) => {
           const { data: ratingsData, error: ratingsError } = await supabase
@@ -88,7 +84,13 @@ export default function SavedContacts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchContacts();
+    }
+  }, [user, fetchContacts]);
 
   const copyToClipboard = async (text, type = 'Contact number') => {
     try {
@@ -165,13 +167,50 @@ export default function SavedContacts() {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 flex items-center justify-center">
-        <Loader className="w-15 h-15 text-gray-500 mb-5" />
+  // Skeleton Card Component
+  const SkeletonCard = () => (
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+      <div className="p-6 pb-4">
+        <div className="flex items-start gap-4 mb-4">
+          {/* Skeleton Avatar */}
+          <div className="flex-shrink-0">
+            <div className="w-20 h-20 rounded-full bg-gray-200 animate-pulse"></div>
+          </div>
+          
+          {/* Skeleton Info */}
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* Skeleton Rating */}
+            <div className="flex gap-1">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+              ))}
+            </div>
+            
+            {/* Skeleton Name */}
+            <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4"></div>
+            
+            {/* Skeleton Username */}
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2"></div>
+            
+            {/* Skeleton Address */}
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+            
+            {/* Skeleton Phone */}
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-2/3"></div>
+          </div>
+        </div>
+
+        {/* Skeleton Buttons */}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="hidden sm:flex items-center gap-7 w-full">
+            <div className="h-9 bg-gray-200 rounded-lg animate-pulse flex-1"></div>
+            <div className="h-9 bg-gray-200 rounded-lg animate-pulse flex-1"></div>
+            <div className="h-9 bg-gray-200 rounded-lg animate-pulse flex-1"></div>
+          </div>
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
@@ -180,7 +219,18 @@ export default function SavedContacts() {
           Saved Contacts
         </h2>
 
-        {contacts.length === 0 ? (
+        {loading ? (
+          <>
+            <div className="mb-6">
+              <div className="h-6 bg-gray-200 rounded animate-pulse w-32"></div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {[...Array(6)].map((_, index) => (
+                <SkeletonCard key={index} />
+              ))}
+            </div>
+          </>
+        ) : contacts.length === 0 ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
