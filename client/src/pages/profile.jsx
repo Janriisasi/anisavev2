@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import ProductFormModal from '../components/productformModal';
@@ -33,61 +33,70 @@ export default function Profile() {
   const [contactError, setContactError] = useState('');
   const [tempAvatarUrl, setTempAvatarUrl] = useState(null);
 
-  useEffect(() => {
-    getUser();
+  // Optimize: Fetch all data in parallel instead of sequentially
+  const fetchAllUserData = useCallback(async (userId) => {
+    try {
+      setLoading(true);
+      
+      // Execute all queries in parallel using Promise.all
+      const [profileRes, productsRes, ratingsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single(),
+        supabase
+          .from('products')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('ratings')
+          .select('rating')
+          .eq('farmer_id', userId)
+      ]);
+
+      // Update all state in one batch to minimize re-renders
+      if (!profileRes.error) {
+        setProfile(profileRes.data);
+      }
+
+      if (!productsRes.error) {
+        setProducts(productsRes.data || []);
+      }
+
+      if (!ratingsRes.error && ratingsRes.data?.length > 0) {
+        const avg = ratingsRes.data.reduce((sum, r) => sum + r.rating, 0) / ratingsRes.data.length;
+        setAvgRating(avg.toFixed(1));
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      toast.error('Failed to load profile data');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const getUser = async () => {
-    const { data } = await supabase.auth.getUser();
-    if (data?.user) {
-      setUser(data.user);
-      fetchProfile(data.user.id);
-      fetchUserProducts(data.user.id);
-      fetchUserRating(data.user.id);
-    }
-  };
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+        fetchAllUserData(data.user.id);
+      }
+    };
+    getUser();
+  }, [fetchAllUserData]);
 
-  const fetchProfile = async (userId) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+  // Memoize computed values
+  const isProfileComplete = useMemo(() => 
+    profile?.address && profile?.contact_number,
+    [profile?.address, profile?.contact_number]
+  );
 
-    if (!error) setProfile(data);
-  };
-
-  const fetchUserProducts = async (userId) => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (!error) setProducts(data);
-    setLoading(false);
-  };
-
-  const fetchUserRating = async (userId) => {
-    const { data, error } = await supabase
-      .from('ratings')
-      .select('rating')
-      .eq('farmer_id', userId);
-
-    if (!error && data.length > 0) {
-      const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length;
-      setAvgRating(avg.toFixed(1));
-    }
-  };
-
-  //check if profile is complete
-  const isProfileComplete = profile?.address && profile?.contact_number;
-
-  //handle add product button
-  const handleAddProductClick = () => {
+  const handleAddProductClick = useCallback(() => {
     if (!isProfileComplete) {
       toast.warning('Please complete your profile with address and phone number before adding products.');
-      //auto-open if profile is incomplete
       setFormData({
         full_name: profile?.full_name || '',
         address: profile?.address || '',
@@ -98,26 +107,20 @@ export default function Profile() {
       return;
     }
     setShowProductForm(true);
-  };
+  }, [isProfileComplete, profile]);
 
-  //contact number validation function
-  const handleContactNumberChange = (e) => {
+  const handleContactNumberChange = useCallback((e) => {
     let value = e.target.value;
-    
-    //remove all the non-numeric characters
     let numericValue = value.replace(/\D/g, '');
     
-    //if user tries to delete the "09", restore it
     if (numericValue.length < 2 || !numericValue.startsWith('09')) {
       numericValue = '09' + numericValue.replace(/^09/, '');
     }
     
-    //limit to 11 digits
     numericValue = numericValue.slice(0, 11);
     
-    setFormData({ ...formData, contact_number: numericValue });
+    setFormData(prev => ({ ...prev, contact_number: numericValue }));
     
-    //validates the contact number
     if (numericValue.length === 2) {
       setContactError('Please enter the remaining 9 digits');
     } else if (numericValue.length < 11) {
@@ -125,88 +128,153 @@ export default function Profile() {
     } else if (numericValue.length === 11) {
       setContactError('');
     }
-  };
+  }, []);
 
   const handleUpload = async (e) => {
-  try {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    //store the current avatar URL before uploading
-    setTempAvatarUrl(profile?.avatar_url);
-    setUploading(true);
-
-    //validate the file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be less than 5MB');
-      return;
-    }
-
-    //compress the image
-    let fileToUpload = file;
     try {
-      toast.loading('Uploading image', { id: 'compress' });
-      fileToUpload = await compressImage(file);
-      toast.success(
-        `Image uploaded successfully!`,
-        { id: 'compress' }
-      );
-    } catch (compressionError) {
-      console.error('Failed uploading. Please try again or refresh the page.');
-      toast.dismiss('compress');
-      // Continue with original file if compression fails
+      const file = e.target.files[0];
+      if (!file) return;
+
+      setTempAvatarUrl(profile?.avatar_url);
+      setUploading(true);
+
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+
+      let fileToUpload = file;
+      try {
+        toast.loading('Uploading image', { id: 'compress' });
+        fileToUpload = await compressImage(file);
+        toast.success('Image uploaded successfully!', { id: 'compress' });
+      } catch (compressionError) {
+        console.error('Failed uploading. Please try again or refresh the page.');
+        toast.dismiss('compress');
+      }
+
+      const fileExt = fileToUpload.name.split('.').pop();
+      const fileName = `avatar-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, fileToUpload, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setProfile(prev => ({ ...prev, tempAvatarUrl: publicUrl }));
+      setTempFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to update profile picture');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleProfileUpdate = async () => {
+    if (contactError) {
+      toast.error('Please fix contact number errors first');
+      return;
     }
 
-    const fileExt = fileToUpload.name.split('.').pop();
-    const fileName = `avatar-${Date.now()}.${fileExt}`;
-    const filePath = `${user.id}/${fileName}`;
+    if (formData.contact_number.length !== 11) {
+      toast.error('Contact number must be exactly 11 digits');
+      return;
+    }
 
-    const { data, error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, fileToUpload, {
-        cacheControl: '3600',
-        upsert: true
-      });
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.full_name,
+          address: formData.address,
+          contact_number: formData.contact_number,
+          avatar_url: tempFormData.avatar_url || profile?.avatar_url
+        })
+        .eq('id', user.id);
 
-    if (uploadError) throw uploadError;
+      if (error) throw error;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath);
+      setProfile(prev => ({
+        ...prev,
+        ...formData,
+        avatar_url: tempFormData.avatar_url || profile?.avatar_url
+      }));
+      
+      setIsEditing(false);
+      setTempAvatarUrl(null);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to update profile');
+    }
+  };
 
-    // Only update the temporary state, not the database yet
-    setProfile(prev => ({ ...prev, tempAvatarUrl: publicUrl }));
-    setTempFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+  const handleCancelEdit = () => {
+    if (tempAvatarUrl) {
+      setProfile(prev => ({ ...prev, avatar_url: tempAvatarUrl }));
+    }
+    setFormData({
+      full_name: profile?.full_name || '',
+      address: profile?.address || '',
+      contact_number: profile?.contact_number || '09'
+    });
+    setTempFormData({});
+    setContactError('');
+    setIsEditing(false);
+    setTempAvatarUrl(null);
+  };
 
-  } catch (error) {
-    console.error('Error:', error);
-    toast.error('Failed to update profile picture');
-  } finally {
-    setUploading(false);
-  }
-};
+  const toggleProductStatus = async (productId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'Available' ? 'Unavailable' : 'Available';
+      
+      const { error } = await supabase
+        .from('products')
+        .update({ status: newStatus })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      setProducts(prev =>
+        prev.map(p => p.id === productId ? { ...p, status: newStatus } : p)
+      );
+      
+      toast.success(`Product marked as ${newStatus}`);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to update product status');
+    }
+  };
 
   const deleteProduct = async (productId) => {
     try {
       setIsDeleting(true);
-      
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', productId);
 
-      if (error) {
-        toast.error('Error deleting product');
-      } else {
-        toast.success('Product deleted');
-        setDeleteConfirm(null);
-        fetchUserProducts(user.id);
-      }
+      if (error) throw error;
+
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      setDeleteConfirm(null);
+      toast.success('Product deleted successfully');
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to delete product');
@@ -215,86 +283,68 @@ export default function Profile() {
     }
   };
 
-  const toggleProductStatus = async (productId, currentStatus) => {
-    const newStatus = currentStatus === 'Available' ? 'Sold Out' : 'Available';
-    
-    const { error } = await supabase
-      .from('products')
-      .update({ status: newStatus })
-      .eq('id', productId);
-
-    if (error) {
-      toast.error('Error updating product status');
-    } else {
-      toast.success('Product status updated');
-      fetchUserProducts(user.id);
-    }
-  };
-
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
   };
 
-  const handleCancel = () => {
-    //restore the original avatar URL
-    if (tempAvatarUrl) {
-      setProfile(prev => ({ ...prev, avatar_url: tempAvatarUrl }));
-    }
-    setFormData(tempFormData);
-    setIsEditing(false);
-    setContactError('');
-    setTempAvatarUrl(null);
-  };
-
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
+  // Optimize: Lazy load images
+  const ProductImage = ({ src, alt }) => {
+    const [imgLoaded, setImgLoaded] = useState(false);
     
-    try {
-      //update profile with all changes including avatar
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: formData.full_name,
-          address: formData.address,
-          contact_number: formData.contact_number,
-          avatar_url: profile.tempAvatarUrl || profile.avatar_url,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      //update local state with new avatar
-      setProfile(prev => ({ 
-        ...prev, 
-        avatar_url: prev.tempAvatarUrl || prev.avatar_url,
-        tempAvatarUrl: null 
-      }));
-      setTempAvatarUrl(null);
-      setIsEditing(false);
-      setContactError('');
-      toast.success('Profile updated successfully!');
-
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
-    }
-  };
-
-  //generate default avatar URL
-  const getDefaultAvatar = (userId) => {
-    return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${userId}`;
+    return (
+      <div className="relative h-48 w-full bg-gray-200">
+        {!imgLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-gray-300 border-t-green-500 rounded-full animate-spin"></div>
+          </div>
+        )}
+        <img 
+          src={src || '/placeholder.jpg'} 
+          alt={alt}
+          loading="lazy"
+          className={`h-48 w-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setImgLoaded(true)}
+        />
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex justify-center items-center mb-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Profile</h2>
+        </div>
 
-          <div className="flex items-center gap-2">
-            {!isEditing && (
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-8">
+          <div className="flex flex-col items-center md:flex-row md:items-start gap-6 md:gap-8">
+            <div className="relative flex-shrink-0">
+              <div className="relative w-32 h-32 sm:w-40 sm:h-40">
+                <img
+                  src={profile?.tempAvatarUrl || profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name || 'User'}&size=160`}
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                />
+                {uploading && (
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                  </div>
+                )}
+                {isEditing && (
+                  <label className="absolute bottom-0 right-0 bg-green-600 hover:bg-green-700 text-white p-3 rounded-full cursor-pointer shadow-lg transition-all duration-200">
+                    <Camera className="w-5 h-5" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                  </label>
+                )}
+              </div>
+              
               <button
                 onClick={() => {
                   setTempFormData({
@@ -310,138 +360,75 @@ export default function Profile() {
                   setContactError('');
                   setIsEditing(true);
                 }}
-                className="md:hidden p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                title="Edit Profile"
+                className="md:hidden mt-4 w-full flex items-center justify-center gap-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
               >
                 <Edit className="w-5 h-5" />
+                <span className="font-medium">Edit Profile</span>
               </button>
-            )}
-
-            {user && (
-              <button
-                onClick={handleLogout}
-                className="hidden md:flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-6 py-2 rounded-lg transition-all duration-200"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="font-medium">Logout</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-6 sm:mb-8">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
-            <div className="relative flex-shrink-0">
-              <div className="relative group">
-                <img
-                  src={isEditing ? (profile?.tempAvatarUrl || profile?.avatar_url || getDefaultAvatar(user?.id)) 
-    : (profile?.avatar_url || getDefaultAvatar(user?.id))}
-                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                  alt="Profile"
-                />
-                {isEditing && (
-                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-200">
-                    <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleUpload}
-                      disabled={uploading}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-              {uploading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                </div>
-              )}
             </div>
 
-            <div className="flex-1 text-center md:text-left w-full">
+            <div className="flex-1 w-full">
               {isEditing ? (
-                <div className="space-y-4 md:pr-12">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Edit Profile</h3>
-                  <form onSubmit={handleUpdateProfile} className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                      <input
-                        type="text"
-                        placeholder="Enter your full name"
-                        value={formData.full_name}
-                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 text-sm sm:text-base"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">Address</label>
-                      <input
-                        type="text"
-                        placeholder="Enter your address"
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 text-sm sm:text-base"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Contact Number 
-                        <span className="text-xs text-gray-500 ml-1">(11 digits required. Enter 9 more digits)</span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="09XXXXXXXXX"
-                        value={formData.contact_number}
-                        onChange={handleContactNumberChange}
-                        onFocus={(e) => {
-                          if (!formData.contact_number) {
-                            setFormData({ ...formData, contact_number: '09' });
-                          }
-                        }}
-                        maxLength={11}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all duration-200 ${
-                          contactError 
-                            ? 'border-red-300 focus:ring-red-200 focus:border-red-500' 
-                            : 'border-gray-300 focus:ring-green-200 focus:border-green-500'
-                        }`}
-                      />
-                      {contactError && (
-                        <p className="text-red-500 text-xs mt-1">{contactError}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                      <button
-                        type="submit"
-                        disabled={contactError || (formData.contact_number && formData.contact_number.length !== 11)}
-                        className={`flex-1 py-3 px-4 rounded-lg transition-colors font-medium text-sm sm:text-base ${
-                          contactError || (formData.contact_number && formData.contact_number.length !== 11)
-                            ? 'bg-gray-400 text-white cursor-not-allowed'
-                            : 'bg-green-700 text-white hover:bg-green-800'
-                        }`}
-                      >
-                        Save Changes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData(tempFormData);
-                          setIsEditing(false);
-                          setContactError('');
-                        }}
-                        className="px-8 py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      value={formData.full_name}
+                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Enter your address"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                    <input
+                      type="tel"
+                      value={formData.contact_number}
+                      onChange={handleContactNumberChange}
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                        contactError ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="09XXXXXXXXX"
+                    />
+                    {contactError && (
+                      <p className="mt-1 text-sm text-red-600">{contactError}</p>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={handleProfileUpdate}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
+                      disabled={!!contactError}
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
-                  <div className="flex flex-col md:flex-row items-center md:items-start justify-between mb-0">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
-                      {profile?.full_name || 'Verifying status...'}
+                  <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between mb-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center md:text-left">
+                      {profile?.full_name || 'Loading your name'}
                     </h2>
                     <button
                       onClick={() => {
@@ -491,6 +478,16 @@ export default function Profile() {
                 </>
               )}
             </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-200 hidden md:flex justify-end">
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Sign Out</span>
+            </button>
           </div>
         </div>
         
@@ -557,11 +554,7 @@ export default function Profile() {
               {products.map((product) => (
                 <div key={product.id} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
                   <div className="relative">
-                    <img 
-                      src={product.image_url || '/placeholder.jpg'} 
-                      alt={product.name}
-                      className="h-48 w-full object-cover"
-                    />
+                    <ProductImage src={product.image_url} alt={product.name} />
                     <div className="absolute top-2 right-2 flex gap-1">
                       <button
                         onClick={() => setEditingProduct(product)}
@@ -594,7 +587,7 @@ export default function Profile() {
                       className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-300 text-sm ${
                         product.status === 'Available'
                           ? 'bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800'
-                          : 'bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-800'
+                          : 'bg-red-100 text-red-700 hover:bg-red-200 hover:bg-red-800'
                       }`}
                     >
                       {product.status || 'Available'}
@@ -616,7 +609,9 @@ export default function Profile() {
           onSuccess={() => {
             setShowProductForm(false);
             setEditingProduct(null);
-            fetchUserProducts(user.id);
+            if (user?.id) {
+              fetchAllUserData(user.id);
+            }
           }}
           existingProduct={editingProduct}
           userProfile={profile}
