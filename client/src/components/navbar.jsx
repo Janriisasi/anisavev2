@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
-import { Menu, X, Search, Megaphone } from 'lucide-react';
+import { Menu, X, Search } from 'lucide-react';
 import { useAuth } from '../contexts/authContext';
 import AboutModal from './aboutModal';
-import AnnouncementModal from './announcementModal';
+import ChatButton from './chatButton';
+import CartButton from './cartButton';
+import NotificationButton from './notificationButton';
+import { usePresence } from '../hooks/usePresence';
 
 export default function Navbar() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  usePresence();
 
   const closeMenu = () => {
     setMenuOpen(false);
@@ -29,18 +33,13 @@ export default function Navbar() {
       setShowSearchResults(false);
       return;
     }
-
     try {
-      //search only users
       const { data: users } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
         .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
         .limit(5);
-
-      setSearchResults({
-        users: users || []
-      });
+      setSearchResults({ users: users || [] });
       setShowSearchResults(true);
     } catch (error) {
       console.error('Search error:', error);
@@ -48,7 +47,6 @@ export default function Navbar() {
   };
 
   const handleUserClick = (userId) => {
-    console.log('Clicking on user:', userId);
     navigate(`/farmer/${userId}`);
     closeMenu();
   };
@@ -62,15 +60,13 @@ export default function Navbar() {
     }
   };
 
-  const handleLogoClick = () => {
-    setShowAbout(true);
-  };
+  const handleLogoClick = () => setShowAbout(true);
 
   const links = [
-    { label: 'Homepage', to: '/homepage' },
+    { label: 'Homepage',   to: '/homepage' },
     { label: 'Categories', to: '/categories' },
-    { label: 'Contacts', to: '/contacts' },
-    { label: 'Profile', to: '/profile' },
+    { label: 'Contacts',   to: '/contacts' },
+    { label: 'Profile',    to: '/profile' },
   ];
 
   const handleNavigation = (to) => {
@@ -79,41 +75,28 @@ export default function Navbar() {
     closeMenu();
   };
 
-  //if no user the navbar will not appear
   if (!user) return null;
 
   return (
     <>
       <style>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-10px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.1s ease-out;
-        }
+        .animate-fadeIn { animation: fadeIn 0.1s ease-out; }
       `}</style>
-      
+
       <nav className="bg-green-800 text-white shadow-lg backdrop-blur-sm sticky top-0 z-30">
         <div className="px-4 py-3">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            {/* our logo */}
+
+            {/* Logo */}
             <button onClick={handleLogoClick} className="flex items-center hover:opacity-80 transition-opacity cursor-pointer" title="About AniSave">
-              <img 
-                src="/images/anisave_logo.webp"
-                alt="Logo"
-                className="h-10 w-auto"
-              />
+              <img src="/images/anisave_logo.webp" alt="Logo" className="h-10 w-auto" />
             </button>
 
-            {/* navigation - desktop */}
+            {/* Desktop nav links */}
             <div className="hidden md:flex gap-7 items-center">
               {links.map(({ label, to }) => (
                 <button
@@ -128,8 +111,9 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* search bar and announcement - desktop */}
+            {/* Desktop right side — search + action buttons */}
             <div className="hidden md:flex items-center gap-3">
+              {/* Search */}
               <div className="relative">
                 <div className="relative">
                   <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 text-white w-8 h-8 p-1 border rounded-full bg-green-800" />
@@ -138,66 +122,43 @@ export default function Navbar() {
                     placeholder="Search users..."
                     className="w-68 pl-10 pr-4 py-2 bg-white rounded-full text-black placeholder-black focus:outline-none focus:border-transparent"
                     value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      handleSearch(e.target.value);
-                    }}
-                    onBlur={() => {
-                      //increased the timeout to allow click events to process
-                      setTimeout(() => setShowSearchResults(false), 300);
-                    }}
+                    onChange={(e) => { setSearchQuery(e.target.value); handleSearch(e.target.value); }}
+                    onBlur={() => setTimeout(() => setShowSearchResults(false), 300)}
                     onFocus={() => searchQuery && setShowSearchResults(true)}
                   />
                 </div>
-                
-                {/* search results dropdown */}
                 {showSearchResults && searchResults.users?.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[9999] max-h-80 overflow-y-auto">
-                    <div>
-                      <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0">Users</div>
-                      {searchResults.users.map((user) => (
-                        <div
-                          key={user.id}
-                          className="px-4 py-4 hover:bg-gray-50 cursor-pointer text-gray-800"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleUserClick(user.id);
-                          }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <img 
-                              src={user.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${user.username || user.id}`} 
-                              alt="" 
-                              className="w-8 h-8 rounded-full object-cover flex-shrink-0" 
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium truncate">{user.full_name || user.username}</div>
-                            </div>
-                          </div>
+                    <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0">Users</div>
+                    {searchResults.users.map((u) => (
+                      <div
+                        key={u.id}
+                        className="px-4 py-4 hover:bg-gray-50 cursor-pointer text-gray-800"
+                        onMouseDown={(e) => { e.preventDefault(); handleUserClick(u.id); }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <img src={u.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                          <div className="font-medium truncate">{u.full_name || u.username}</div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Announcement button - desktop */}
-              <button
-                onClick={() => setShowAnnouncement(true)}
-                className="relative p-2 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-200 hover:scale-110 group"
-                title="View Market Updates"
-              >
-                <Megaphone className="w-5 h-5 text-white" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-              </button>
+              {/* Notification bell */}
+              <NotificationButton />
+
+              {/* Cart */}
+              <CartButton />
+
+              {/* Chat */}
+              <ChatButton />
             </div>
 
-            {/* mobile menu button */}
+            {/* Mobile hamburger */}
             <div className="md:hidden">
-              <button 
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="transition-transform duration-300 hover:scale-110"
-              >
+              <button onClick={() => setMenuOpen(!menuOpen)} className="transition-transform duration-300 hover:scale-110">
                 <div className={`transition-all duration-300 ${menuOpen ? 'rotate-90' : 'rotate-0'}`}>
                   {menuOpen ? <X size={24} /> : <Menu size={24} />}
                 </div>
@@ -206,139 +167,93 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* mobile menu animation */}
-        <div 
-          className={`md:hidden absolute top-full left-0 w-full bg-green-800 shadow-2xl z-20 overflow-visible transition-all duration-500 ease-in-out ${
-            menuOpen 
-              ? 'max-h-screen opacity-100 transform translate-y-0' 
-              : 'max-h-0 opacity-0 transform -translate-y-4 pointer-events-none'
-          }`}
-        >
+        {/* Mobile menu */}
+        <div className={`md:hidden absolute top-full left-0 w-full bg-green-800 shadow-2xl z-20 overflow-visible transition-all duration-500 ease-in-out ${
+          menuOpen ? 'max-h-screen opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-4 pointer-events-none'
+        }`}>
           <div className="px-4 py-6 space-y-4">
-            {/* mobile search */}
-            <div 
-              className={`relative transition-all duration-700 delay-100 z-50 ${
-                menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
-              }`}
-            >
+
+            {/* Mobile search */}
+            <div className={`relative transition-all duration-700 delay-100 z-50 ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
               <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 text-white w-8 h-8 p-1 border rounded-full bg-green-800" />
               <input
                 type="text"
                 placeholder="Search users..."
                 className="w-full pl-10 pr-4 py-2 bg-white rounded-full text-black placeholder-black focus:outline-none focus:border-transparent transition-all duration-300 hover:shadow-lg"
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  handleSearch(e.target.value);
-                }}
-                onBlur={() => {
-                  setTimeout(() => setShowSearchResults(false), 300);
-                }}
+                onChange={(e) => { setSearchQuery(e.target.value); handleSearch(e.target.value); }}
+                onBlur={() => setTimeout(() => setShowSearchResults(false), 300)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
               />
-              
-              {/* mobile search results */}
               {showSearchResults && searchResults.users?.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[60] max-h-60 overflow-y-auto animate-fadeIn">
-                  <div>
-                    <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0 z-[60]">Users</div>
-                    {searchResults.users.map((user, index) => (
-                      <div
-                        key={user.id}
-                        className={`px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800 border-b border-gray-100 last:border-b-0 transition-all duration-300 hover:translate-x-1`}
-                        style={{ animationDelay: `${index * 50}ms` }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleUserClick(user.id);
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={user.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${user.username || user.id}`} 
-                            alt="" 
-                            className="w-6 h-6 rounded-full object-cover flex-shrink-0" 
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium truncate text-sm">{user.username || user.full_name}</div>
-                            <div className="text-xs text-gray-500">Farmer</div>
-                          </div>
-                        </div>
+                  <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0 z-[60]">Users</div>
+                  {searchResults.users.map((u, index) => (
+                    <div
+                      key={u.id}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800 border-b border-gray-100 last:border-b-0 transition-all duration-300 hover:translate-x-1"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                      onMouseDown={(e) => { e.preventDefault(); handleUserClick(u.id); }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img src={u.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                        <div className="font-medium truncate text-sm">{u.username || u.full_name}</div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Announcement button - mobile */}
-            <button
-              onClick={() => {
-                setShowAnnouncement(true);
-                closeMenu();
-              }}
-              className={`w-full bg-yellow-500 hover:bg-yellow-600 px-4 py-3 rounded-full text-lg text-white font-medium transition-all duration-700 hover:scale-105 flex items-center justify-center gap-2 ${
-                menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
-              }`}
-              style={{
-                transitionDelay: menuOpen ? '200ms' : '0ms',
-                pointerEvents: menuOpen ? 'auto' : 'none'
-              }}
-            >
-              <Megaphone size={20} />
-              Market Updates 📢
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-            </button>
-            
-            {/* navigation links */}
+            {/* Mobile Chat */}
+            <div className={`transition-all duration-700 delay-[150ms] ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`} style={{ pointerEvents: menuOpen ? 'auto' : 'none' }}>
+              <ChatButton mobileMenu />
+            </div>
+
+            {/* Mobile Cart */}
+            <div className={`transition-all duration-700 delay-[200ms] ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`} style={{ pointerEvents: menuOpen ? 'auto' : 'none' }}>
+              <CartButton mobileMenu />
+            </div>
+
+            {/* Mobile Notifications — simple link for mobile */}
+            <div className={`transition-all duration-700 delay-[250ms] ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`} style={{ pointerEvents: menuOpen ? 'auto' : 'none' }}>
+              <NotificationButton mobileMenu />
+            </div>
+
+            {/* Nav links */}
             {links.map(({ label, to }, index) => (
               <button
                 key={to}
                 onClick={() => handleNavigation(to)}
                 className={`block text-white hover:text-gray-300 py-3 font-medium text-lg transition-all duration-500 hover:translate-x-1 hover:drop-shadow-lg w-full text-left ${
-                  menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
+                  menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
                 }`}
-                style={{
-                  transitionDelay: menuOpen ? `${(index + 3) * 100}ms` : '0ms',
-                  pointerEvents: menuOpen ? 'auto' : 'none'
-                }}
+                style={{ transitionDelay: menuOpen ? `${(index + 4) * 100}ms` : '0ms', pointerEvents: menuOpen ? 'auto' : 'none' }}
               >
                 {label}
               </button>
             ))}
-            
-            {/* logout button */}
+
+            {/* Logout */}
             <button
-              onClick={() => {
-                handleLogout();
-                closeMenu();
-              }}
+              onClick={() => { handleLogout(); closeMenu(); }}
               className={`w-full bg-red-500 hover:bg-red-600 px-4 py-3 rounded-full text-lg text-white font-medium transition-all duration-700 hover:scale-105 hover:shadow-xl ${
-                menuOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'
+                menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
               }`}
-              style={{
-                transitionDelay: menuOpen ? '700ms' : '0ms',
-                pointerEvents: menuOpen ? 'auto' : 'none'
-              }}
+              style={{ transitionDelay: menuOpen ? '800ms' : '0ms', pointerEvents: menuOpen ? 'auto' : 'none' }}
             >
               Logout
             </button>
           </div>
         </div>
 
-        {/* backdrop */}
+        {/* Backdrop */}
         {menuOpen && (
-          <div 
-            className="md:hidden fixed inset-0 z-10 bg-black/20 transition-opacity duration-300"
-            onClick={closeMenu}
-          />
+          <div className="md:hidden fixed inset-0 z-10 bg-black/20 transition-opacity duration-300" onClick={closeMenu} />
         )}
       </nav>
 
-      {/* About Modal */}
       <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
-
-      {/* Announcement Modal */}
-      <AnnouncementModal isOpen={showAnnouncement} onClose={() => setShowAnnouncement(false)} />
     </>
   );
 }

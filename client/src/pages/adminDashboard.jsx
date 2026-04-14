@@ -1,50 +1,85 @@
-import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, Package, UserPlus, Activity, TrendingUp, Star, MapPin, AlertTriangle, LogOut, AlertCircle, Database, ChartBar } from 'lucide-react';
-import supabase from '../lib/supabase';
+import React, { useState, useEffect } from "react";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  Users,
+  Package,
+  UserPlus,
+  Activity,
+  TrendingUp,
+  Star,
+  MapPin,
+  AlertTriangle,
+  LogOut,
+  AlertCircle,
+  Database,
+  ChartBar,
+} from "lucide-react";
+import supabase from "../lib/supabase";
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [adminCode, setAdminCode] = useState('');
+  const [adminCode, setAdminCode] = useState("");
   const [debugInfo, setDebugInfo] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [dashboardData, setDashboardData] = useState({
     users: {
       total: 0,
       active: 0,
       newToday: 0,
-      recentSignups: []
+      recentSignups: [],
     },
     products: {
       total: 0,
       available: 0,
       soldOut: 0,
-      categories: []
+      categories: [],
     },
     activity: {
       ratings: 0,
       contacts: 0,
-      avgRating: 0
+      avgRating: 0,
     },
     charts: {
       userGrowth: [],
       productsByCategory: [],
-      dailyActivity: []
+      dailyActivity: [],
     },
     debug: {
       authUsers: 0,
       profilesUsers: 0,
-      tablesFound: []
-    }
+      tablesFound: [],
+    },
   });
 
   //adminpass
-  const ADMIN_CODE = 'admin';
+  const ADMIN_CODE = "admin";
   //admins
-  const ADMIN_EMAILS = ['adminjanri0255@gmail.com', "caromayashleymarie@gmail.com", "castillanocharles405@gmail.com", "bellezakathereen96@gmail.com", "lawrencefrankmantiquilla15@gmail.com", "catajoannahmarie@gmail.com", "paolojohnlatorilla711@gmail.com"];
+  const ADMIN_EMAILS = [
+    "adminjanri0255@gmail.com",
+    "caromayashleymarie@gmail.com",
+    "castillanocharles405@gmail.com",
+    "bellezakathereen96@gmail.com",
+    "lawrencefrankmantiquilla15@gmail.com",
+    "catajoannahmarie@gmail.com",
+    "paolojohnlatorilla711@gmail.com",
+  ];
 
   useEffect(() => {
     checkAdminAuth();
@@ -53,43 +88,43 @@ export default function AdminDashboard() {
   //set up real-time subscription for profile changes
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('Setting up real-time subscriptions...');
-      
+      console.log("Setting up real-time subscriptions...");
+
       const profileSubscription = supabase
-        .channel('profiles_changes')
+        .channel("profiles_changes")
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: '*',
-            schema: 'public',
-            table: 'profiles'
+            event: "*",
+            schema: "public",
+            table: "profiles",
           },
           (payload) => {
-            console.log('Profile change detected:', payload);
+            console.log("Profile change detected:", payload);
             //refresh data when profiles change
             fetchDashboardData();
-          }
+          },
         )
         .subscribe();
 
       const productSubscription = supabase
-        .channel('products_changes')
+        .channel("products_changes")
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: '*',
-            schema: 'public',
-            table: 'products'
+            event: "*",
+            schema: "public",
+            table: "products",
           },
           (payload) => {
-            console.log('Product change detected:', payload);
+            console.log("Product change detected:", payload);
             fetchDashboardData();
-          }
+          },
         )
         .subscribe();
 
       return () => {
-        console.log('Cleaning up subscriptions...');
+        console.log("Cleaning up subscriptions...");
         profileSubscription.unsubscribe();
         productSubscription.unsubscribe();
       };
@@ -99,61 +134,74 @@ export default function AdminDashboard() {
   const checkAdminAuth = async () => {
     try {
       setLoading(true);
-      setError('');
-      
-      console.log('Checking admin authentication...');
-      
-      const isLocallyAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
-      console.log('Local admin auth status:', isLocallyAuthenticated);
-      
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      console.log('Current user:', user?.email || 'No user');
-      console.log('User error:', userError?.message || 'None');
-      
+      setError("");
+
+      console.log("Checking admin authentication...");
+
+      const isLocallyAuthenticated =
+        localStorage.getItem("admin_authenticated") === "true";
+      console.log("Local admin auth status:", isLocallyAuthenticated);
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      console.log("Current user:", user?.email || "No user");
+      console.log("User error:", userError?.message || "None");
+
       setDebugInfo({
         hasLocalAuth: isLocallyAuthenticated,
         currentUser: user?.email || null,
         userError: userError?.message || null,
         isAdminEmail: user ? ADMIN_EMAILS.includes(user.email) : false,
-        hasAdminRole: user?.user_metadata?.role === 'admin'
+        hasAdminRole: user?.user_metadata?.role === "admin",
       });
-      
+
       if (!user || userError) {
-        console.log('No valid user session');
-        localStorage.removeItem('admin_authenticated');
+        console.log("No valid user session");
+        localStorage.removeItem("admin_authenticated");
         setIsAuthenticated(false);
         if (!user) {
-          setError('You must be logged in to access the admin dashboard. Please login to your regular account first.');
+          setError(
+            "You must be logged in to access the admin dashboard. Please login to your regular account first.",
+          );
         }
         return;
       }
-      
+
       if (isLocallyAuthenticated) {
         const isAdminEmail = ADMIN_EMAILS.includes(user.email);
-        const hasAdminRole = user.user_metadata?.role === 'admin';
-        
-        console.log('Admin check - Email:', isAdminEmail, 'Role:', hasAdminRole);
-        
+        const hasAdminRole = user.user_metadata?.role === "admin";
+
+        console.log(
+          "Admin check - Email:",
+          isAdminEmail,
+          "Role:",
+          hasAdminRole,
+        );
+
         if (isAdminEmail || hasAdminRole) {
-          console.log('Admin access granted');
+          console.log("Admin access granted");
           setIsAuthenticated(true);
           await fetchDashboardData();
         } else {
-          console.log('User not authorized as admin');
-          localStorage.removeItem('admin_authenticated');
+          console.log("User not authorized as admin");
+          localStorage.removeItem("admin_authenticated");
           setIsAuthenticated(false);
-          setError(`Access denied. User ${user.email} is not authorized as an admin.`);
+          setError(
+            `Access denied. User ${user.email} is not authorized as an admin.`,
+          );
         }
       } else {
-        console.log('No local admin auth, showing login form');
+        console.log("No local admin auth, showing login form");
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Auth error:', error);
-      setError('Authentication error: ' + error.message);
+      console.error("Auth error:", error);
+      setError("Authentication error: " + error.message);
       setIsAuthenticated(false);
-      localStorage.removeItem('admin_authenticated');
+      localStorage.removeItem("admin_authenticated");
     } finally {
       setLoading(false);
     }
@@ -162,44 +210,56 @@ export default function AdminDashboard() {
   const handleAdminLogin = async () => {
     try {
       setLoading(true);
-      setError('');
-      
-      console.log('Attempting admin login...');
-      
+      setError("");
+
+      console.log("Attempting admin login...");
+
       if (adminCode !== ADMIN_CODE) {
-        setError('Invalid admin code');
-        setAdminCode('');
+        setError("Invalid admin code");
+        setAdminCode("");
         setLoading(false);
         return;
       }
-      
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      console.log('User during login:', user?.email || 'No user');
-      
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      console.log("User during login:", user?.email || "No user");
+
       if (userError || !user) {
-        setError('You need to be logged in to access the admin dashboard. Please login to your regular account first.');
+        setError(
+          "You need to be logged in to access the admin dashboard. Please login to your regular account first.",
+        );
         setLoading(false);
         return;
       }
 
       const isAdminEmail = ADMIN_EMAILS.includes(user.email);
-      const hasAdminRole = user.user_metadata?.role === 'admin';
-      
-      console.log('Admin login check - Email:', isAdminEmail, 'Role:', hasAdminRole);
-      
+      const hasAdminRole = user.user_metadata?.role === "admin";
+
+      console.log(
+        "Admin login check - Email:",
+        isAdminEmail,
+        "Role:",
+        hasAdminRole,
+      );
+
       if (isAdminEmail || hasAdminRole) {
-        console.log('Admin login successful');
-        localStorage.setItem('admin_authenticated', 'true');
+        console.log("Admin login successful");
+        localStorage.setItem("admin_authenticated", "true");
         setIsAuthenticated(true);
         await fetchDashboardData();
       } else {
-        setError(`Access denied. User ${user.email} is not authorized as an admin.`);
-        console.log('Admin login failed - unauthorized user');
+        setError(
+          `Access denied. User ${user.email} is not authorized as an admin.`,
+        );
+        console.log("Admin login failed - unauthorized user");
       }
     } catch (error) {
-      console.error('Admin login error:', error);
-      setError('Error during admin authentication: ' + error.message);
+      console.error("Admin login error:", error);
+      setError("Error during admin authentication: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -208,16 +268,16 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       setRefreshing(true);
-      console.log('Fetching dashboard data...');
-      
+      console.log("Fetching dashboard data...");
+
       //check what tables exist first
-      const { data: tablesData } = await supabase.rpc('get_table_names');
-      console.log('Available tables:', tablesData);
-      
+      const { data: tablesData } = await supabase.rpc("get_table_names");
+      console.log("Available tables:", tablesData);
+
       //check the auth.users count
       const { count: authUsersCount } = await supabase.auth.admin.listUsers();
-      console.log('Auth users count:', authUsersCount);
-      
+      console.log("Auth users count:", authUsersCount);
+
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
@@ -225,119 +285,149 @@ export default function AdminDashboard() {
       weekAgo.setDate(weekAgo.getDate() - 7);
 
       //get all the users from profiles table
-      console.log('Fetching profiles...');
-      const { data: allUsers, error: usersError, count: profilesCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
+      console.log("Fetching profiles...");
+      const {
+        data: allUsers,
+        error: usersError,
+        count: profilesCount,
+      } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false });
 
-      console.log('Profiles query result:', {
+      console.log("Profiles query result:", {
         data: allUsers?.length || 0,
-        error: usersError?.message || 'None',
-        count: profilesCount
+        error: usersError?.message || "None",
+        count: profilesCount,
       });
 
       if (usersError) {
-        console.error('Users fetch error:', usersError);
+        console.error("Users fetch error:", usersError);
       }
 
       let authUsers = [];
       if (!allUsers || allUsers.length === 0) {
-        console.log('Trying to fetch from auth.users...');
+        console.log("Trying to fetch from auth.users...");
         try {
-          const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+          const { data: authData, error: authError } =
+            await supabase.auth.admin.listUsers();
           if (!authError) {
             authUsers = authData.users || [];
-            console.log('Found users in auth.users:', authUsers.length);
+            console.log("Found users in auth.users:", authUsers.length);
           }
         } catch (authErr) {
-          console.log('Cannot access auth.users (normal if not service key)');
+          console.log("Cannot access auth.users (normal if not service key)");
         }
       }
 
       //get recent users in last 7 days
       const { data: recentUsers } = await supabase
-        .from('profiles')
-        .select('*')
-        .gte('created_at', weekAgo.toISOString())
-        .order('created_at', { ascending: false })
+        .from("profiles")
+        .select("*")
+        .gte("created_at", weekAgo.toISOString())
+        .order("created_at", { ascending: false })
         .limit(10);
 
-      console.log('Recent users:', recentUsers?.length || 0);
+      console.log("Recent users:", recentUsers?.length || 0);
 
       //get all products
-      console.log('Fetching products...');
+      console.log("Fetching products...");
       const { data: allProducts, error: productsError } = await supabase
-        .from('products')
-        .select('*');
+        .from("products")
+        .select("*");
 
-      console.log('Products:', allProducts?.length || 0, 'Error:', productsError?.message || 'None');
+      console.log(
+        "Products:",
+        allProducts?.length || 0,
+        "Error:",
+        productsError?.message || "None",
+      );
 
       if (productsError) {
-        console.error('Products fetch error:', productsError);
+        console.error("Products fetch error:", productsError);
       }
 
       //get available products
       const { data: availableProducts } = await supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'Available');
+        .from("products")
+        .select("*")
+        .eq("status", "Available");
 
       //get ratings
-      console.log('Fetching ratings...');
+      console.log("Fetching ratings...");
       const { data: ratings, error: ratingsError } = await supabase
-        .from('ratings')
-        .select('*');
+        .from("ratings")
+        .select("*");
 
-      console.log('Ratings:', ratings?.length || 0, 'Error:', ratingsError?.message || 'None');
+      console.log(
+        "Ratings:",
+        ratings?.length || 0,
+        "Error:",
+        ratingsError?.message || "None",
+      );
 
       if (ratingsError) {
-        console.error('Ratings fetch error:', ratingsError);
+        console.error("Ratings fetch error:", ratingsError);
       }
 
       //get saved contacts
-      console.log('Fetching contacts...');
+      console.log("Fetching contacts...");
       const { data: contacts, error: contactsError } = await supabase
-        .from('saved_contacts')
-        .select('*');
+        .from("saved_contacts")
+        .select("*");
 
-      console.log('Contacts:', contacts?.length || 0, 'Error:', contactsError?.message || 'None');
+      console.log(
+        "Contacts:",
+        contacts?.length || 0,
+        "Error:",
+        contactsError?.message || "None",
+      );
 
       if (contactsError) {
-        console.error('Contacts fetch error:', contactsError);
+        console.error("Contacts fetch error:", contactsError);
       }
 
       const usersData = allUsers && allUsers.length > 0 ? allUsers : authUsers;
-      
+
       //process data for the charts
       const userGrowthData = processUserGrowthData(usersData || []);
       const categoryData = processCategoryData(allProducts || []);
-      const activityData = processActivityData(usersData || [], allProducts || [], ratings || []);
+      const activityData = processActivityData(
+        usersData || [],
+        allProducts || [],
+        ratings || [],
+      );
 
       //calculates the metrics
-      const todayUsers = (usersData || []).filter(u => {
+      const todayUsers = (usersData || []).filter((u) => {
         const createdAt = u.created_at || u.created_at;
         return new Date(createdAt) >= yesterday;
       }).length;
 
-      const activeUsers = (usersData || []).filter(u => {
-        const lastActive = new Date(u.updated_at || u.last_sign_in_at || u.created_at);
+      const activeUsers = (usersData || []).filter((u) => {
+        const lastActive = new Date(
+          u.updated_at || u.last_sign_in_at || u.created_at,
+        );
         const dayAgo = new Date();
         dayAgo.setHours(dayAgo.getHours() - 24);
         return lastActive >= dayAgo;
       }).length;
 
-      const avgRating = (ratings || []).length > 0 
-        ? ((ratings || []).reduce((acc, r) => acc + r.rating, 0) / (ratings || []).length).toFixed(1)
-        : 0;
+      const avgRating =
+        (ratings || []).length > 0
+          ? (
+              (ratings || []).reduce((acc, r) => acc + r.rating, 0) /
+              (ratings || []).length
+            ).toFixed(1)
+          : 0;
 
-      console.log('Dashboard data processed successfully');
-      console.log('Metrics:', {
+      console.log("Dashboard data processed successfully");
+      console.log("Metrics:", {
         totalUsers: (usersData || []).length,
         todayUsers,
         activeUsers,
         totalProducts: (allProducts || []).length,
-        availableProducts: (availableProducts || []).length
+        availableProducts: (availableProducts || []).length,
       });
 
       setDashboardData({
@@ -345,35 +435,36 @@ export default function AdminDashboard() {
           total: (usersData || []).length,
           active: activeUsers,
           newToday: todayUsers,
-          recentSignups: recentUsers || usersData?.slice(0, 10) || []
+          recentSignups: recentUsers || usersData?.slice(0, 10) || [],
         },
         products: {
           total: (allProducts || []).length,
           available: (availableProducts || []).length,
-          soldOut: ((allProducts || []).length) - ((availableProducts || []).length),
-          categories: categoryData
+          soldOut:
+            (allProducts || []).length - (availableProducts || []).length,
+          categories: categoryData,
         },
         activity: {
           ratings: (ratings || []).length,
           contacts: (contacts || []).length,
-          avgRating: avgRating
+          avgRating: avgRating,
         },
         charts: {
           userGrowth: userGrowthData,
           productsByCategory: categoryData,
-          dailyActivity: activityData
+          dailyActivity: activityData,
         },
         debug: {
           authUsers: authUsers.length,
           profilesUsers: (allUsers || []).length,
-          tablesFound: tablesData || []
-        }
+          tablesFound: tablesData || [],
+        },
       });
 
       setLastRefresh(new Date());
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      setError('Error loading dashboard data: ' + error.message);
+      console.error("Error fetching dashboard data:", error);
+      setError("Error loading dashboard data: " + error.message);
     } finally {
       setRefreshing(false);
     }
@@ -384,15 +475,15 @@ export default function AdminDashboard() {
       const date = new Date();
       date.setDate(date.getDate() - (29 - i));
       return {
-        date: date.toISOString().split('T')[0],
+        date: date.toISOString().split("T")[0],
         users: 0,
-        cumulative: 0
+        cumulative: 0,
       };
     });
 
-    users.forEach(user => {
-      const userDate = new Date(user.created_at).toISOString().split('T')[0];
-      const dayIndex = last30Days.findIndex(day => day.date === userDate);
+    users.forEach((user) => {
+      const userDate = new Date(user.created_at).toISOString().split("T")[0];
+      const dayIndex = last30Days.findIndex((day) => day.date === userDate);
       if (dayIndex !== -1) {
         last30Days[dayIndex].users++;
       }
@@ -400,7 +491,7 @@ export default function AdminDashboard() {
 
     //calculate the cumulative
     let cumulative = 0;
-    return last30Days.map(day => {
+    return last30Days.map((day) => {
       cumulative += day.users;
       return { ...day, cumulative };
     });
@@ -408,16 +499,19 @@ export default function AdminDashboard() {
 
   const processCategoryData = (products) => {
     const categories = {};
-    products.forEach(product => {
-      const categoryName = product.category === 'HerbsAndSpices' ? 'Herbs & Spices' : product.category;
+    products.forEach((product) => {
+      const categoryName =
+        product.category === "HerbsAndSpices"
+          ? "Herbs & Spices"
+          : product.category;
       categories[categoryName] = (categories[categoryName] || 0) + 1;
     });
-    
-    const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+    const colors = ["#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6"];
     return Object.entries(categories).map(([name, value], index) => ({
       name,
       value,
-      color: colors[index % colors.length]
+      color: colors[index % colors.length],
     }));
   };
 
@@ -426,10 +520,10 @@ export default function AdminDashboard() {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
       return {
-        day: date.toLocaleDateString('en', { weekday: 'short' }),
+        day: date.toLocaleDateString("en", { weekday: "short" }),
         users: 0,
         products: 0,
-        ratings: 0
+        ratings: 0,
       };
     });
 
@@ -438,21 +532,21 @@ export default function AdminDashboard() {
       const dayStart = new Date(today);
       dayStart.setDate(today.getDate() - (6 - i));
       dayStart.setHours(0, 0, 0, 0);
-      
+
       const dayEnd = new Date(dayStart);
       dayEnd.setHours(23, 59, 59, 999);
 
-      last7Days[i].users = users.filter(u => {
+      last7Days[i].users = users.filter((u) => {
         const createdAt = new Date(u.created_at);
         return createdAt >= dayStart && createdAt <= dayEnd;
       }).length;
-      
-      last7Days[i].products = products.filter(p => {
+
+      last7Days[i].products = products.filter((p) => {
         const createdAt = new Date(p.created_at);
         return createdAt >= dayStart && createdAt <= dayEnd;
       }).length;
-      
-      last7Days[i].ratings = ratings.filter(r => {
+
+      last7Days[i].ratings = ratings.filter((r) => {
         const createdAt = new Date(r.created_at);
         return createdAt >= dayStart && createdAt <= dayEnd;
       }).length;
@@ -462,11 +556,11 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    console.log('Admin logout');
-    localStorage.removeItem('admin_authenticated');
+    console.log("Admin logout");
+    localStorage.removeItem("admin_authenticated");
     setIsAuthenticated(false);
-    setAdminCode('');
-    setError('');
+    setAdminCode("");
+    setError("");
     setDebugInfo(null);
   };
 
@@ -475,7 +569,9 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-sm md:text-base text-gray-600">Loading dashboard...</p>
+          <p className="text-sm md:text-base text-gray-600">
+            Loading dashboard...
+          </p>
         </div>
       </div>
     );
@@ -489,20 +585,25 @@ export default function AdminDashboard() {
             <div className="w-12 h-12 md:w-16 md:h-16 bg-green-700 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
               <Users className="w-6 h-6 md:w-8 md:h-8 text-white" />
             </div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Admin Access</h2>
-            <p className="text-sm md:text-base text-gray-600">Enter admin code to access dashboard</p>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
+              Admin Access
+            </h2>
+            <p className="text-sm md:text-base text-gray-600">
+              Enter admin code to access dashboard
+            </p>
             <p className="text-xs md:text-sm text-red-600 mt-2">
-              If you're not an admin, you don't have access to this page. Return to the homepage.
+              If you're not an admin, you don't have access to this page. Return
+              to the homepage.
             </p>
           </div>
-          
+
           {error && (
             <div className="mb-4 p-2 md:p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-start gap-2">
               <AlertCircle className="w-4 h-4 md:w-5 md:h-5 mt-0.5 flex-shrink-0" />
               <span className="text-xs md:text-sm">{error}</span>
             </div>
           )}
-          
+
           <div className="space-y-4">
             <div>
               <input
@@ -511,7 +612,7 @@ export default function AdminDashboard() {
                 value={adminCode}
                 onChange={(e) => setAdminCode(e.target.value)}
                 className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 transition-colors"
-                onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+                onKeyPress={(e) => e.key === "Enter" && handleAdminLogin()}
               />
             </div>
             <button
@@ -519,12 +620,14 @@ export default function AdminDashboard() {
               disabled={loading}
               className="w-full bg-green-700 text-white py-2 px-3 md:py-3 md:px-4 rounded-lg hover:bg-green-800 transition-colors font-medium disabled:opacity-50 text-sm md:text-base"
             >
-              {loading ? 'Checking...' : 'Access Dashboard'}
+              {loading ? "Checking..." : "Access Dashboard"}
             </button>
           </div>
-          
+
           <div className="mt-5 md:mt-6 text-xs text-gray-500 text-center">
-            <p>This dashboard is restricted to authorized administrators only.</p>
+            <p>
+              This dashboard is restricted to authorized administrators only.
+            </p>
           </div>
         </div>
       </div>
@@ -535,16 +638,27 @@ export default function AdminDashboard() {
     <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs md:text-sm text-gray-600 font-medium">{title}</p>
-          <p className="text-lg md:text-2xl font-bold text-gray-800 mt-0.5 md:mt-1">{value}</p>
+          <p className="text-xs md:text-sm text-gray-600 font-medium">
+            {title}
+          </p>
+          <p className="text-lg md:text-2xl font-bold text-gray-800 mt-0.5 md:mt-1">
+            {value}
+          </p>
           {change !== undefined && (
-            <div className={`flex items-center mt-1 md:mt-2 text-xs md:text-sm ${change >= 0 ? 'text-green-800' : 'text-red-600'}`}>
+            <div
+              className={`flex items-center mt-1 md:mt-2 text-xs md:text-sm ${change >= 0 ? "text-green-800" : "text-red-600"}`}
+            >
               <TrendingUp className="w-3 h-3 md:w-4 md:h-4 mr-0.5 md:mr-1" />
-              <span>{change >= 0 ? '+' : ''}{change}%</span>
+              <span>
+                {change >= 0 ? "+" : ""}
+                {change}%
+              </span>
             </div>
           )}
         </div>
-        <div className={`w-8 h-8 md:w-12 md:h-12 bg-${color}-100 rounded-lg md:rounded-xl flex items-center justify-center`}>
+        <div
+          className={`w-8 h-8 md:w-12 md:h-12 bg-${color}-100 rounded-lg md:rounded-xl flex items-center justify-center`}
+        >
           <Icon className={`w-4 h-4 md:w-6 md:h-6 text-${color}-600`} />
         </div>
       </div>
@@ -591,7 +705,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-
         {/* debug info */}
         <div className="mb-4 md:mb-6 bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-100 p-3 md:p-4">
           <h3 className="text-xs md:text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1 md:gap-2">
@@ -601,19 +714,27 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs">
             <div>
               <span className="text-gray-500">Profiles Table:</span>
-              <span className="ml-1 md:ml-2 font-medium">{dashboardData.debug.profilesUsers} users</span>
+              <span className="ml-1 md:ml-2 font-medium">
+                {dashboardData.debug.profilesUsers} users
+              </span>
             </div>
             <div>
               <span className="text-gray-500">Auth Users:</span>
-              <span className="ml-1 md:ml-2 font-medium">{dashboardData.debug.authUsers} users</span>
+              <span className="ml-1 md:ml-2 font-medium">
+                {dashboardData.debug.authUsers} users
+              </span>
             </div>
             <div>
               <span className="text-gray-500">Real-time:</span>
-              <span className="ml-1 md:ml-2 font-medium text-green-600">Active</span>
+              <span className="ml-1 md:ml-2 font-medium text-green-600">
+                Active
+              </span>
             </div>
             <div>
               <span className="text-gray-500">Last Refresh:</span>
-              <span className="ml-1 md:ml-2 font-medium">{lastRefresh.toLocaleTimeString()}</span>
+              <span className="ml-1 md:ml-2 font-medium">
+                {lastRefresh.toLocaleTimeString()}
+              </span>
             </div>
           </div>
         </div>
@@ -656,65 +777,84 @@ export default function AdminDashboard() {
               <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-green-800" />
               User Growth (30 Days)
             </h3>
-            <ResponsiveContainer width="100%" height={200} className="md:hidden">
+            <ResponsiveContainer
+              width="100%"
+              height={200}
+              className="md:hidden"
+            >
               <AreaChart data={dashboardData.charts.userGrowth}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="date"
                   tickFormatter={(date) => new Date(date).getDate()}
                   stroke="#666"
                   tick={{ fontSize: 10 }}
                 />
                 <YAxis stroke="#666" tick={{ fontSize: 10 }} />
-                <Tooltip 
+                <Tooltip
                   labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                  formatter={(value, name) => [value, name === 'users' ? 'New' : 'Total']}
-                  contentStyle={{ fontSize: '12px' }}
+                  formatter={(value, name) => [
+                    value,
+                    name === "users" ? "New" : "Total",
+                  ]}
+                  contentStyle={{ fontSize: "12px" }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="cumulative" 
-                  stroke="#10B981" 
-                  fill="#10B981" 
+                <Area
+                  type="monotone"
+                  dataKey="cumulative"
+                  stroke="#10B981"
+                  fill="#10B981"
                   fillOpacity={0.3}
                   name="Total Users"
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="users" 
-                  stroke="#13833cff" 
-                  fill="#16A34A" 
+                <Area
+                  type="monotone"
+                  dataKey="users"
+                  stroke="#13833cff"
+                  fill="#16A34A"
                   fillOpacity={0.6}
                   name="New Users"
                 />
               </AreaChart>
             </ResponsiveContainer>
-            <ResponsiveContainer width="100%" height={300} className="hidden md:block">
+            <ResponsiveContainer
+              width="100%"
+              height={300}
+              className="hidden md:block"
+            >
               <AreaChart data={dashboardData.charts.userGrowth}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(date) => new Date(date).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(date) =>
+                    new Date(date).toLocaleDateString("en", {
+                      month: "short",
+                      day: "numeric",
+                    })
+                  }
                   stroke="#666"
                 />
                 <YAxis stroke="#666" />
-                <Tooltip 
+                <Tooltip
                   labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                  formatter={(value, name) => [value, name === 'users' ? 'New Users' : 'Total Users']}
+                  formatter={(value, name) => [
+                    value,
+                    name === "users" ? "New Users" : "Total Users",
+                  ]}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="cumulative" 
-                  stroke="#10B981" 
-                  fill="#10B981" 
+                <Area
+                  type="monotone"
+                  dataKey="cumulative"
+                  stroke="#10B981"
+                  fill="#10B981"
                   fillOpacity={0.3}
                   name="Total Users"
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="users" 
-                  stroke="#13833cff" 
-                  fill="#16A34A" 
+                <Area
+                  type="monotone"
+                  dataKey="users"
+                  stroke="#13833cff"
+                  fill="#16A34A"
                   fillOpacity={0.6}
                   name="New Users"
                 />
@@ -728,7 +868,11 @@ export default function AdminDashboard() {
               <Package className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
               Products by Category
             </h3>
-            <ResponsiveContainer width="100%" height={200} className="md:hidden">
+            <ResponsiveContainer
+              width="100%"
+              height={200}
+              className="md:hidden"
+            >
               <PieChart>
                 <Pie
                   data={dashboardData.charts.productsByCategory}
@@ -736,17 +880,25 @@ export default function AdminDashboard() {
                   cy="50%"
                   outerRadius={70}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelStyle={{ fontSize: '10px' }}
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
+                  labelStyle={{ fontSize: "10px" }}
                 >
-                  {dashboardData.charts.productsByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                  {dashboardData.charts.productsByCategory.map(
+                    (entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ),
+                  )}
                 </Pie>
-                <Tooltip contentStyle={{ fontSize: '12px' }} />
+                <Tooltip contentStyle={{ fontSize: "12px" }} />
               </PieChart>
             </ResponsiveContainer>
-            <ResponsiveContainer width="100%" height={300} className="hidden md:block">
+            <ResponsiveContainer
+              width="100%"
+              height={300}
+              className="hidden md:block"
+            >
               <PieChart>
                 <Pie
                   data={dashboardData.charts.productsByCategory}
@@ -754,11 +906,15 @@ export default function AdminDashboard() {
                   cy="50%"
                   outerRadius={100}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
                 >
-                  {dashboardData.charts.productsByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                  {dashboardData.charts.productsByCategory.map(
+                    (entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ),
+                  )}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -777,13 +933,17 @@ export default function AdminDashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="day" stroke="#666" tick={{ fontSize: 10 }} />
               <YAxis stroke="#666" tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={{ fontSize: '12px' }} />
+              <Tooltip contentStyle={{ fontSize: "12px" }} />
               <Bar dataKey="users" fill="#16A34A" name="Users" />
               <Bar dataKey="products" fill="#1c63d5ff" name="Products" />
               <Bar dataKey="ratings" fill="#db941bff" name="Ratings" />
             </BarChart>
           </ResponsiveContainer>
-          <ResponsiveContainer width="100%" height={300} className="hidden md:block">
+          <ResponsiveContainer
+            width="100%"
+            height={300}
+            className="hidden md:block"
+          >
             <BarChart data={dashboardData.charts.dailyActivity}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="day" stroke="#666" />
@@ -807,35 +967,50 @@ export default function AdminDashboard() {
             </h3>
             <div className="space-y-3 md:space-y-4 max-h-64 md:max-h-96 overflow-y-auto">
               {dashboardData.users.recentSignups.length > 0 ? (
-                dashboardData.users.recentSignups.slice(0, 10).map((user, index) => (
-                  <div key={user.id || index} className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2 md:gap-3">
-                      <div className="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <Users className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
+                dashboardData.users.recentSignups
+                  .slice(0, 10)
+                  .map((user, index) => (
+                    <div
+                      key={user.id || index}
+                      className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <Users className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-xs md:text-base text-gray-800">
+                            {user.full_name ||
+                              user.username ||
+                              user.email?.split("@")[0]}
+                          </p>
+                          <p className="text-xs md:text-sm text-gray-500">
+                            {user.email}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-xs md:text-base text-gray-800">{user.full_name || user.username || user.email?.split('@')[0]}</p>
-                        <p className="text-xs md:text-sm text-gray-500">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs md:text-sm text-gray-500">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </p>
-                      {user.address && (
-                        <p className="text-xs text-gray-400 flex items-center gap-0.5 md:gap-1">
-                          <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                          {user.address.split(',')[0]}
+                      <div className="text-right">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          {new Date(user.created_at).toLocaleDateString()}
                         </p>
-                      )}
+                        {user.address && (
+                          <p className="text-xs text-gray-400 flex items-center gap-0.5 md:gap-1">
+                            <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                            {user.address.split(",")[0]}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <div className="text-center py-6 md:py-8 text-gray-500">
                   <Users className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 text-gray-300" />
-                  <p className="text-sm md:text-base">No recent signups found</p>
-                  <p className="text-xs md:text-sm mt-1">New users will appear here when they sign up</p>
+                  <p className="text-sm md:text-base">
+                    No recent signups found
+                  </p>
+                  <p className="text-xs md:text-sm mt-1">
+                    New users will appear here when they sign up
+                  </p>
                 </div>
               )}
             </div>
@@ -850,24 +1025,44 @@ export default function AdminDashboard() {
               </h3>
               <div className="space-y-3 md:space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs md:text-base text-gray-600">Active Users</span>
-                  <span className="font-semibold text-xs md:text-base text-green-600">{dashboardData.users.active}</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    Active Users
+                  </span>
+                  <span className="font-semibold text-xs md:text-base text-green-600">
+                    {dashboardData.users.active}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs md:text-base text-gray-600">Total Products</span>
-                  <span className="font-semibold text-xs md:text-base text-blue-600">{dashboardData.products.total}</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    Total Products
+                  </span>
+                  <span className="font-semibold text-xs md:text-base text-blue-600">
+                    {dashboardData.products.total}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs md:text-base text-gray-600">Sold Out</span>
-                  <span className="font-semibold text-xs md:text-base text-red-600">{dashboardData.products.soldOut}</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    Sold Out
+                  </span>
+                  <span className="font-semibold text-xs md:text-base text-red-600">
+                    {dashboardData.products.soldOut}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs md:text-base text-gray-600">Total Ratings</span>
-                  <span className="font-semibold text-xs md:text-base text-yellow-600">{dashboardData.activity.ratings}</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    Total Ratings
+                  </span>
+                  <span className="font-semibold text-xs md:text-base text-yellow-600">
+                    {dashboardData.activity.ratings}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs md:text-base text-gray-600">Saved Contacts</span>
-                  <span className="font-semibold text-xs md:text-base text-purple-600">{dashboardData.activity.contacts}</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    Saved Contacts
+                  </span>
+                  <span className="font-semibold text-xs md:text-base text-purple-600">
+                    {dashboardData.activity.contacts}
+                  </span>
                 </div>
               </div>
             </div>
@@ -879,31 +1074,47 @@ export default function AdminDashboard() {
               </h3>
               <div className="space-y-2.5 md:space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs md:text-base text-gray-600">Database</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    Database
+                  </span>
                   <div className="flex items-center gap-1 md:gap-2">
                     <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-green-600">Healthy</span>
+                    <span className="text-xs md:text-sm text-green-600">
+                      Healthy
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs md:text-base text-gray-600">API Response</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    API Response
+                  </span>
                   <div className="flex items-center gap-1 md:gap-2">
                     <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-green-600">Fast</span>
+                    <span className="text-xs md:text-sm text-green-600">
+                      Fast
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs md:text-base text-gray-600">Real-time Updates</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    Real-time Updates
+                  </span>
                   <div className="flex items-center gap-1 md:gap-2">
                     <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-green-600">Active</span>
+                    <span className="text-xs md:text-sm text-green-600">
+                      Active
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs md:text-base text-gray-600">Storage</span>
+                  <span className="text-xs md:text-base text-gray-600">
+                    Storage
+                  </span>
                   <div className="flex items-center gap-1 md:gap-2">
                     <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-green-600">Available</span>
+                    <span className="text-xs md:text-sm text-green-600">
+                      Available
+                    </span>
                   </div>
                 </div>
               </div>

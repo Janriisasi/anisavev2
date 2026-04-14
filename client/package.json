@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.52.1",
     "browser-image-compression": "^2.0.2",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
     "gsap": "^3.13.0",
     "lightswind": "^3.1.15",

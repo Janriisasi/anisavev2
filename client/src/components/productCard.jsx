@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import productPrices from '../data/productPrices.json';
+import StartChatButton from '../components/startChatButton';
 
 export default function ProductCard({ product, onSaveContact, showSaveButton = true }) {
   const navigate = useNavigate();

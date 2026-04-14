@@ -7,14 +7,25 @@ import compressImage from '../utils/imageCompression';
 import { useAuth } from '../contexts/authContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const formatWithCommas = (value) => {
+  if (value === '' || value === null || value === undefined) return '';
+  const num = value.toString().replace(/,/g, '');
+  if (isNaN(num)) return value;
+  const parts = num.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+};
+
+const stripCommas = (value) => value.toString().replace(/,/g, '');
+
 export default function ProductFormModal({ onClose, onSuccess, existingProduct, userProfile }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: existingProduct?.name || '',
     category: existingProduct?.category || 'Vegetables',
-    price: existingProduct?.price || '',
-    quantity_kg: existingProduct?.quantity_kg || '',
+    price: existingProduct?.price ? formatWithCommas(existingProduct.price) : '',
+    quantity_kg: existingProduct?.quantity_kg ? formatWithCommas(existingProduct.quantity_kg) : '',
     image_url: existingProduct?.image_url || '',
     description: existingProduct?.description || ''
   });
@@ -39,7 +50,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     setForm(prev => ({
       ...prev,
       name: productName,
-      price: suggestedPrice
+      price: formatWithCommas(suggestedPrice)
     }));
     setErrors(prev => ({ ...prev, name: '' }));
   };
@@ -75,12 +86,16 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
       newErrors.name = 'Product name is required';
     }
 
-    if (!form.price || form.price === '' || parseFloat(form.price) <= 0) {
+    if (!form.price || form.price === '' || parseFloat(stripCommas(form.price)) <= 0) {
       newErrors.price = 'Valid price is required';
+    } else if (parseFloat(stripCommas(form.price)) > 999999) {
+      newErrors.price = 'Price cannot exceed ₱999,999';
     }
 
-    if (!form.quantity_kg || form.quantity_kg === '' || parseFloat(form.quantity_kg) <= 0) {
+    if (!form.quantity_kg || form.quantity_kg === '' || parseFloat(stripCommas(form.quantity_kg)) <= 0) {
       newErrors.quantity_kg = 'Valid quantity is required';
+    } else if (parseFloat(stripCommas(form.quantity_kg)) > 5000) {
+      newErrors.quantity_kg = 'Quantity cannot exceed 5,000 kg';
     }
 
     setErrors(newErrors);
@@ -253,8 +268,8 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
           .update({
             name: form.name,
             category: form.category,
-            price: form.price,
-            quantity_kg: form.quantity_kg,
+            price: stripCommas(form.price),
+            quantity_kg: stripCommas(form.quantity_kg),
             image_url: imageUrl,
             description: form.description,
             updated_at: new Date().toISOString()
@@ -271,8 +286,8 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
               user_id: user.id,
               name: form.name,
               category: form.category,
-              price: form.price,
-              quantity_kg: form.quantity_kg,
+              price: stripCommas(form.price),
+              quantity_kg: stripCommas(form.quantity_kg),
               image_url: imageUrl,
               description: form.description,
               status: 'Available'
@@ -491,24 +506,32 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     Price per kg <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="number"
-                    placeholder="Price per kg"
-                    className={`input w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
-                      errors.price
-                        ? 'border-red-500 focus:ring-red-200 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-2 focus:ring-green-200 focus:border-green-500'
-                    }`}
-                    value={form.price}
-                    onChange={(e) => {
-                      setForm({...form, price: e.target.value});
-                      setErrors(prev => ({ ...prev, price: '' }));
-                    }}
-                  />
+                  <div className={`flex border rounded-lg overflow-hidden transition-all duration-200 ${
+                    errors.price
+                      ? 'border-red-500 ring-2 ring-red-200'
+                      : 'border-gray-300 focus-within:ring-2 focus-within:ring-green-200 focus-within:border-green-500'
+                  }`}>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0"
+                      className="input flex-1 pl-3 sm:pl-4 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm outline-none border-none bg-white"
+                      value={form.price}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+                        const parts = raw.split('.');
+                        // Max 6 digits before decimal
+                        if (parts[0].length > 6) return;
+                        const formatted = formatWithCommas(raw);
+                        setForm({...form, price: formatted});
+                        setErrors(prev => ({ ...prev, price: '' }));
+                      }}
+                    />
+                  </div>
                   {errors.price && <p className="text-xs sm:text-sm text-red-500">{errors.price}</p>}
                   {form.name && !errors.price && (
                     <p className="text-xs text-gray-500">
-                      Suggested: ₱{productPrices[form.category]?.[form.name]}/kg
+                      Suggested: ₱ {formatWithCommas(productPrices[form.category]?.[form.name])}/kg
                     </p>
                   )}
                 </div>
@@ -516,10 +539,12 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 <div className="space-y-1 sm:space-y-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     Quantity (kg) <span className="text-red-500">*</span>
+                    <p className="text-xs sm:text-xs text-gray-400">Max: 5,000 kg</p>
                   </label>
                   <input
-                    type="number"
-                    placeholder="Quantity in kg"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0"
                     className={`input w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
                       errors.quantity_kg
                         ? 'border-red-500 focus:ring-red-200 focus:border-red-500'
@@ -527,7 +552,11 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                     }`}
                     value={form.quantity_kg}
                     onChange={(e) => {
-                      setForm({...form, quantity_kg: e.target.value});
+                      const raw = e.target.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+                      const numVal = parseFloat(raw);
+                      if (!isNaN(numVal) && numVal > 5000) return;
+                      const formatted = formatWithCommas(raw);
+                      setForm({...form, quantity_kg: formatted});
                       setErrors(prev => ({ ...prev, quantity_kg: '' }));
                     }}
                   />

@@ -198,15 +198,21 @@ function SignUp() {
             <label htmlFor="full_name" className="block text-sm sm:text-base font-medium text-gray-700">
               What's your full name?
             </label>
-            <input
-              id="full_name"
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
-              name="full_name"
-              value={form.full_name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              autoFocus
-            />
+            <div className="relative">
+              <input
+                id="full_name"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-12 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
+                name="full_name"
+                value={form.full_name}
+                onChange={handleChange}
+                maxLength={25}
+                placeholder="Enter your full name"
+                autoFocus
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                {form.full_name.length}/25
+              </span>
+            </div>
           </div>
         );
       case 2:
@@ -215,15 +221,21 @@ function SignUp() {
             <label htmlFor="username" className="block text-sm sm:text-base font-medium text-gray-700">
               Choose a username
             </label>
-            <input
-              id="username"
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              placeholder="Enter your username"
-              autoFocus
-            />
+            <div className="relative">
+              <input
+                id="username"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-12 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
+                name="username"
+                value={form.username}
+                onChange={handleChange}
+                maxLength={15}
+                placeholder="Enter your username"
+                autoFocus
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                {form.username.length}/15
+              </span>
+            </div>
           </div>
         );
       case 3:

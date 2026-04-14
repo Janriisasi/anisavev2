@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/authContext';
+import { CartProvider } from './contexts/cartContext';
+import { NotificationProvider } from './contexts/notificationContext';
 import Navbar from './components/navbar';
 import Routes from './Routes';
 import Loader from './components/loader';
@@ -18,7 +20,7 @@ function AppContent() {
     <>
       {user && <Navbar />}
       <Routes />
-      <Toaster 
+      <Toaster
         position="center-top"
         toastOptions={{
           duration: 2000,
@@ -43,7 +45,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <NotificationProvider>
+          <CartProvider>
+            <AppContent />
+          </CartProvider>
+        </NotificationProvider>
       </AuthProvider>
     </Router>
   );
