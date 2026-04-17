@@ -792,12 +792,12 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center gap-3 p-3 border-b border-gray-200 bg-gradient-to-r from-green-800 to-green-700 md:rounded-t-2xl">
+      <div className="flex items-center gap-3 p-3 border-b border-gray-100 bg-white md:rounded-t-2xl">
         <button
           onClick={onBack}
-          className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+          className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
         >
-          <ArrowLeft className="w-5 h-5 text-white" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
 
         <div className="relative flex-shrink-0">
@@ -807,25 +807,25 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
               `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${otherUser?.username}`
             }
             alt={otherUser?.full_name}
-            className="w-10 h-10 rounded-full object-cover border-2 border-white"
+            className="w-10 h-10 rounded-full object-cover border-2 border-green-50"
           />
           {isOnline && (
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full" />
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
           )}
         </div>
 
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-white truncate">
+          <h4 className="font-bold text-gray-800 truncate text-sm">
             {otherUser?.full_name || otherUser?.username}
           </h4>
-          <p className="text-xs text-green-100">
+          <p className="text-[10px] font-medium">
             {isOnline ? (
-              <span className="flex items-center gap-1">
-                <Circle className="w-2 h-2 fill-current" />
+              <span className="text-green-600 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                 Active now
               </span>
             ) : (
-              <span>{formatLastSeen(presenceData?.last_seen)}</span>
+              <span className="text-gray-500">{formatLastSeen(presenceData?.last_seen)}</span>
             )}
           </p>
         </div>
@@ -834,9 +834,9 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
           >
-            <MoreVertical className="w-5 h-5 text-white" />
+            <MoreVertical className="w-5 h-5" />
           </button>
 
           <AnimatePresence>

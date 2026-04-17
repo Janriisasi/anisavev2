@@ -1,16 +1,28 @@
 import { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/authContext';
 import ChatPopup from './chatPopup';
 
-export default function ChatButton({ mobileMenu = false }) {
+export default function ChatButton({ mobileMenu = false, mobileTab = false, isActive = false }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [initialConversation, setInitialConversation] = useState(null);
   const [productContext, setProductContext] = useState(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleClose = () => setIsOpen(false);
+    window.addEventListener('closeOverlays', handleClose);
+    return () => window.removeEventListener('closeOverlays', handleClose);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -93,6 +105,43 @@ export default function ChatButton({ mobileMenu = false }) {
   };
 
   if (!user) return null;
+
+  if (mobileTab) {
+    return (
+      <>
+        <button
+          onClick={toggleChat}
+          className={`relative flex flex-col items-center justify-center py-2 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${isOpen || isActive ? 'text-white' : 'text-green-100/70 hover:text-white'}`}
+        >
+          <div className={`relative ${isOpen || isActive ? 'scale-110' : ''} transition-transform`}>
+            <MessageCircle className="w-6 h-6" />
+            <AnimatePresence>
+              {unreadCount > 0 && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1 shadow-sm"
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <span className="text-[10px] mt-1 font-medium">Chat</span>
+          {(isOpen || isActive) && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-white rounded-t-full" />}
+        </button>
+
+        <ChatPopup
+          isOpen={isOpen}
+          onClose={handleClose}
+          onUnreadChange={setUnreadCount}
+          initialConversation={initialConversation}
+          productContext={productContext}
+        />
+      </>
+    );
+  }
 
   // ── Mobile menu variant — matches the style of other navbar menu rows ────────
   if (mobileMenu) {

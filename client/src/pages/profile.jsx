@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import {
   Camera, Star, Package, Edit3, Trash2, Plus,
   MapPin, Phone, LogOut, Edit, ShoppingBag, Award,
+  LayoutGrid, Users,
 } from "lucide-react";
 
 const loadedImageCache = new Set();
@@ -92,8 +93,7 @@ export default function Profile() {
     return () => ch.unsubscribe();
   }, [user]);
 
-  // Realtime: update product inventory live when decrement_product_inventory runs
-  // (triggered when a farmer approves an order — no page refresh needed)
+  // Realtime: update product inventory live
   useEffect(() => {
     if (!user) return;
     const ch = supabase.channel('profile-products-inventory-watch')
@@ -102,9 +102,7 @@ export default function Profile() {
         schema: 'public',
         table: 'products',
       }, (payload) => {
-        // JS-side filter: only products belonging to this user
         if (payload.new.user_id !== user.id) return;
-
         setProducts((prev) =>
           prev.map((p) =>
             p.id === payload.new.id ? { ...p, ...payload.new } : p
@@ -251,6 +249,37 @@ export default function Profile() {
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Profile</h2>
         </div>
 
+        {/* ── MOBILE QUICK-NAV: Categories & Contacts ────────────────────
+            Hidden on md+ because desktop already has these in the top navbar.
+            Acts as the replacement for the old "Menu" drawer shortcuts.     */}
+        <div className="md:hidden grid grid-cols-2 gap-3 mb-6">
+          <button
+            onClick={() => navigate("/categories")}
+            className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-white/20 shadow-sm rounded-2xl px-4 py-3.5 hover:bg-green-50 hover:border-green-200 transition-all duration-200 active:scale-95"
+          >
+            <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <LayoutGrid className="w-5 h-5 text-green-700" />
+            </div>
+            <div className="text-left">
+              <p className="text-xs text-gray-500 leading-none mb-0.5">Browse</p>
+              <p className="text-sm font-semibold text-gray-800">Categories</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate("/contacts")}
+            className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-white/20 shadow-sm rounded-2xl px-4 py-3.5 hover:bg-green-50 hover:border-green-200 transition-all duration-200 active:scale-95"
+          >
+            <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-green-700" />
+            </div>
+            <div className="text-left">
+              <p className="text-xs text-gray-500 leading-none mb-0.5">Saved</p>
+              <p className="text-sm font-semibold text-gray-800">Contacts</p>
+            </div>
+          </button>
+        </div>
+
         {/* Profile card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-8">
           <div className="flex flex-col items-center md:flex-row md:items-start gap-6 md:gap-8">
@@ -345,7 +374,6 @@ export default function Profile() {
                         <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
                         <span>{avgRating > 0 ? avgRating : "No ratings yet"}</span>
                       </div>
-                      {/* ── SOLD COUNT BADGE ── */}
                       <div className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 ${soldCount > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
                         <Award className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${soldCount > 0 ? 'text-green-600' : 'text-gray-400'}`} />
                         <span className={soldCount > 0 ? 'text-green-700 font-semibold' : 'text-gray-500'}>

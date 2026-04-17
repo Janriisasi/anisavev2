@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
-import { Menu, X, Search } from 'lucide-react';
+import { Search, Home, User, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/authContext';
 import AboutModal from './aboutModal';
 import ChatButton from './chatButton';
@@ -11,18 +12,17 @@ import { usePresence } from '../hooks/usePresence';
 
 export default function Navbar() {
   const { user } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   usePresence();
 
-  const closeMenu = () => {
-    setMenuOpen(false);
+  const closeSearch = () => {
     setShowSearchResults(false);
     setSearchQuery('');
   };
@@ -48,7 +48,7 @@ export default function Navbar() {
 
   const handleUserClick = (userId) => {
     navigate(`/farmer/${userId}`);
-    closeMenu();
+    closeSearch();
   };
 
   const handleLogout = async () => {
@@ -72,7 +72,8 @@ export default function Navbar() {
   const handleNavigation = (to) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     navigate(to);
-    closeMenu();
+    closeSearch();
+    window.dispatchEvent(new CustomEvent('closeOverlays'));
   };
 
   if (!user) return null;
@@ -85,14 +86,31 @@ export default function Navbar() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .animate-fadeIn { animation: fadeIn 0.1s ease-out; }
+
+        /* Mobile body padding: top nav + bottom nav + safe areas */
+        @media (max-width: 767px) {
+          body {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
+          }
+          .mobile-nav-safe-top {
+            padding-top: calc(env(safe-area-inset-top) + 0.75rem) !important;
+          }
+        }
       `}</style>
 
-      <nav className="bg-green-800 text-white shadow-lg backdrop-blur-sm sticky top-0 z-30">
-        <div className="px-4 py-3">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
+      {/* ── TOP NAV ── */}
+      <nav
+        className="bg-green-800 text-white shadow-lg backdrop-blur-sm sticky top-0 z-[70] block"
+      >
+        <div className="px-4 py-3 mobile-nav-safe-top">
+          <div className="max-w-7xl mx-auto flex justify-between items-center gap-3">
 
             {/* Logo */}
-            <button onClick={handleLogoClick} className="flex items-center hover:opacity-80 transition-opacity cursor-pointer" title="About AniSave">
+            <button
+              onClick={handleLogoClick}
+              className="flex items-center hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0"
+              title="About AniSave"
+            >
               <img src="/images/anisave_logo.webp" alt="Logo" className="h-10 w-auto" />
             </button>
 
@@ -113,7 +131,6 @@ export default function Navbar() {
 
             {/* Desktop right side — search + action buttons */}
             <div className="hidden md:flex items-center gap-3">
-              {/* Search */}
               <div className="relative">
                 <div className="relative">
                   <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 text-white w-8 h-8 p-1 border rounded-full bg-green-800" />
@@ -137,7 +154,11 @@ export default function Navbar() {
                         onMouseDown={(e) => { e.preventDefault(); handleUserClick(u.id); }}
                       >
                         <div className="flex items-center gap-3">
-                          <img src={u.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                          <img
+                            src={u.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          />
                           <div className="font-medium truncate">{u.full_name || u.username}</div>
                         </div>
                       </div>
@@ -146,112 +167,152 @@ export default function Navbar() {
                 )}
               </div>
 
-              {/* Notification bell */}
               <NotificationButton />
-
-              {/* Cart */}
               <CartButton />
-
-              {/* Chat */}
               <ChatButton />
             </div>
 
-            {/* Mobile hamburger */}
-            <div className="md:hidden">
-              <button onClick={() => setMenuOpen(!menuOpen)} className="transition-transform duration-300 hover:scale-110">
-                <div className={`transition-all duration-300 ${menuOpen ? 'rotate-90' : 'rotate-0'}`}>
-                  {menuOpen ? <X size={24} /> : <Menu size={24} />}
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        <div className={`md:hidden absolute top-full left-0 w-full bg-green-800 shadow-2xl z-20 overflow-visible transition-all duration-500 ease-in-out ${
-          menuOpen ? 'max-h-screen opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-4 pointer-events-none'
-        }`}>
-          <div className="px-4 py-6 space-y-4">
-
-            {/* Mobile search */}
-            <div className={`relative transition-all duration-700 delay-100 z-50 ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-              <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 text-white w-8 h-8 p-1 border rounded-full bg-green-800" />
-              <input
-                type="text"
-                placeholder="Search users..."
-                className="w-full pl-10 pr-4 py-2 bg-white rounded-full text-black placeholder-black focus:outline-none focus:border-transparent transition-all duration-300 hover:shadow-lg"
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); handleSearch(e.target.value); }}
-                onBlur={() => setTimeout(() => setShowSearchResults(false), 300)}
-                onFocus={() => searchQuery && setShowSearchResults(true)}
-              />
-              {showSearchResults && searchResults.users?.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[60] max-h-60 overflow-y-auto animate-fadeIn">
-                  <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0 z-[60]">Users</div>
-                  {searchResults.users.map((u, index) => (
-                    <div
-                      key={u.id}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800 border-b border-gray-100 last:border-b-0 transition-all duration-300 hover:translate-x-1"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                      onMouseDown={(e) => { e.preventDefault(); handleUserClick(u.id); }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <img src={u.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
-                        <div className="font-medium truncate text-sm">{u.username || u.full_name}</div>
-                      </div>
+            {/* ── MOBILE: Search + Logout (right of logo) ── */}
+            <div className="flex md:hidden items-center gap-2 flex-1 justify-end">
+              <AnimatePresence mode="wait">
+                {isMobileSearchOpen ? (
+                  <motion.div
+                    key="mobile-search-expanded"
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: "100%", opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="relative flex items-center gap-2"
+                  >
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-green-800 w-4 h-4 pointer-events-none" />
+                      <input
+                        autoFocus
+                        type="text"
+                        placeholder="Search users..."
+                        className="w-full pl-8 pr-3 py-1.5 bg-white rounded-full text-black text-sm placeholder-gray-400 focus:outline-none ring-2 ring-green-600/20 focus:ring-green-500"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          handleSearch(e.target.value);
+                        }}
+                        onBlur={() => {
+                          if (!searchQuery) {
+                            setTimeout(() => setIsMobileSearchOpen(false), 200);
+                          }
+                          setTimeout(() => setShowSearchResults(false), 300);
+                        }}
+                      />
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Mobile Chat */}
-            <div className={`transition-all duration-700 delay-[150ms] ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`} style={{ pointerEvents: menuOpen ? 'auto' : 'none' }}>
-              <ChatButton mobileMenu />
-            </div>
+                    {/* Mobile search dropdown */}
+                    {showSearchResults && searchResults.users?.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[9999] max-h-72 overflow-y-auto animate-fadeIn">
+                        <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-xs sticky top-0">
+                          Users
+                        </div>
+                        {searchResults.users.map((u) => (
+                          <div
+                            key={u.id}
+                            className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800 border-b border-gray-100 last:border-b-0"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleUserClick(u.id);
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={
+                                  u.avatar_url ||
+                                  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`
+                                }
+                                alt=""
+                                className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                              />
+                              <div className="font-medium truncate text-sm">
+                                {u.full_name || u.username}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    key="mobile-search-icon"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    onClick={() => setIsMobileSearchOpen(true)}
+                    className="flex items-center justify-center w-9 h-9 rounded-full bg-green-700 hover:bg-green-600 transition-colors flex-shrink-0"
+                    title="Search"
+                  >
+                    <Search className="w-4 h-4 text-white" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
 
-            {/* Mobile Cart */}
-            <div className={`transition-all duration-700 delay-[200ms] ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`} style={{ pointerEvents: menuOpen ? 'auto' : 'none' }}>
-              <CartButton mobileMenu />
-            </div>
-
-            {/* Mobile Notifications — simple link for mobile */}
-            <div className={`transition-all duration-700 delay-[250ms] ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`} style={{ pointerEvents: menuOpen ? 'auto' : 'none' }}>
-              <NotificationButton mobileMenu />
-            </div>
-
-            {/* Nav links */}
-            {links.map(({ label, to }, index) => (
+              {/* Logout button */}
               <button
-                key={to}
-                onClick={() => handleNavigation(to)}
-                className={`block text-white hover:text-gray-300 py-3 font-medium text-lg transition-all duration-500 hover:translate-x-1 hover:drop-shadow-lg w-full text-left ${
-                  menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-                }`}
-                style={{ transitionDelay: menuOpen ? `${(index + 4) * 100}ms` : '0ms', pointerEvents: menuOpen ? 'auto' : 'none' }}
+                onClick={handleLogout}
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-green-700 hover:bg-red-500 transition-colors flex-shrink-0"
+                title="Logout"
               >
-                {label}
+                <LogOut className="w-4 h-4 text-white" />
               </button>
-            ))}
+            </div>
 
-            {/* Logout */}
-            <button
-              onClick={() => { handleLogout(); closeMenu(); }}
-              className={`w-full bg-red-500 hover:bg-red-600 px-4 py-3 rounded-full text-lg text-white font-medium transition-all duration-700 hover:scale-105 hover:shadow-xl ${
-                menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-              }`}
-              style={{ transitionDelay: menuOpen ? '800ms' : '0ms', pointerEvents: menuOpen ? 'auto' : 'none' }}
-            >
-              Logout
-            </button>
           </div>
         </div>
-
-        {/* Backdrop */}
-        {menuOpen && (
-          <div className="md:hidden fixed inset-0 z-10 bg-black/20 transition-opacity duration-300" onClick={closeMenu} />
-        )}
       </nav>
+
+      {/* ── BOTTOM TAB BAR (Mobile Only) ── */}
+      <div
+        className="md:hidden fixed bottom-0 left-0 w-full bg-green-800 text-white z-[60] flex justify-around items-center shadow-[0_-4px_10px_rgba(0,0,0,0.1)] px-1"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {/* Home */}
+        <motion.button
+          onClick={() => handleNavigation('/homepage')}
+          className={`relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${
+            location.pathname.startsWith('/homepage') ? 'text-white' : 'text-green-100/70 hover:text-white'
+          }`}
+        >
+          <div className={`relative ${location.pathname.startsWith('/homepage') ? 'scale-110' : ''} transition-transform`}>
+            <Home className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] mt-1 font-medium">Home</span>
+          {location.pathname.startsWith('/homepage') && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
+          )}
+        </motion.button>
+
+        {/* Alerts */}
+        <NotificationButton mobileTab mobileMenu isActive={location.pathname.startsWith('/notifications')} />
+
+        {/* Cart */}
+        <CartButton mobileTab mobileMenu isActive={location.pathname.startsWith('/cart')} />
+
+        {/* Chat */}
+        <ChatButton mobileTab mobileMenu isActive={location.pathname.startsWith('/chat')} />
+
+        {/* Profile (replaces Menu) */}
+        <motion.button
+          onClick={() => handleNavigation('/profile')}
+          className={`relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${
+            location.pathname.startsWith('/profile') ? 'text-white' : 'text-green-100/70 hover:text-white'
+          }`}
+        >
+          <div className={`relative ${location.pathname.startsWith('/profile') ? 'scale-110' : ''} transition-transform`}>
+            <User className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] mt-1 font-medium">Profile</span>
+          {location.pathname.startsWith('/profile') && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
+          )}
+        </motion.button>
+      </div>
 
       <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </>

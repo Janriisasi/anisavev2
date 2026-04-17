@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, MessageCircle } from 'lucide-react';
+import { X, Search, MessageCircle, ArrowLeft } from 'lucide-react';
 import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/authContext';
 import ChatConversationList from './chatConversationList';
@@ -151,9 +151,9 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.2, type: 'spring', stiffness: 300, damping: 25 }}
-        className="fixed z-[9999] bg-white shadow-2xl border border-gray-200 flex flex-col
-          md:bottom-0 md:right-4 md:rounded-t-2xl md:w-96 md:max-w-[400px]
-          max-md:inset-0 max-md:rounded-none max-md:w-full"
+        className="fixed bg-white shadow-2xl md:border border-gray-200 flex flex-col
+          md:bottom-0 md:right-4 md:rounded-t-2xl md:w-96 md:max-w-[400px] md:z-[9999]
+          max-md:inset-0 max-md:rounded-none max-md:w-full max-md:z-[50] max-md:pb-[4rem] max-md:pt-[calc(env(safe-area-inset-top)+4rem)]"
         style={{ 
           maxHeight: window.innerWidth < 768 ? '100vh' : '600px',
           height: window.innerWidth < 768 ? '100vh' : '80vh'
@@ -162,17 +162,21 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
         {!selectedConversation ? (
           <>
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-green-800 to-green-700 md:rounded-t-2xl">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-white" />
-                <h3 className="font-bold text-white text-lg">Chats</h3>
+            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 bg-white md:rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-green-700" />
+                  <h3 className="font-bold text-gray-800 text-xl">Chats</h3>
+                </div>
               </div>
-              <button
-                onClick={onClose}
-                className="p-1 hover:bg-white/20 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
+              <div className="hidden md:block">
+                <button
+                  onClick={onClose}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
             </div>
 
             {/* Search */}

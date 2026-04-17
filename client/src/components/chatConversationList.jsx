@@ -212,7 +212,7 @@ export default function ChatConversationList({
                           try {
                             const jsonStr = lastMessage.content.split(']\n')[0].replace('[PRODUCT_CONTEXT:', '');
                             const product = JSON.parse(jsonStr);
-                            return `🛍️ Product Inquiry: ${product.name}`;
+                            return `Product Inquiry: ${product.name}`;
                           } catch (e) {
                             return "New message";
                           }
@@ -238,7 +238,7 @@ export default function ChatConversationList({
                   )}
                 </p>
                 {unreadCount > 0 && !typingUsers[conversation.id] && (
-                  <span className="flex-shrink-0 ml-2 bg-green-700 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+                  <span className="flex-shrink-0 ml-2 bg-green-700 text-white text-sm font-bold rounded-full min-w-[24px] h-6 flex items-center justify-center px-2">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
