@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/authContext';
 import toast from 'react-hot-toast';
+import PostTransactionRatingModal from './postTransactionRatingModal';
 
 const STATUS_CONFIG = {
   confirming:  { label: 'Awaiting Review', color: 'text-amber-700', bg: 'bg-amber-100' },
@@ -69,6 +70,7 @@ export default function FarmerOrderRequests() {
   const [actionLoading, setActionLoading] = useState(null); // order id being actioned
   const [declineModal, setDeclineModal] = useState(null); // order to decline
   const [filter, setFilter] = useState('confirming'); // 'confirming' | 'all'
+  const [ratingModal, setRatingModal] = useState(null); // { buyerId, buyerName, buyerAvatar, orderSnapshot }
 
   const fetchOrders = useCallback(async () => {
     if (!user) return;
@@ -151,6 +153,18 @@ export default function FarmerOrderRequests() {
       );
 
       toast.success('Order approved! Inventory updated.');
+
+      // Prompt farmer to rate the buyer
+      setRatingModal({
+        buyerId: order.buyer_id,
+        buyerName: order.buyer?.full_name || order.buyer?.username,
+        buyerAvatar: order.buyer?.avatar_url || null,
+        orderSnapshot: {
+          name: order.product_snapshot?.name,
+          quantity_kg: order.quantity_kg,
+          total_amount: order.total_amount,
+        },
+      });
     } catch (err) {
       console.error('Approve error:', err);
       toast.error('Failed to approve order');
@@ -390,6 +404,17 @@ export default function FarmerOrderRequests() {
           loading={actionLoading === declineModal?.id}
         />
       )}
+
+      {/* Post-transaction rating modal — farmer rates the buyer */}
+      <PostTransactionRatingModal
+        isOpen={!!ratingModal}
+        onClose={() => setRatingModal(null)}
+        mode="rate_buyer"
+        targetId={ratingModal?.buyerId}
+        targetName={ratingModal?.buyerName}
+        targetAvatar={ratingModal?.buyerAvatar}
+        orderSnapshot={ratingModal?.orderSnapshot}
+      />
     </div>
   );
 }

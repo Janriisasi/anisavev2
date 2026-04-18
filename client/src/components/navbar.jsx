@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
@@ -75,6 +75,20 @@ export default function Navbar() {
     closeSearch();
     window.dispatchEvent(new CustomEvent('closeOverlays'));
   };
+
+  // Exact-match active tab so only ONE indicator shows at a time.
+  // Uses the first path segment so sub-routes like /homepage/foo still match.
+  const activeTab = '/' + (location.pathname.split('/')[1] || '');
+  const isTabActive = (path) => activeTab === path;
+
+  // For overlay tabs (notifications, chat) that don't change the URL,
+  // track which one is open so only one indicator shows at a time.
+  const [activeOverlayTab, setActiveOverlayTab] = useState(null);
+
+  // When the URL-based tab changes, clear any overlay tab
+  useEffect(() => {
+    setActiveOverlayTab(null);
+  }, [location.pathname]);
 
   if (!user) return null;
 
@@ -274,41 +288,55 @@ export default function Navbar() {
       >
         {/* Home */}
         <motion.button
-          onClick={() => handleNavigation('/homepage')}
+          onClick={() => { setActiveOverlayTab(null); handleNavigation('/homepage'); }}
           className={`relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${
-            location.pathname.startsWith('/homepage') ? 'text-white' : 'text-green-100/70 hover:text-white'
+            isTabActive('/homepage') && !activeOverlayTab ? 'text-white' : 'text-green-100/70 hover:text-white'
           }`}
         >
-          <div className={`relative ${location.pathname.startsWith('/homepage') ? 'scale-110' : ''} transition-transform`}>
+          <div className={`relative ${isTabActive('/homepage') && !activeOverlayTab ? 'scale-110' : ''} transition-transform`}>
             <Home className="w-6 h-6" />
           </div>
           <span className="text-[10px] mt-1 font-medium">Home</span>
-          {location.pathname.startsWith('/homepage') && (
+          {isTabActive('/homepage') && !activeOverlayTab && (
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
           )}
         </motion.button>
 
         {/* Alerts */}
-        <NotificationButton mobileTab mobileMenu isActive={location.pathname.startsWith('/notifications')} />
+        <NotificationButton
+          mobileTab
+          mobileMenu
+          isActive={activeOverlayTab === 'notifications'}
+          onOpen={(open) => setActiveOverlayTab(open ? 'notifications' : null)}
+        />
 
         {/* Cart */}
-        <CartButton mobileTab mobileMenu isActive={location.pathname.startsWith('/cart')} />
+        <CartButton
+          mobileTab
+          mobileMenu
+          isActive={isTabActive('/cart') && !activeOverlayTab}
+        />
 
         {/* Chat */}
-        <ChatButton mobileTab mobileMenu isActive={location.pathname.startsWith('/chat')} />
+        <ChatButton
+          mobileTab
+          mobileMenu
+          isActive={activeOverlayTab === 'chat'}
+          onOpen={(open) => setActiveOverlayTab(open ? 'chat' : null)}
+        />
 
         {/* Profile (replaces Menu) */}
         <motion.button
-          onClick={() => handleNavigation('/profile')}
+          onClick={() => { setActiveOverlayTab(null); handleNavigation('/profile'); }}
           className={`relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${
-            location.pathname.startsWith('/profile') ? 'text-white' : 'text-green-100/70 hover:text-white'
+            isTabActive('/profile') && !activeOverlayTab ? 'text-white' : 'text-green-100/70 hover:text-white'
           }`}
         >
-          <div className={`relative ${location.pathname.startsWith('/profile') ? 'scale-110' : ''} transition-transform`}>
+          <div className={`relative ${isTabActive('/profile') && !activeOverlayTab ? 'scale-110' : ''} transition-transform`}>
             <User className="w-6 h-6" />
           </div>
           <span className="text-[10px] mt-1 font-medium">Profile</span>
-          {location.pathname.startsWith('/profile') && (
+          {isTabActive('/profile') && !activeOverlayTab && (
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
           )}
         </motion.button>

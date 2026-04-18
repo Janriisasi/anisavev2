@@ -25,7 +25,7 @@ const typeBg = (type) => {
   }
 };
 
-export default function NotificationButton({ mobileMenu = false, mobileTab = false, isActive = false }) {
+export default function NotificationButton({ mobileMenu = false, mobileTab = false, isActive = false, showIndicator = false, indicatorLayoutId = 'tab-indicator', onOpen }) {
   const { user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
@@ -33,12 +33,17 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
   const navigate = useNavigate();
   const location = useLocation();
 
+  const setOpenState = (val) => {
+    setIsOpen(val);
+    onOpen?.(val);
+  };
+
   useEffect(() => {
-    setIsOpen(false);
+    setOpenState(false);
   }, [location.pathname]);
 
   useEffect(() => {
-    const handleClose = () => setIsOpen(false);
+    const handleClose = () => setOpenState(false);
     window.addEventListener('closeOverlays', handleClose);
     return () => window.removeEventListener('closeOverlays', handleClose);
   }, []);
@@ -54,7 +59,7 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
     // Click outside for desktop
     const handleClickOutside = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
-        setIsOpen(false);
+        setOpenState(false);
       }
     };
 
@@ -78,7 +83,7 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
     } else if (notif.type === 'order_approved' || notif.type === 'order_declined') {
       navigate('/cart'); // buyer sees order history in cart page
     }
-    setIsOpen(false);
+    setOpenState(false);
   };
 
   const content = (
@@ -119,7 +124,7 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
               )}
               {!mobileMenu && (
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => setOpenState(false)}
                   className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <X className="w-4 h-4 text-gray-400" />
@@ -173,10 +178,10 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
     return (
       <>
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`relative flex flex-col items-center justify-center py-2 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${isOpen || isActive ? 'text-white' : 'text-green-100/70 hover:text-white'}`}
+          onClick={() => setOpenState(!isOpen)}
+          className={`relative flex flex-col items-center justify-center py-2 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${isActive ? 'text-white' : 'text-green-100/70 hover:text-white'}`}
         >
-          <div className={`relative ${isOpen || isActive ? 'scale-110' : ''} transition-transform`}>
+          <div className={`relative ${isActive ? 'scale-110' : ''} transition-transform`}>
             <Bell className="w-6 h-6" />
             <AnimatePresence>
               {unreadCount > 0 && (
@@ -192,7 +197,9 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
             </AnimatePresence>
           </div>
           <span className="text-[10px] mt-1 font-medium">Alerts</span>
-          {(isOpen || isActive) && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-white rounded-t-full" />}
+          {isActive && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
+          )}
         </button>
         {isOpen && createPortal(content, document.body)}
       </>
@@ -203,7 +210,7 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
     return (
       <>
         <motion.button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setOpenState(!isOpen)}
           whileTap={{ scale: 0.98 }}
           className="w-full flex items-center justify-between text-white hover:text-gray-300 py-3 font-medium text-lg transition-all duration-200 hover:translate-x-1 hover:drop-shadow-lg"
         >
@@ -225,7 +232,7 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
   return (
     <div className="relative" ref={panelRef}>
       <motion.button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setOpenState(!isOpen)}
         className="relative p-2 bg-green-800 hover:bg-green-700 rounded-full transition-all duration-200"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}

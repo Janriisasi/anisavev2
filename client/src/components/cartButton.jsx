@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/cartContext';
 import { useAuth } from '../contexts/authContext';
 
-export default function CartButton({ mobileMenu = false, mobileTab = false, isActive = false }) {
+export default function CartButton({ mobileMenu = false, mobileTab = false, isActive = false, showIndicator = false, indicatorLayoutId = 'tab-indicator' }) {
   const { user } = useAuth();
   const { cartCount } = useCart();
   const navigate = useNavigate();
@@ -33,7 +33,9 @@ export default function CartButton({ mobileMenu = false, mobileTab = false, isAc
           </AnimatePresence>
         </div>
         <span className="text-[10px] mt-1 font-medium">Cart</span>
-        {isActive && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-white rounded-t-full" />}
+        {isActive && (
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
+        )}
       </button>
     );
   }

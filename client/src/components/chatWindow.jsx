@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Send, Circle, ShoppingBag, X, MoreVertical, UserPlus, UserMinus, Trash2, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Send, Circle, ShoppingBag, X, MoreVertical, UserPlus, UserMinus, Trash2, ImageIcon, Star } from 'lucide-react';
 import { compressImage } from '../utils/imageCompression';
 
 import { formatDistanceToNow } from 'date-fns';
@@ -8,6 +8,7 @@ import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/authContext';
 import toast from 'react-hot-toast';
 import DeleteConfirmationModal from './deleteConfirmation';
+import PostTransactionRatingModal from './postTransactionRatingModal';
 
 
 // How old last_activity can be before we treat the user as offline (must match usePresence.js)
@@ -561,6 +562,7 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
   // ─── Order approve / decline from chat ───────────────────────────────────────
   const [orderActionLoading, setOrderActionLoading] = useState(null);
   const [actedOrders, setActedOrders] = useState({});
+  const [ratingPrompt, setRatingPrompt] = useState(null); // { farmerId, farmerName, farmerAvatar, orderSnapshot }
 
   const handleOrderAction = async (order, action) => {
     const orderId = order.order_id;
@@ -700,13 +702,35 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
                 </div>
               )}
 
-              {/* Buyer sees status */}
+              {/* Buyer sees status + rate button */}
               {isOwn && (
                 <div className={`px-3 pb-2 pt-1 ${isOwn ? 'bg-green-700/40' : 'bg-white'}`}>
                   {alreadyActed ? (
-                    <p className={`text-center text-[10px] font-bold ${alreadyActed === 'approved' ? 'text-green-200' : 'text-red-300'}`}>
-                      {alreadyActed === 'approved' ? '\u2713 Approved' : '\u2717 Declined'}
-                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      <p className={`text-center text-[10px] font-bold ${alreadyActed === 'approved' ? 'text-green-200' : 'text-red-300'}`}>
+                        {alreadyActed === 'approved' ? '✓ Approved' : '✗ Declined'}
+                      </p>
+                      {alreadyActed === 'approved' && (
+                        <button
+                          onClick={() =>
+                            setRatingPrompt({
+                              farmerId: otherUser.id,
+                              farmerName: otherUser.full_name || otherUser.username,
+                              farmerAvatar: otherUser.avatar_url || null,
+                              orderSnapshot: {
+                                name: order.product_name,
+                                quantity_kg: order.quantity_kg,
+                                total_amount: order.total_amount,
+                              },
+                            })
+                          }
+                          className="flex items-center justify-center gap-1.5 w-full py-1.5 bg-yellow-400/90 hover:bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-xl transition-colors"
+                        >
+                          <Star className="w-3 h-3 fill-current" />
+                          Rate Farmer
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-center text-[10px] text-green-100/80">Waiting for farmer to respond…</p>
                   )}
@@ -821,7 +845,7 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
           <p className="text-[10px] font-medium">
             {isOnline ? (
               <span className="text-green-600 flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />
                 Active now
               </span>
             ) : (
@@ -1140,6 +1164,17 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
         isDeleting={actionLoading}
         productName={otherUser?.full_name || otherUser?.username}
         type="chat"
+      />
+
+      {/* Post-transaction rating modal — buyer rates the farmer */}
+      <PostTransactionRatingModal
+        isOpen={!!ratingPrompt}
+        onClose={() => setRatingPrompt(null)}
+        mode="rate_farmer"
+        targetId={ratingPrompt?.farmerId}
+        targetName={ratingPrompt?.farmerName}
+        targetAvatar={ratingPrompt?.farmerAvatar}
+        orderSnapshot={ratingPrompt?.orderSnapshot}
       />
     </div>
   );
