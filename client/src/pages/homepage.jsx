@@ -4,7 +4,7 @@ import supabase from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/productCard";
 import StartChatButton from "../components/startChatButton";
-import productPrices from "../data/productPrices.json";
+import { useMarketPrices } from "../contexts/marketPricesContext";
 import {
   TrendingUp,
   Package,
@@ -14,8 +14,10 @@ import {
   Sprout,
 } from "lucide-react";
 import SellerDetailsPopup from "../components/sellerDetailsPopup";
+import AiAdvisor from "../components/aiAdvisor";
 
 const Home = () => {
+  const { prices } = useMarketPrices();
   const [user, setUser] = useState(null);
   const [myProducts, setMyProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -121,7 +123,6 @@ const Home = () => {
           await fetchMyProducts(user.id);
           await fetchMyRating(user.id);
           await fetchFarmerProducts(user.id); // Fetch products posted by other farmers
-          generateProductsFromPrices();
         }
       } catch (error) {
         console.error("Error:", error);
@@ -136,24 +137,35 @@ const Home = () => {
   // Real-time listener for product updates (inventory changes)
   useEffect(() => {
     if (!user) return;
-    const ch = supabase.channel('home-products-inventory-watch')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'products',
-      }, (payload) => {
-        // Update myProducts if it belongs to me (Dashboard updates)
-        if (payload.new.user_id === user.id) {
-          setMyProducts((prev) =>
-            prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p))
-          );
-        } else {
-          // Update farmerProducts if it belongs to someone else (Browse section updates)
-          setFarmerProducts((prev) =>
-            prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new, profiles: p.profiles } : p))
-          );
-        }
-      })
+    const ch = supabase
+      .channel("home-products-inventory-watch")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "products",
+        },
+        (payload) => {
+          // Update myProducts if it belongs to me (Dashboard updates)
+          if (payload.new.user_id === user.id) {
+            setMyProducts((prev) =>
+              prev.map((p) =>
+                p.id === payload.new.id ? { ...p, ...payload.new } : p,
+              ),
+            );
+          } else {
+            // Update farmerProducts if it belongs to someone else (Browse section updates)
+            setFarmerProducts((prev) =>
+              prev.map((p) =>
+                p.id === payload.new.id
+                  ? { ...p, ...payload.new, profiles: p.profiles }
+                  : p,
+              ),
+            );
+          }
+        },
+      )
       .subscribe();
 
     return () => {
@@ -176,7 +188,9 @@ const Home = () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("*, profiles(*)")
+        .select(
+          "*, profiles(id, username, full_name, avatar_url, address, contact_number)",
+        )
         .neq("user_id", currentUserId); // Exclude current user's products
 
       if (error) throw error;
@@ -213,32 +227,33 @@ const Home = () => {
     }
   };
 
-  //generate products from productPrices.json with real images
-  const generateProductsFromPrices = () => {
-    const products = [];
-    let productId = 1;
+  //generate products from dynamic prices context with real images
+  useEffect(() => {
+    if (prices && Object.keys(prices).length > 0) {
+      const products = [];
+      let productId = 1;
 
-    Object.entries(productPrices).forEach(([category, items]) => {
-      Object.entries(items).forEach(([name, priceData]) => {
-        // Check if priceData is an object and has a price property
-        const price =
-          typeof priceData === "object" ? priceData.price : priceData;
+      Object.entries(prices).forEach(([category, items]) => {
+        Object.entries(items).forEach(([name, priceData]) => {
+          // Check if priceData is an object and has a price property
+          const price = typeof priceData === "object" ? priceData.price : priceData;
 
-        products.push({
-          id: productId++,
-          name: name,
-          category: category,
-          price: price,
-          quantity_kg: Math.floor(Math.random() * 100) + 10,
-          image_url: productImages[name] || `/images/placeholder.jpg`,
-          description: `Fresh ${name.toLowerCase()} available for purchase`,
-          profiles: null,
+          products.push({
+            id: productId++,
+            name: name,
+            category: category,
+            price: price,
+            quantity_kg: Math.floor(Math.random() * 100) + 10,
+            image_url: productImages[name] || `/images/placeholder.jpg`,
+            description: `Fresh ${name.toLowerCase()} available for purchase`,
+            profiles: null,
+          });
         });
       });
-    });
 
-    setAllProducts(products);
-  };
+      setAllProducts(products);
+    }
+  }, [prices]);
 
   const handleSaveContact = async (farmerId) => {
     if (!user) {
@@ -396,6 +411,9 @@ const Home = () => {
             </motion.div>
           </motion.div>
 
+          {/* AI Farming Advisor */}
+          <AiAdvisor myProducts={myProducts} />
+
           {loading ? (
             <div className="text-center py-12">
               <motion.div
@@ -511,7 +529,9 @@ const Home = () => {
 
                 {farmerProducts.length === 0 ? (
                   <div className="text-center py-8 bg-white/60 backdrop-blur-sm rounded-2xl">
-                    <p className="text-gray-500">No products from other farmers yet.</p>
+                    <p className="text-gray-500">
+                      No products from other farmers yet.
+                    </p>
                   </div>
                 ) : (
                   <motion.div
@@ -568,7 +588,9 @@ const Home = () => {
                           {product.profiles && (
                             <div
                               className="flex items-center gap-2 cursor-pointer group/farmer"
-                              onClick={() => navigate(`/farmer/${product.profiles.id}`)}
+                              onClick={() =>
+                                navigate(`/farmer/${product.profiles.id}`)
+                              }
                             >
                               <img
                                 src={

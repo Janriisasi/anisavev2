@@ -5,7 +5,7 @@ import { Bell, Check, CheckCheck, Package, ThumbsUp, ThumbsDown, ShoppingBag, X,
 import { useLocation, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { useNotifications } from '../contexts/notificationContext';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from '../hooks/useAuth';
 
 const typeIcon = (type) => {
   switch (type) {

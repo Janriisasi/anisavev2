@@ -4,7 +4,15 @@ import supabase from "../lib/supabase";
 import { useUser } from "../hooks/useUser";
 import RateFarmer from "../components/rateFarmer";
 import StartChatButton from "../components/startChatButton";
-import { Star, MapPin, Phone, Package, ArrowLeft, Copy, ShoppingCart } from "lucide-react";
+import {
+  Star,
+  MapPin,
+  Phone,
+  Package,
+  ArrowLeft,
+  Copy,
+  ShoppingCart,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { useCart } from "../contexts/cartContext";
 import { motion } from "framer-motion";
@@ -31,19 +39,24 @@ export default function FarmerProfile() {
     }
 
     // Real-time listener for product updates
-    const ch = supabase.channel(`farmer-profile-inventory-${id}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'products',
-      }, (payload) => {
-        if (payload.new.user_id !== id) return;
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.id === payload.new.id ? { ...p, ...payload.new } : p
-          )
-        );
-      })
+    const ch = supabase
+      .channel(`farmer-profile-inventory-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "products",
+        },
+        (payload) => {
+          if (payload.new.user_id !== id) return;
+          setProducts((prev) =>
+            prev.map((p) =>
+              p.id === payload.new.id ? { ...p, ...payload.new } : p,
+            ),
+          );
+        },
+      )
       .subscribe();
 
     return () => {
@@ -54,9 +67,10 @@ export default function FarmerProfile() {
   const fetchFarmerData = async () => {
     try {
       setLoading(true);
+      // ✅ Never select email — only safe public fields + contact info
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, username, full_name, avatar_url, address, contact_number")
         .eq("id", id)
         .single();
 
@@ -99,22 +113,11 @@ export default function FarmerProfile() {
 
   const checkIfContactSaved = async () => {
     try {
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Profile error:", profileError);
-        setIsContactSaved(false);
-        return;
-      }
-
+      // ✅ user.id already available — no need to query profiles first
       const { data } = await supabase
         .from("saved_contacts")
         .select("id")
-        .eq("buyer_id", profileData.id)
+        .eq("buyer_id", user.id)
         .eq("farmer_id", id)
         .single();
 
@@ -139,26 +142,12 @@ export default function FarmerProfile() {
 
     setSaving(true);
     try {
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Profile error:", profileError);
-        toast.error(
-          "User profile not found. Please complete your profile setup.",
-        );
-        setSaving(false);
-        return;
-      }
-
+      // ✅ user.id already available — no need to query profiles first
       if (isContactSaved) {
         const { error } = await supabase
           .from("saved_contacts")
           .delete()
-          .eq("buyer_id", profileData.id)
+          .eq("buyer_id", user.id)
           .eq("farmer_id", id);
 
         if (error) throw error;
@@ -166,9 +155,13 @@ export default function FarmerProfile() {
         setIsContactSaved(false);
         toast.success("Contact removed from saved contacts");
       } else {
+        // ✅ Store contact_number + address snapshot so contactPage can read
+        //    them without querying other users' private profile rows
         const { error } = await supabase.from("saved_contacts").insert({
-          buyer_id: profileData.id,
+          buyer_id: user.id,
           farmer_id: id,
+          contact_number: farmer.contact_number || null,
+          address: farmer.address || null,
         });
 
         if (error) {
@@ -348,7 +341,9 @@ export default function FarmerProfile() {
                   {farmer.address && (
                     <div className="bg-gray-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 max-w-full overflow-hidden">
                       <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
-                      <span className="truncate max-w-xs sm:max-w-sm">{farmer.address}</span>
+                      <span className="truncate max-w-xs sm:max-w-sm">
+                        {farmer.address}
+                      </span>
                     </div>
                   )}
                   {farmer.contact_number && (
@@ -447,7 +442,10 @@ export default function FarmerProfile() {
                         ₱{Number(product.price).toFixed(2)}/kg
                       </span>
                       <span className="text-gray-600 text-sm truncate">
-                        {Number(product.quantity_kg).toLocaleString(undefined, { maximumFractionDigits: 2 })} kg available
+                        {Number(product.quantity_kg).toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        kg available
                       </span>
                     </div>
 
@@ -469,11 +467,15 @@ export default function FarmerProfile() {
                           onClick={() => openCartModal(product)}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          title={isInCart(product.id) ? "Already in cart (update)" : "Add to cart"}
+                          title={
+                            isInCart(product.id)
+                              ? "Already in cart (update)"
+                              : "Add to cart"
+                          }
                           className={`px-3 py-2 rounded-lg flex items-center justify-center transition-all border ${
                             isInCart(product.id)
-                              ? 'bg-yellow-100 border-yellow-300 text-yellow-700 hover:bg-yellow-200'
-                              : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700'
+                              ? "bg-yellow-100 border-yellow-300 text-yellow-700 hover:bg-yellow-200"
+                              : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700"
                           }`}
                         >
                           <ShoppingCart className="w-4 h-4" />
@@ -496,7 +498,7 @@ export default function FarmerProfile() {
             />
           </div>
         )}
- 
+
         {cartModalData && (
           <AddToCartModal
             product={cartModalData.product}

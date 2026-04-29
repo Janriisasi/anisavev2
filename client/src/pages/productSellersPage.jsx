@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import supabase from "../lib/supabase";
-import productPrices from "../data/productPrices.json";
+import { useMarketPrices } from "../contexts/marketPricesContext";
 import { ArrowLeft, Star, MapPin, Phone, ChevronDown, ShoppingCart } from "lucide-react";
 import SellerDetailsPopup from "../components/sellerDetailsPopup";
 import StartChatButton from "../components/startChatButton";
@@ -24,6 +24,7 @@ export default function ProductSellersPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const { isInCart } = useCart();
+  const { prices } = useMarketPrices();
 
   const productImages = {
     Eggplant: "/images/eggplant.webp",
@@ -79,14 +80,19 @@ export default function ProductSellersPage() {
   };
 
   useEffect(() => {
-    if (productName) generateProductAndSellers();
-  }, [productName]);
+    if (productName && Object.keys(prices).length > 0) generateProductAndSellers();
+  }, [productName, prices]);
 
   const generateProductAndSellers = async () => {
     setLoading(true);
     let defaultPrice = null;
-    Object.entries(productPrices).forEach(([category, items]) => {
-      if (items[productName]) defaultPrice = items[productName];
+    let defaultCategory = null;
+
+    Object.entries(prices).forEach(([category, items]) => {
+      if (items[productName]) {
+        defaultPrice = items[productName];
+        defaultCategory = category;
+      }
     });
 
     const { data: dbProducts, error } = await supabase
@@ -106,10 +112,12 @@ export default function ProductSellersPage() {
       });
       setSellers(dbProducts);
     } else if (defaultPrice) {
-      Object.entries(productPrices).forEach(([category, items]) => {
-        if (items[productName]) {
-          setProduct({ name: productName, category, price: defaultPrice, image_url: productImages[productName], description: `Fresh ${productName.toLowerCase()} available for purchase` });
-        }
+      setProduct({
+        name: productName,
+        category: defaultCategory,
+        price: defaultPrice,
+        image_url: productImages[productName],
+        description: `Fresh ${productName.toLowerCase()} available for purchase`
       });
       setSellers([]);
     }

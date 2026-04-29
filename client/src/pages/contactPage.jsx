@@ -20,36 +20,24 @@ export default function SavedContacts() {
 
     setLoading(true);
     try {
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Profile error:", profileError);
-        toast.error("User profile not found.");
-        setLoading(false);
-        return;
-      }
-
+      // ✅ user.id already available from auth — no redundant profiles lookup needed
       const { data, error } = await supabase
         .from("saved_contacts")
         .select(
           `
           id,
           farmer_id,
+          contact_number,
+          address,
           farmers:profiles!saved_contacts_farmer_id_fkey(
             id,
             username,
             full_name,
-            avatar_url,
-            address,
-            contact_number
+            avatar_url
           )
         `,
         )
-        .eq("buyer_id", profileData.id);
+        .eq("buyer_id", user.id);
 
       if (error) throw error;
 
@@ -72,7 +60,11 @@ export default function SavedContacts() {
 
           return {
             ...contact,
-            farmer: contact.farmers,
+            farmer: {
+              ...contact.farmers,
+              contact_number: contact.contact_number,
+              address: contact.address,
+            },
             avgRating: avgRating > 0 ? parseFloat(avgRating.toFixed(1)) : 0,
             totalRatings,
           };

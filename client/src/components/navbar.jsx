@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
 import { Search, Home, User, LogOut } from 'lucide-react';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from '../hooks/useAuth';
 import AboutModal from './aboutModal';
 import ChatButton from './chatButton';
 import CartButton from './cartButton';

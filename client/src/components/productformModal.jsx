@@ -1,10 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import supabase from '../lib/supabase';
-import { Upload, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Upload, ChevronDown, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
-import productPrices from '../data/productPrices.json';
+import { useMarketPrices } from '../contexts/marketPricesContext';
 import compressImage from '../utils/imageCompression';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const formatWithCommas = (value) => {
@@ -32,6 +32,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(existingProduct?.image_url || null);
   const [errors, setErrors] = useState({});
+  const { prices } = useMarketPrices();
   
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [productOpen, setProductOpen] = useState(false);
@@ -41,12 +42,12 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   const isProfileComplete = userProfile?.address && userProfile?.contact_number;
 
   const availableProducts = useMemo(() => {
-    if (!form.category) return [];
-    return Object.keys(productPrices[form.category] || {});
-  }, [form.category]);
+    if (!form.category || !prices[form.category]) return [];
+    return Object.keys(prices[form.category] || {});
+  }, [form.category, prices]);
 
   const handleProductSelect = (productName) => {
-    const suggestedPrice = productPrices[form.category][productName];
+    const suggestedPrice = prices[form.category]?.[productName] || 0;
     setForm(prev => ({
       ...prev,
       name: productName,
@@ -55,7 +56,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     setErrors(prev => ({ ...prev, name: '' }));
   };
 
-  const categories = Object.keys(productPrices);
+  const categories = Object.keys(prices || {});
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -240,10 +241,6 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!isProfileComplete) {
-      toast.error('Please complete your profile with address and phone number before adding products.');
-      return;
-    }
 
     if (!validateForm()) {
       toast.error('Please fill in all required fields correctly');
@@ -311,71 +308,6 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     }
   };
 
-  if (!isProfileComplete) {
-    return (
-      <AnimatePresence>
-        <motion.div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div 
-            className="bg-white rounded-xl sm:rounded-2xl w-full max-w-[95%] sm:max-w-md p-4 sm:p-6"
-            initial={{ scale: 0.95, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.95, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <div className="text-center">
-              <div className="mx-auto flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4">
-                <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600" />
-              </div>
-              <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-4">
-                Complete Your Profile
-              </h2>
-              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
-                To add products, you need to complete your profile with:
-              </p>
-              <div className="text-left bg-gray-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-sm">
-                <ul className="space-y-2">
-                  {!userProfile?.address && (
-                    <li className="flex items-center text-red-600">
-                      <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
-                      Address information
-                    </li>
-                  )}
-                  {!userProfile?.contact_number && (
-                    <li className="flex items-center text-red-600">
-                      <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
-                      Phone number
-                    </li>
-                  )}
-                </ul>
-              </div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
-                This information helps buyers contact you and arrange deliveries.
-              </p>
-              <div className="flex gap-2 sm:gap-3">
-                <button
-                  onClick={onClose}
-                  className="flex-1 bg-green-700 text-white py-2.5 sm:py-3 rounded-lg hover:bg-green-800 transition-colors font-medium text-sm sm:text-base"
-                >
-                  Update Profile
-                </button>
-                <button
-                  onClick={onClose}
-                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
 
   return (
     <AnimatePresence>
@@ -387,7 +319,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
         onClick={onClose}
       >
         <motion.div
-          className="bg-white rounded-xl sm:rounded-2xl w-full max-w-[95%] sm:max-w-4xl p-4 sm:p-6 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-xl sm:rounded-2xl w-full max-w-[95%] sm:max-w-3xl p-4 sm:p-5 max-h-[80vh] sm:max-h-[85vh] overflow-y-auto shadow-2xl"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -395,17 +327,37 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
           onClick={(e) => e.stopPropagation()}
         >
           <motion.h2 
-            className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6"
+            className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-gray-800"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
             {existingProduct ? 'Edit Product' : 'Add New Product'}
           </motion.h2>
+
+          {!isProfileComplete && (
+            <motion.div
+              className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-3 sm:mb-4"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div className="text-[11px] sm:text-xs text-blue-700 leading-relaxed">
+                <span className="font-semibold">Tip:</span> Adding your{' '}
+                {!userProfile?.address && !userProfile?.contact_number
+                  ? 'address and phone number'
+                  : !userProfile?.address
+                  ? 'address'
+                  : 'phone number'}{' '}
+                helps buyers reach you and arrange delivery.
+              </div>
+            </motion.div>
+          )}
           
           <motion.form 
             onSubmit={handleSubmit} 
-            className="space-y-3 sm:space-y-6"
+            className="space-y-3 sm:space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -417,10 +369,10 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <h3 className="text-sm sm:text-lg font-semibold text-gray-700">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-700">
                   Product Image <span className="text-red-500">*</span>
                 </h3>
-                <div className={`border-2 border-dashed rounded-lg p-3 sm:p-6 text-center h-40 sm:h-80 ${
+                <div className={`border-2 border-dashed rounded-lg p-2 sm:p-4 text-center h-36 sm:h-64 ${
                   errors.image ? 'border-red-500 bg-red-50' : 'border-gray-300'
                 }`}>
                   <input
@@ -442,11 +394,11 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                       />
                     ) : (
                       <>
-                        <Upload className="w-6 h-6 sm:w-16 sm:h-16 text-gray-400 mb-2 sm:mb-4" />
-                        <span className="text-xs sm:text-lg text-gray-500 font-medium">
+                        <Upload className="w-6 h-6 sm:w-12 sm:h-12 text-gray-400 mb-1 sm:mb-3" />
+                        <span className="text-xs sm:text-sm text-gray-500 font-medium">
                           Click to upload image
                         </span>
-                        <span className="text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-2">
+                        <span className="text-[10px] text-gray-400 mt-1">
                           Max 5MB
                         </span>
                       </>
@@ -467,7 +419,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <h3 className="text-sm sm:text-lg font-semibold text-gray-700">Product Details</h3>
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Product Details</h3>
                 
                 <CustomDropdown
                   label="Category"
@@ -529,9 +481,9 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                     />
                   </div>
                   {errors.price && <p className="text-xs sm:text-sm text-red-500">{errors.price}</p>}
-                  {form.name && !errors.price && (
+                  {form.name && !errors.price && prices[form.category]?.[form.name] && (
                     <p className="text-xs text-gray-500">
-                      Suggested: ₱ {formatWithCommas(productPrices[form.category]?.[form.name])}/kg
+                      Suggested: ₱ {formatWithCommas(prices[form.category][form.name])}/kg
                     </p>
                   )}
                 </div>
@@ -583,7 +535,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
               <motion.button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

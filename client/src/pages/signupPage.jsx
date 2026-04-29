@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader } from 'lucide-react';
 import supabase from '../lib/supabase';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from '../hooks/useAuth';
 
 function SignUp() {
   const { user } = useAuth();
@@ -23,60 +23,75 @@ function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [slideDirection, setSlideDirection] = useState('');
 
+  // Username availability state
+  const [usernameStatus, setUsernameStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
+  const usernameDebounceRef = useRef(null);
+
   const totalSteps = 4;
 
   useEffect(() => {
-    if (user) {
-      navigate('/homepage');
-    }
+    if (user) navigate('/homepage');
   }, [user, navigate]);
 
-  
-    useEffect(() => {
-      const handleResize = () => {
-        setIsMobile(window.innerWidth < 640);
-      };
-  
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }, []);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
 
-  const handlePasswordFocus = () => {
-    setShowPasswordRequirements(true);
-  };
+    // Live username availability check (debounced)
+    if (name === 'username') {
+      setUsernameStatus(null);
+      clearTimeout(usernameDebounceRef.current);
 
-  const handlePasswordBlur = () => {
-    if (form.password === '') {
-      setShowPasswordRequirements(false);
+      const trimmed = value.trim();
+      if (trimmed.length < 3) return;
+
+      setUsernameStatus('checking');
+      usernameDebounceRef.current = setTimeout(async () => {
+        try {
+          // SAFE: queries public_profiles view — only exposes username, no email/sensitive data
+          const { data, error } = await supabase
+            .from('public_profiles')
+            .select('username')
+            .eq('username', trimmed)
+            .maybeSingle();
+
+          if (error) {
+            setUsernameStatus(null);
+            return;
+          }
+          setUsernameStatus(data ? 'taken' : 'available');
+        } catch {
+          setUsernameStatus(null);
+        }
+      }, 500);
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+  const handlePasswordFocus = () => setShowPasswordRequirements(true);
+  const handlePasswordBlur = () => {
+    if (form.password === '') setShowPasswordRequirements(false);
   };
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
-  //password validation
+  // Password validation
   const hasMinLength = form.password.length >= 6;
   const hasUpperCase = /[A-Z]/.test(form.password);
   const hasLowerCase = /[a-z]/.test(form.password);
   const hasNumber = /\d/.test(form.password);
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
 
-  const getRequirementClass = (isValid) => {
-    return `flex items-center text-xs sm:text-sm ${
-      isValid ? 'text-green-600' : 'text-red-500'
-    }`;
-  };
+  const getRequirementClass = (isValid) =>
+    `flex items-center text-xs sm:text-sm ${isValid ? 'text-green-600' : 'text-red-500'}`;
 
   const RequirementItem = ({ isValid, text }) => (
     <div className={getRequirementClass(isValid)}>
-      <span className="mr-2">
-        {isValid ? '✓' : 'X'}
-      </span>
+      <span className="mr-2">{isValid ? '✓' : 'X'}</span>
       {text}
     </div>
   );
@@ -92,6 +107,18 @@ function SignUp() {
       case 2:
         if (!form.username.trim()) {
           toast.error('Please enter a username');
+          return false;
+        }
+        if (form.username.trim().length < 3) {
+          toast.error('Username must be at least 3 characters');
+          return false;
+        }
+        if (usernameStatus === 'checking') {
+          toast.error('Please wait while we check username availability');
+          return false;
+        }
+        if (usernameStatus === 'taken') {
+          toast.error('That username is already taken');
           return false;
         }
         return true;
@@ -144,13 +171,9 @@ function SignUp() {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-    
-    if (!validateCurrentStep()) {
-      return;
-    }
+    if (!validateCurrentStep()) return;
 
     setLoading(true);
-
     try {
       const { full_name, username, email, password } = form;
 
@@ -158,18 +181,14 @@ function SignUp() {
         email,
         password,
         options: {
-          data: {
-            username,
-            full_name,
-          },
+          data: { username, full_name },
         },
       });
 
       if (error) {
-        console.error('Supabase sign up error:', error);
-
         if (error.message.includes('User already registered')) {
-          throw new Error('An account with this email already exists.');
+          // Generic message — don't confirm whether an email exists to attackers
+          throw new Error('Unable to create account. Please check your details or try logging in.');
         } else if (error.message.includes('Invalid email')) {
           throw new Error('Please enter a valid email address.');
         } else {
@@ -188,6 +207,15 @@ function SignUp() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Username status indicator
+  const UsernameStatusIcon = () => {
+    if (!form.username.trim() || form.username.trim().length < 3) return null;
+    if (usernameStatus === 'checking') return <Loader className="w-5 h-5 text-gray-400 animate-spin" />;
+    if (usernameStatus === 'available') return <CheckCircle className="w-5 h-5 text-green-600" />;
+    if (usernameStatus === 'taken') return <XCircle className="w-5 h-5 text-red-500" />;
+    return null;
   };
 
   const renderStep = () => {
@@ -224,7 +252,13 @@ function SignUp() {
             <div className="relative">
               <input
                 id="username"
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-12 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
+                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-20 text-base sm:text-lg border-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 transition-all ${
+                  usernameStatus === 'taken'
+                    ? 'border-red-500 focus:border-red-500'
+                    : usernameStatus === 'available'
+                    ? 'border-green-500 focus:border-green-500'
+                    : 'border-black focus:border-green-700'
+                }`}
                 name="username"
                 value={form.username}
                 onChange={handleChange}
@@ -232,10 +266,17 @@ function SignUp() {
                 placeholder="Enter your username"
                 autoFocus
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                {form.username.length}/15
-              </span>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <span className="text-xs text-gray-400">{form.username.length}/15</span>
+                <UsernameStatusIcon />
+              </div>
             </div>
+            {usernameStatus === 'taken' && (
+              <p className="text-xs text-red-500 mt-1">Username is already taken. Please choose another.</p>
+            )}
+            {usernameStatus === 'available' && (
+              <p className="text-xs text-green-600 mt-1">Username is available!</p>
+            )}
           </div>
         );
       case 3:
@@ -266,7 +307,7 @@ function SignUp() {
               <input
                 id="password"
                 className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition-all"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={form.password}
                 onChange={handleChange}
@@ -281,52 +322,21 @@ function SignUp() {
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-700 focus:outline-none"
                 tabIndex={-1}
               >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            
-            {/* Password requirements */}
+
             {showPasswordRequirements && (
               <div className="mt-3 p-3 bg-gray-50 border border-gray-300 rounded-lg">
                 {(!hasMinLength || !hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) && (
                   <p className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</p>
                 )}
-                
                 <div className="space-y-1">
-                  {!hasMinLength && (
-                    <RequirementItem 
-                      isValid={false} 
-                      text="At least 6 characters" 
-                    />
-                  )}
-                  {!hasUpperCase && (
-                    <RequirementItem 
-                      isValid={false} 
-                      text="One uppercase letter (A-Z)" 
-                    />
-                  )}
-                  {!hasLowerCase && (
-                    <RequirementItem 
-                      isValid={false} 
-                      text="One lowercase letter (a-z)" 
-                    />
-                  )}
-                  {!hasNumber && (
-                    <RequirementItem 
-                      isValid={false} 
-                      text="One number (0-9)" 
-                    />
-                  )}
-                  {!hasSpecialChar && (
-                    <RequirementItem 
-                      isValid={false} 
-                      text="One special character (!@#$%^&*)" 
-                    />
-                  )}
+                  {!hasMinLength && <RequirementItem isValid={false} text="At least 6 characters" />}
+                  {!hasUpperCase && <RequirementItem isValid={false} text="One uppercase letter (A-Z)" />}
+                  {!hasLowerCase && <RequirementItem isValid={false} text="One lowercase letter (a-z)" />}
+                  {!hasNumber && <RequirementItem isValid={false} text="One number (0-9)" />}
+                  {!hasSpecialChar && <RequirementItem isValid={false} text="One special character (!@#$%^&*)" />}
                   {hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar && (
                     <div className="flex items-center text-sm text-green-600 font-medium">
                       <span className="mr-2">✓</span>
@@ -344,19 +354,17 @@ function SignUp() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: isMobile 
-          ? `url(/images/bg_mobile.png)` 
-          : `url(/images/bg_login.png)`
+        backgroundImage: isMobile
+          ? `url(/images/bg_mobile.png)`
+          : `url(/images/bg_login.png)`,
       }}
     >
       <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-10 rounded-2xl shadow-2xl w-full max-w-lg border border-white/20 relative z-10">
         <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-black">
-            Get Started
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-black">Get Started</h2>
           <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Step {currentStep} of {totalSteps}
           </p>
@@ -383,13 +391,16 @@ function SignUp() {
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
-          {/* Current Step Content */}
           <div className="overflow-hidden">
-            <div className={`transition-all duration-300 ease-in-out ${
-              slideDirection === 'next' ? '-translate-x-full opacity-0' : 
-              slideDirection === 'prev' ? 'translate-x-full opacity-0' : 
-              'translate-x-0 opacity-100'
-            }`}>
+            <div
+              className={`transition-all duration-300 ease-in-out ${
+                slideDirection === 'next'
+                  ? '-translate-x-full opacity-0'
+                  : slideDirection === 'prev'
+                  ? 'translate-x-full opacity-0'
+                  : 'translate-x-0 opacity-100'
+              }`}
+            >
               {renderStep()}
             </div>
           </div>
@@ -406,12 +417,13 @@ function SignUp() {
                 Previous
               </button>
             )}
-            
+
             {currentStep < totalSteps ? (
               <button
                 type="button"
                 onClick={handleNext}
-                className="flex-1 py-3 px-4 text-sm sm:text-base bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+                disabled={currentStep === 2 && usernameStatus === 'checking'}
+                className="flex-1 py-3 px-4 text-sm sm:text-base bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />
@@ -430,10 +442,7 @@ function SignUp() {
 
         <p className="text-center mt-6 text-gray-600 text-xs sm:text-base">
           Already have an account?{' '}
-          <a
-            href="/login"
-            className="text-green-800 hover:text-green-900 font-medium"
-          >
+          <a href="/login" className="text-green-800 hover:text-green-900 font-medium">
             Login here
           </a>
         </p>

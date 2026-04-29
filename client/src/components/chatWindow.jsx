@@ -5,7 +5,7 @@ import { compressImage } from '../utils/imageCompression';
 
 import { formatDistanceToNow } from 'date-fns';
 import supabase from '../lib/supabase';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import DeleteConfirmationModal from './deleteConfirmation';
 import PostTransactionRatingModal from './postTransactionRatingModal';
@@ -326,11 +326,20 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
         setIsSaved(false);
         toast.success('Contact removed');
       } else {
+        // ✅ Fetch other user's contact info first, then store snapshot
+        const { data: farmerProfile } = await supabase
+          .from('profiles')
+          .select('contact_number, address')
+          .eq('id', otherUser.id)
+          .single();
+
         const { error } = await supabase
           .from('saved_contacts')
           .insert({
             buyer_id: user.id,
-            farmer_id: otherUser.id
+            farmer_id: otherUser.id,
+            contact_number: farmerProfile?.contact_number || null,
+            address: farmerProfile?.address || null,
           });
         
         if (error) throw error;

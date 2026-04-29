@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import supabase from '../lib/supabase';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from './useAuth';
 
 /**
  * Custom hook for managing user presence (online/offline status)
@@ -83,12 +83,15 @@ export function usePresence() {
     if (!user) return;
     try {
       const now = new Date().toISOString();
-      await supabase.from('user_presence').upsert(
+      const { error } = await supabase.from('user_presence').upsert(
         { user_id: user.id, is_online: true, last_seen: now, last_activity: now, updated_at: now },
         { onConflict: 'user_id' }
       );
+      if (error && error.code !== '409') {
+         console.warn('usePresence setOnline notice:', error.message);
+      }
     } catch (err) {
-      console.error('usePresence setOnline:', err);
+      // ignore
     }
   };
 
@@ -97,12 +100,13 @@ export function usePresence() {
     isOnlineRef.current = false;
     try {
       const now = new Date().toISOString();
-      await supabase
+      const { error } = await supabase
         .from('user_presence')
         .update({ is_online: false, last_seen: now, updated_at: now })
         .eq('user_id', user.id);
+      if (error) console.warn('usePresence setOffline notice:', error.message);
     } catch (err) {
-      console.error('usePresence setOffline:', err);
+      // ignore
     }
   };
 
@@ -147,7 +151,7 @@ export function usePresence() {
         body,
       }).catch(() => { /* swallow — page is already unloading */ });
     } catch (err) {
-      console.error('usePresence setOfflineKeepalive:', err);
+      // silence
     }
   };
 
@@ -155,7 +159,7 @@ export function usePresence() {
     if (!user) return;
     try {
       const now = new Date().toISOString();
-      await supabase.from('user_presence').upsert(
+      const { error } = await supabase.from('user_presence').upsert(
         {
           user_id: user.id,
           is_online: isOnline,
@@ -165,8 +169,11 @@ export function usePresence() {
         },
         { onConflict: 'user_id' }
       );
+      if (error && error.code !== '409') {
+        // Only log non-conflict errors silently
+      }
     } catch (err) {
-      console.error('usePresence updatePresence:', err);
+      // silence
     }
   };
 

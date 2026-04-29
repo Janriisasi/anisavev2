@@ -3,7 +3,7 @@ import { MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import supabase from '../lib/supabase';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from '../hooks/useAuth';
 import ChatPopup from './chatPopup';
 
 export default function ChatButton({ mobileMenu = false, mobileTab = false, isActive = false, showIndicator = false, indicatorLayoutId = 'tab-indicator', onOpen }) {

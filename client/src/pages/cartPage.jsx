@@ -8,7 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import supabase from '../lib/supabase';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../contexts/cartContext';
 import TransactionConfirmModal from '../components/transactionConfirmModal';
 import toast from 'react-hot-toast';

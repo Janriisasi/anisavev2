@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import supabase from "../lib/supabase";
 import ProductCard from "../components/productCard";
 import StartChatButton from "../components/startChatButton";
-import productPrices from "../data/productPrices.json";
+import { useMarketPrices } from "../contexts/marketPricesContext";
 import { ArrowLeft, ChevronUp } from "lucide-react";
 
 export default function CategoriesPage() {
@@ -16,6 +16,7 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const { prices } = useMarketPrices();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -101,12 +102,14 @@ export default function CategoriesPage() {
     setLoading(true);
     setProducts([]);
 
+    if (Object.keys(prices).length === 0) return; // wait for prices to load
+
     if (name) {
       generateCategoryProducts();
     } else {
       generateAllProducts();
     }
-  }, [name]);
+  }, [name, prices]);
 
   const getProductImage = (category, productName) => {
     return (
@@ -140,8 +143,8 @@ export default function CategoriesPage() {
     const allCategoryProducts = [];
     let productId = 1;
 
-    // Get default prices from productPrices.json for this category
-    const defaultPrices = productPrices[name] || {};
+    // Get default prices from Supabase context for this category
+    const defaultPrices = prices[name] || {};
 
     // Fetch products from db to get seller information
     const { data: dbProducts, error } = await supabase
@@ -155,7 +158,7 @@ export default function CategoriesPage() {
       .eq("category", name)
       .eq("status", "Available");
 
-    // Add template products from productPrices.json
+    // Add template products from live prices
     if (defaultPrices && typeof defaultPrices === "object") {
       Object.entries(defaultPrices).forEach(([productName, defaultPrice]) => {
         if (productName === "images" || typeof defaultPrice !== "number") {
@@ -192,8 +195,8 @@ export default function CategoriesPage() {
     const allProducts = [];
     let productId = 1;
 
-    // Add template products from productPrices.json
-    Object.entries(productPrices).forEach(([category, items]) => {
+    // Use live prices from Supabase context
+    Object.entries(prices).forEach(([category, items]) => {
       if (typeof items === "object" && items !== null) {
         Object.entries(items).forEach(([productName, priceData]) => {
           if (productName === "images" || typeof priceData !== "number") {

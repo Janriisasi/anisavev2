@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/authContext';
+import { AuthProvider } from './contexts/authContext';
+import { useAuth } from './hooks/useAuth';
 import { CartProvider } from './contexts/cartContext';
 import { NotificationProvider } from './contexts/notificationContext';
 import Navbar from './components/navbar';

@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
-import supabase from '../lib/supabase';
-import { useAuth } from '../contexts/authContext';
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
+import supabase from "../lib/supabase";
+import { useAuth } from "../contexts/authContext";
 
 function Login() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
@@ -18,7 +18,7 @@ function Login() {
   useEffect(() => {
     if (user) {
       //redirect to the page they tried to visit or homepage
-      const from = location.state?.from?.pathname || '/homepage';
+      const from = location.state?.from?.pathname || "/homepage";
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
@@ -28,11 +28,12 @@ function Login() {
       setIsMobile(window.innerWidth < 640);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -56,81 +57,85 @@ function Login() {
 
       //check if profile exists
       const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
+        .from("profiles")
+        .select("id, username, full_name, avatar_url")
+        .eq("id", data.user.id)
         .single();
 
       // if no profile exists, create one
       if (profileError) {
-        const { error: createError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              username: data.user.email.split('@')[0],
-              full_name: '',
-              avatar_url: '',
-              address: '',
-              contact_number: '',
-              updated_at: new Date().toISOString()
-            }
-          ]);
+        const { error: createError } = await supabase.from("profiles").insert([
+          {
+            id: data.user.id,
+            username: data.user.email.split("@")[0],
+            full_name: "",
+            avatar_url: "",
+            address: "",
+            contact_number: "",
+            updated_at: new Date().toISOString(),
+          },
+        ]);
 
         if (createError) {
-          console.error('Error creating profile:', createError);
-          toast.error('Error creating profile. Please contact support.');
+          console.error("Error creating profile:", createError);
+          toast.error("Error creating profile. Please contact support.");
           return;
         }
       }
 
-      toast.success('Login successful!');
-      navigate('/homepage');
-
+      toast.success("Login successful!");
+      navigate("/homepage");
     } catch (error) {
-      toast.error('An unexpected error occurred');
-      console.error('Login error:', error);
+      toast.error("An unexpected error occurred");
+      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: isMobile 
-          ? `url(/images/bg_mobile.png)` 
-          : `url(/images/bg_login.png)`
+        backgroundImage: isMobile
+          ? `url(/images/bg_mobile.png)`
+          : `url(/images/bg_login.png)`,
       }}
     >
-      
       <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-11 rounded-2xl shadow-xl w-full max-w-md h-full border border-white/20 relative">
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-black">
             Welcome Back
           </h2>
-          <p className="text-gray-600 mt-2 text-sm sm:text-base">Log in your account now!</p>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
+            Log in your account now!
+          </p>
         </div>
-        
+
         <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
           <div className="space-y-1 sm:space-y-1">
-            <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="block text-xs sm:text-sm font-medium text-gray-700"
+            >
               Email
             </label>
-            <input 
+            <input
               id="email"
-              className="w-full px-3 sm:px-4 py-2 sm:py-2 text-sm sm:text-base border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700" 
-              name="email" 
+              className="w-full px-3 sm:px-4 py-2 sm:py-2 text-sm sm:text-base border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700"
+              name="email"
               type="email"
               value={form.email}
-              onChange={handleChange} 
-              required 
+              onChange={handleChange}
+              required
             />
           </div>
-          
+
           <div className="space-y-1 sm:space-y-1">
-            <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-xs sm:text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <div className="relative">
@@ -157,19 +162,22 @@ function Login() {
               </button>
             </div>
           </div>
-          
-          <button 
-            type="submit" 
-            disabled={loading} 
+
+          <button
+            type="submit"
+            disabled={loading}
             className="w-full py-2 sm:py-2 px-4 text-sm sm:text-base bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200"
           >
-            {loading ? 'Logging In...' : 'Log in'}
+            {loading ? "Logging In..." : "Log in"}
           </button>
         </form>
-        
+
         <p className="text-center mt-4 sm:mt-6 text-gray-600 text-xs sm:text-base">
-          Don't have an account?{' '}
-          <a href="/signup" className="text-green-800 hover:text-green-900 font-medium">
+          Don't have an account?{" "}
+          <a
+            href="/signup"
+            className="text-green-800 hover:text-green-900 font-medium"
+          >
             Sign up here
           </a>
         </p>

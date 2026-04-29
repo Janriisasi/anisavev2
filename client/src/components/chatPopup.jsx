@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, MessageCircle, ArrowLeft } from 'lucide-react';
 import supabase from '../lib/supabase';
-import { useAuth } from '../contexts/authContext';
+import { useAuth } from '../hooks/useAuth';
 import ChatConversationList from './chatConversationList';
 import ChatWindow from './chatWindow';
 

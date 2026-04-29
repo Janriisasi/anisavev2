@@ -27,8 +27,10 @@ import {
   AlertCircle,
   Database,
   ChartBar,
+  Tag
 } from "lucide-react";
 import supabase from "../lib/supabase";
+import PriceManagement from "../components/admin/priceManagement";
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -38,6 +40,7 @@ export default function AdminDashboard() {
   const [debugInfo, setDebugInfo] = useState(null);
   const [error, setError] = useState("");
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [activeTab, setActiveTab] = useState("overview");
   const [dashboardData, setDashboardData] = useState({
     users: {
       total: 0,
@@ -564,6 +567,10 @@ export default function AdminDashboard() {
     setDebugInfo(null);
   };
 
+  const handleRefresh = async () => {
+    await fetchDashboardData();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
@@ -668,35 +675,60 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-8 gap-2 md:gap-4">
-          <div className="flex items-center justify-between w-full sm:w-auto">
+        {/* header and nav */}
+        <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-700 rounded-full flex items-center justify-center text-white font-bold text-xl">
+              A
+            </div>
             <div>
-              <h1 className="text-xl md:text-3xl font-bold text-gray-800 flex items-center gap-2 md:gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-green-800 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                </div>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                 Admin Dashboard
               </h1>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2 sm:hidden"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex items-center gap-2 md:gap-4 self-end sm:self-auto">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs md:text-sm text-gray-500">Last updated</p>
-              <p className="text-xs md:text-sm font-medium text-gray-700">
-                {lastRefresh.toLocaleString()}
+              <p className="text-xs md:text-sm text-gray-500">
+                Platform Overview & Management
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+            <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "overview"
+                    ? "bg-white text-green-700 shadow-sm"
+                    : "text-gray-600 hover:text-green-700 hover:bg-gray-200/50"
+                }`}
+              >
+                <Activity className="w-4 h-4" />
+                <span className="hidden sm:inline">Overview</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("prices")}
+                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "prices"
+                    ? "bg-white text-green-700 shadow-sm"
+                    : "text-gray-600 hover:text-green-700 hover:bg-gray-200/50"
+                }`}
+              >
+                <Tag className="w-4 h-4" />
+                <span className="hidden sm:inline">Prices</span>
+              </button>
+            </div>
+
+            <button
+              onClick={handleRefresh}
+              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-full transition-colors flex-shrink-0"
+              title="Refresh Data"
+            >
+              <Activity
+                className={`w-5 h-5 ${refreshing ? "animate-spin text-green-600" : ""}`}
+              />
+            </button>
             <button
               onClick={handleLogout}
-              className="bg-red-500 text-white p-2 md:px-4 md:py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2 hidden sm:flex"
+              className="flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium flex-shrink-0"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />
@@ -705,70 +737,71 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* debug info */}
-        <div className="mb-4 md:mb-6 bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-100 p-3 md:p-4">
-          <h3 className="text-xs md:text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1 md:gap-2">
-            <Database className="w-3 h-3 md:w-4 md:h-4 text-purple-600" />
-            Debug Information
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs">
-            <div>
-              <span className="text-gray-500">Profiles Table:</span>
-              <span className="ml-1 md:ml-2 font-medium">
-                {dashboardData.debug.profilesUsers} users
-              </span>
+        {activeTab === "overview" && (
+          <>
+            {/* debug info */}
+            <div className="mb-4 md:mb-6 bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-100 p-3 md:p-4">
+              <h3 className="text-xs md:text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1 md:gap-2">
+                <Database className="w-3 h-3 md:w-4 md:h-4 text-purple-600" />
+                Debug Information
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs">
+                <div>
+                  <span className="text-gray-500">Profiles Table:</span>
+                  <span className="ml-1 md:ml-2 font-medium">
+                    {dashboardData.debug.profilesUsers} users
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Auth Users:</span>
+                  <span className="ml-1 md:ml-2 font-medium">
+                    {dashboardData.debug.authUsers} users
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Real-time:</span>
+                  <span className="ml-1 md:ml-2 font-medium text-green-600">
+                    Active
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Last Refresh:</span>
+                  <span className="ml-1 md:ml-2 font-medium">
+                    {lastRefresh.toLocaleTimeString()}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div>
-              <span className="text-gray-500">Auth Users:</span>
-              <span className="ml-1 md:ml-2 font-medium">
-                {dashboardData.debug.authUsers} users
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-500">Real-time:</span>
-              <span className="ml-1 md:ml-2 font-medium text-green-600">
-                Active
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-500">Last Refresh:</span>
-              <span className="ml-1 md:ml-2 font-medium">
-                {lastRefresh.toLocaleTimeString()}
-              </span>
-            </div>
-          </div>
-        </div>
 
-        {/* key metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-8">
-          <StatCard
-            title="Total Users"
-            value={dashboardData.users.total}
-            icon={Users}
-            change={12}
-          />
-          <StatCard
-            title="Active Products"
-            value={dashboardData.products.available}
-            icon={Package}
-            change={8}
-            color="blue"
-          />
-          <StatCard
-            title="New Users Today"
-            value={dashboardData.users.newToday}
-            icon={UserPlus}
-            change={25}
-            color="purple"
-          />
-          <StatCard
-            title="Average Rating"
-            value={dashboardData.activity.avgRating || "N/A"}
-            icon={Star}
-            color="yellow"
-          />
-        </div>
-
+            {/* key metrics */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-8">
+              <StatCard
+                title="Total Users"
+                value={dashboardData.users.total}
+                icon={Users}
+                change={12}
+              />
+              <StatCard
+                title="Active Products"
+                value={dashboardData.products.available}
+                icon={Package}
+                change={8}
+                color="blue"
+              />
+              <StatCard
+                title="New Users Today"
+                value={dashboardData.users.newToday}
+                icon={UserPlus}
+                change={25}
+                color="purple"
+              />
+              <StatCard
+                title="Average Rating"
+                value={dashboardData.activity.avgRating || "N/A"}
+                icon={Star}
+                color="yellow"
+              />
+            </div>
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 mb-4 md:mb-8">
           {/* user growth chart */}
@@ -1121,6 +1154,13 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+        </>
+        )}
+
+        {activeTab === "prices" && (
+          <PriceManagement />
+        )}
+
       </div>
     </div>
   );
