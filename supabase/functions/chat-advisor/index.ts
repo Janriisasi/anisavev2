@@ -13,15 +13,33 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { systemContext, userText } = body;
+    const { systemContext, userText, messages } = body;
     const hfToken = Deno.env.get('HF_TOKEN');
 
     if (!hfToken) {
       throw new Error('HF_TOKEN is not set in environment variables')
     }
 
+    // Build the messages array for the HuggingFace API.
+    // Supports two modes:
+    //   1. Legacy quick-prompt mode: { systemContext, userText }
+    //      → single user message
+    //   2. Multi-turn chat mode: { systemContext, messages }
+    //      → full conversation history [{ role, content }, ...]
+    let chatMessages: { role: string; content: string }[] = [];
+
+    if (messages && Array.isArray(messages) && messages.length > 0) {
+      // Multi-turn chat — pass history as-is (already role/content pairs)
+      chatMessages = messages;
+    } else if (userText) {
+      // Legacy single-question mode
+      chatMessages = [{ role: 'user', content: userText }];
+    } else {
+      throw new Error('Either "userText" or "messages" must be provided in the request body.')
+    }
+
     const response = await fetch(
-      "https://router.huggingface.co/v1/chat/completions", // Updated: main HF router (not featherless-ai)
+      "https://router.huggingface.co/v1/chat/completions",
       {
         method: "POST",
         headers: {
@@ -29,10 +47,10 @@ Deno.serve(async (req: Request) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemma-4-31B-it:together", // Updated: larger model via Together provider
+          model: "google/gemma-4-31B-it:together",
           messages: [
             { role: "system", content: systemContext },
-            { role: "user", content: userText },
+            ...chatMessages,
           ],
           max_tokens: 1000,
           temperature: 0.7,

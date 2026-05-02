@@ -351,7 +351,7 @@ export default function LandingPage() {
         >
           <div className="absolute inset-0 opacity-20 w-full h-full">
             <OptimizedImage
-              src="/images/Notif.png"
+              src="/images/bg-cta.png"
               alt="Background pattern"
               fillContainer={true}
               className="absolute inset-0 w-full h-full object-cover object-center"
@@ -522,94 +522,176 @@ export default function LandingPage() {
           </div>
         </section>
 
+       {/* CTA Section */}
+        <section className="py-16 sm:py-20 lg:py-24 overflow-hidden relative">
+          {/* Background image */}
+          <div className="absolute inset-0 w-full h-full">
+            <OptimizedImage
+              src="/images/bg-cta.png"
+              alt="CTA Background"
+              fillContainer={true}
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              width={1440}
+              height={300}
+            />
+            <div className="absolute inset-0 bg-black/40 z-[1]" />
+          </div>
+          <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-5 leading-tight">
+              Ready to secure your next harvest?
+            </h2>
+            <p className="text-green-200 text-base sm:text-lg mb-10 max-w-2xl mx-auto opacity-90">
+              Join thousands of Filipino farmers already using AniSave to
+              increase their monthly income by an average of 25%.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button
+                variant="outline"
+                size="lg"
+                className="bg-white text-[#024310] hover:bg-green-50 border-0 font-bold"
+                onClick={() => navigate("/signup")}
+              >
+                Register for Free
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="border border-white/30 text-white font-bold"
+              >
+                Download Mobile App
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* Footer */}
         <footer className="bg-[#D5E9D6] border-t border-black/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 mb-6 sm:mb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14 lg:py-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-10">
+              {/* Brand col */}
+              <div className="sm:col-span-2 lg:col-span-1">
+                <img
+                  className="w-36 h-auto mb-4"
+                  src="/images/invertedcolor_logo.webp"
+                  alt="AniSave Logo"
+                />
+                <p className="text-slate-600 text-sm mt-4 mb-6 max-w-xs leading-relaxed">
+                  Modernizing Filipino agriculture through data, community, and
+                  technology. Empowering the hands that feed the nation.
+                </p>
+                <div className="flex items-center gap-4">
+                  <a
+                    href="https://facebook.com"
+                    aria-label="Facebook"
+                    className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
+                  >
+                    <Facebook size={20} />
+                  </a>
+                  <a
+                    href="https://instagram.com"
+                    aria-label="Instagram"
+                    className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
+                  >
+                    <Instagram size={20} />
+                  </a>
+                  <a
+                    href="https://linkedin.com"
+                    aria-label="LinkedIn"
+                    className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
+                  >
+                    <Linkedin size={20} />
+                  </a>
+                </div>
+              </div>
+
+              {/* Platform */}
               <div>
-                <ul className="space-y-3 sm:space-y-4">
-                  {navLinks.map((link) => (
-                    <li key={link.id}>
-                      <button 
-                        onClick={() => scrollToId(link.id)}
-                        className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg font-medium"
+                <h5 className="font-bold text-slate-900 mb-4 text-sm tracking-wide uppercase">
+                  Platform
+                </h5>
+                <ul className="space-y-3">
+                  {[
+                    "Market Prices",
+                    "Product Directory",
+                    "Farmer Profiles",
+                    "Government Feed",
+                  ].map((item) => (
+                    <li key={item}>
+                      <a
+                        href="#"
+                        className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
                       >
-                        {link.label}
-                      </button>
+                        {item}
+                      </a>
                     </li>
                   ))}
                 </ul>
               </div>
 
+              {/* Company */}
               <div>
-                <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Legal</h4>
-                <ul className="space-y-3 sm:space-y-4">
-                  <li>
-                    <a
-                      href="/privacy"
-                      className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg"
-                    >
-                      More about AniSave
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/terms"
-                      className="text-black hover:text-[#00573C] transition-colors duration-300 text-base sm:text-lg"
-                    >
-                      Terms of Service
-                    </a>
-                  </li>
+                <h5 className="font-bold text-slate-900 mb-4 text-sm tracking-wide uppercase">
+                  Company
+                </h5>
+                <ul className="space-y-3">
+                  {[
+                    { label: "About Us", href: "#about" },
+                    { label: "Careers", href: "#" },
+                    { label: "Privacy Policy", href: "/privacy" },
+                    { label: "Terms of Service", href: "/terms" },
+                  ].map((item) => (
+                    <li key={item.label}>
+                      <a
+                        href={item.href}
+                        className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
+                      >
+                        {item.label}
+                      </a>
+                    </li>
+                  ))}
                 </ul>
               </div>
 
+              {/* Support */}
               <div>
-                <h4 className="font-semibold text-black text-base sm:text-lg mb-3 sm:mb-4">Follow us</h4>
-                <div className="flex items-center gap-4 sm:gap-6">
-                  <a
-                    href="https://facebook.com"
-                    aria-label="Facebook"
-                    className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                  >
-                    <Facebook size={20} className="sm:w-6 sm:h-6" />
-                  </a>
-                  <a
-                    href="https://instagram.com"
-                    aria-label="Instagram"
-                    className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                  >
-                    <Instagram size={20} className="sm:w-6 sm:h-6" />
-                  </a>
-                  <a
-                    href="https://linkedin.com"
-                    aria-label="LinkedIn"
-                    className="text-black hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                  >
-                    <Linkedin size={20} className="sm:w-6 sm:h-6" />
-                  </a>
-                </div>
+                <h5 className="font-bold text-slate-900 mb-4 text-sm tracking-wide uppercase">
+                  Support
+                </h5>
+                <ul className="space-y-3">
+                  {["Help Center", "Contact Sales", "Live Support"].map(
+                    (item) => (
+                      <li key={item}>
+                        <a
+                          href="#"
+                          className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
+                        >
+                          {item}
+                        </a>
+                      </li>
+                    ),
+                  )}
+                </ul>
               </div>
             </div>
           </div>
-          <div className="bg-[#ECEFF2] border-t border-black/20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-              <p className="text-center text-black text-sm sm:text-base lg:text-lg">
-                © 2025 Anisave. All rights reserved.
+
+          {/* Bottom bar */}
+          <div className="bg-[#ECEFF2] border-t border-black/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+              <p className="text-slate-500 text-sm text-center sm:text-left">
+                © 2025 AniSave. All rights reserved. Proudly made in the
+                Philippines.
               </p>
+              <button
+                onClick={scrollToTop}
+                className="bg-[#024310] hover:bg-[#035815] text-white rounded-full p-2.5 shadow-md transition-all duration-300"
+                aria-label="Scroll to top"
+              >
+                <ChevronUp size={18} />
+              </button>
             </div>
           </div>
         </footer>
-
-        {/* Scroll to Top Button */}
-        {showScrollTop && (
-          <button
-            onClick={scrollToTop}
-            className="fixed bottom-8 right-8 bg-[#024310] hover:bg-[#035815] text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 z-40"
-            aria-label="Scroll to top"
-          >
-            <ChevronUp size={24} />
-          </button>
-        )}
       </div>
     </>
   );

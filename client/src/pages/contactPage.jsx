@@ -256,9 +256,12 @@ export default function SavedContacts() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-6">
+        <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
           Saved Contacts
         </h2>
+        <p className="text-center text-sm text-gray-500 mb-6">
+          Browse all your saved farmer in one place
+        </p>
 
         {loading ? (
           <>

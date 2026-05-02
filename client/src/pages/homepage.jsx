@@ -296,14 +296,9 @@ const Home = () => {
       <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Title */}
-          <motion.h2
-            className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
             Dashboard
-          </motion.h2>
+          </h2>
           <p className="text-center text-sm text-gray-500 mb-6">
             Monitor your sales and best selling products here
           </p>

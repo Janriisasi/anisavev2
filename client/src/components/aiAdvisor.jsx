@@ -11,17 +11,15 @@ import {
   BarChart2,
   TrendingUp,
   Flame,
+  Send,
+  User,
+  ShoppingBag,
+  Star,
 } from "lucide-react";
 import supabase from "../lib/supabase";
 import { useMarketPrices } from "../contexts/marketPricesContext";
 
 // ─── Trend Data Fetcher ───────────────────────────────────────────────────────
-/**
- * Queries the live `products` table and aggregates per product:
- *   sellerCount  – distinct farmers currently selling it
- *   totalQty     – total kg listed across all sellers
- *   avgPrice     – average asking price from sellers
- */
 const fetchTrendData = async () => {
   try {
     const { data, error } = await supabase
@@ -67,6 +65,57 @@ const fetchTrendData = async () => {
   }
 };
 
+// ─── Fetch top buyers (by approved orders count) ─────────────────────────────
+const fetchTopBuyers = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("buyer_id, profiles!orders_buyer_id_fkey(full_name, username)")
+      .eq("status", "approved");
+
+    if (error) throw error;
+
+    const map = {};
+    (data || []).forEach(({ buyer_id, profiles: prof }) => {
+      if (!map[buyer_id]) {
+        map[buyer_id] = {
+          id: buyer_id,
+          name: prof?.full_name || prof?.username || "Unknown Buyer",
+          orderCount: 0,
+        };
+      }
+      map[buyer_id].orderCount++;
+    });
+
+    return Object.values(map)
+      .sort((a, b) => b.orderCount - a.orderCount)
+      .slice(0, 3);
+  } catch (err) {
+    console.error("Buyer fetch error:", err);
+    return [];
+  }
+};
+
+// ─── Fetch current user profile ───────────────────────────────────────────────
+const fetchUserProfile = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("full_name, username")
+      .eq("id", user.id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error("Profile fetch error:", err);
+    return null;
+  }
+};
+
 // ─── Context Helpers ──────────────────────────────────────────────────────────
 const getMonthContext = () => {
   const now = new Date();
@@ -80,7 +129,7 @@ const getMonthContext = () => {
   return { month, year, season, currentMonth };
 };
 
-const buildContext = (myProducts, prices, trendData) => {
+const buildContext = (myProducts, prices, trendData, topBuyers, userName) => {
   const { month, year, season } = getMonthContext();
 
   const allCrops = [];
@@ -111,16 +160,34 @@ PALIWANAG:
 - Gamitin ang data na ito bilang pangunahing batayan sa mga tanong tungkol sa trends`
       : "\n(Walang live trend data na available ngayon.)";
 
+  const buyerBlock =
+    topBuyers.length > 0
+      ? `
+TOP BUYERS SA PLATFORM (base sa bilang ng approved orders):
+${topBuyers.map((b, i) => `  ${i + 1}. ${b.name} — ${b.orderCount} approved order${b.orderCount !== 1 ? "s" : ""}`).join("\n")}`
+      : "\n(Walang buyer data na available.)";
+
+  const hasProducts = myProducts.length > 0;
+  const sellingStatus = hasProducts
+    ? `Ang magsasaka ay may ${myProducts.length} produkto na nakalista: ${myProductNames}`
+    : "Ang magsasaka ay WALA pang nakalista na produkto sa platform.";
+
+  const greeting = userName
+    ? `Ang pangalan ng gumagamit ay ${userName}.`
+    : "";
+
   return `
 Ikaw ay isang AI Farming Advisor ng AniSave para sa mga magsasaka sa Pilipinas.
+${greeting}
 
 Kasalukuyang Buwan: ${month} ${year}
 Kasalukuyang Season: ${season}
-Mga Produkto ng Magsasaka: ${myProductNames}
+${sellingStatus}
 
 OPISYAL NA PRESYO NG MGA PRODUKTO (₱/kg mula sa DA):
 ${allCrops.map((c) => `  • ${c.name} (${c.category}): ₱${c.price}`).join("\n")}
 ${trendBlock}
+${buyerBlock}
 
 MAHALAGANG PATAKARAN:
 - Sumagot LAGING sa wikang Tagalog.
@@ -128,6 +195,9 @@ MAHALAGANG PATAKARAN:
 - Maging MAIKLI at TUWID sa punto — walang mahabang paliwanag.
 - Gumamit ng bullet points at emojis para madaling basahin.
 - Maximum 180 salita lang ang sagot (hindi kasama ang chart data).
+- TANGGIHAN ang mga tanong na HINDI tungkol sa pagsasaka, agrikultura, pagbebenta ng produktong pang-bukid, o ekonomiya ng magsasaka. Kung ang tanong ay hindi agrikultural (hal. programming, showbiz, sports, general trivia), sumagot ng: "Paumanhin! Ako ay isang AI Farming Advisor lamang. Narito ako para sagutin ang mga tanong tungkol sa pagsasaka, presyo ng produkto, at agrikultura. Para sa ibang paksa, mangyaring gumamit ng ibang AI assistant. 🌾"
+- Kung ang magsasaka ay WALA pang nakalista na produkto, himukin silang maglista na.
+- Kung may top buyers, banggitin sila kapag may tanong tungkol sa pagbebenta.
 
 CHART INSTRUCTIONS:
 Kapag ang sagot ay may ranking o comparison (hal. pinakamabenta, pinaka-profitable, pinakamabuting itanim), DAPAT mag-include ng chart sa DULO ng sagot.
@@ -199,6 +269,12 @@ const LOADING_MESSAGES = {
     "🌱 Hinahanap ang pinakamahusay na paraan...",
     "✅ Inihahanda ang mga rekomendasyon...",
   ],
+  chat: [
+    "🤔 Pinag-aaralan ang iyong tanong...",
+    "📦 Kinukuha ang impormasyon...",
+    "🌿 Hinahanap ang pinakamahusay na sagot...",
+    "✅ Halos tapos na...",
+  ],
 };
 const DEFAULT_LOADING = [
   "⚙️ Sinisimulan ang pagsusuri...",
@@ -206,6 +282,42 @@ const DEFAULT_LOADING = [
   "🤔 Pinag-aaralan ang iyong tanong...",
   "✅ Halos tapos na...",
 ];
+
+// ─── Greeting Helpers ─────────────────────────────────────────────────────────
+const getGreeting = (userName, myProducts) => {
+  const firstName = userName ? userName.split(" ")[0] : null;
+  const hour = new Date().getHours();
+  const timeGreet =
+    hour < 12 ? "Magandang umaga" : hour < 18 ? "Magandang hapon" : "Magandang gabi";
+
+  const greetings = firstName
+    ? [
+        `${timeGreet}, ${firstName}! 🌾 Kumusta ang inyong taniman ngayon?`,
+        `Hoy ${firstName}! 🌱 Mayroon bang bago sa bukid?`,
+        `${firstName}, ${timeGreet}! 💰 Handa ka na bang kumita ngayon?`,
+        `${timeGreet}, ${firstName}! 🌿 Anong balita sa inyong produkto?`,
+      ]
+    : [
+        `${timeGreet}, Magsasaka! 🌾 Kumusta ang taniman?`,
+        `Handa ka na bang kumita ngayon? 💰`,
+      ];
+
+  const tips =
+    myProducts.length === 0
+      ? [
+          `💡 Tip: Wala ka pang nakalista na produkto! Subukang mag-list ng iyong mga ani para makita ng mga buyer.`,
+          `🛒 Mayroon bang pananim na handa nang ibenta? I-list na ngayon sa AniSave!`,
+        ]
+      : [
+          `📊 Tingnan ang live market trends para malaman kung kailan pinakamainam na magbenta.`,
+          `💡 Ang ${myProducts[0]?.name || "iyong produkto"} ay maaaring mas magandang ibenta ngayon!`,
+        ];
+
+  const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+  const tip = tips[Math.floor(Math.random() * tips.length)];
+
+  return { greeting, tip };
+};
 
 // ─── Slideshow Loader ─────────────────────────────────────────────────────────
 const SlideshowLoader = ({ promptKey }) => {
@@ -308,29 +420,116 @@ const TrendChart = ({ chartData }) => {
   );
 };
 
-// ─── Trending Ticker shown when idle ─────────────────────────────────────────
-const TrendingTicker = ({ trendData }) => {
-  if (!trendData.length) return null;
+// ─── Enhanced Trending Ticker ─────────────────────────────────────────────────
+const TrendingSection = ({ trendData, topBuyers, myProducts, userName }) => {
+  const firstName = userName ? userName.split(" ")[0] : null;
   const top3 = trendData.slice(0, 3);
+  const hasProducts = myProducts.length > 0;
+
+  return (
+    <div className="mx-4 mb-3 space-y-2">
+      {/* Hot products ticker */}
+      {top3.length > 0 && (
+        <motion.div
+          className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="w-8 h-8 rounded-xl bg-amber-200/60 flex items-center justify-center flex-shrink-0">
+            <Flame size={14} className="text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">
+              Trending sa Platform Ngayon
+            </p>
+            <p className="text-xs text-amber-800">
+              {top3.map((t, i) => (
+                <span key={t.name}>
+                  {MEDALS[i]} <strong>{t.name}</strong> ({t.sellerCount} sellers)
+                  {i < top3.length - 1 ? "  ·  " : ""}
+                </span>
+              ))}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Sell nudge if no products */}
+      {!hasProducts && (
+        <motion.div
+          className="bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
+            <ShoppingBag size={14} className="text-green-700" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-green-700 uppercase tracking-wide mb-0.5">
+              Simulan na ang Pagbebenta!
+            </p>
+            <p className="text-xs text-green-800">
+              {firstName ? `${firstName}, mag` : "Mag"}-list na ng iyong produkto at kumita ngayon! 🌾{" "}
+              {top3.length > 0 && (
+                <span>
+                  Mataas ang demand sa <strong>{top3[0].name}</strong> ngayon.
+                </span>
+              )}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Top buyers */}
+      {topBuyers.length > 0 && (
+        <motion.div
+          className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div className="w-8 h-8 rounded-xl bg-blue-200/60 flex items-center justify-center flex-shrink-0">
+            <Star size={14} className="text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">
+              Pinaka-Active na Buyers
+            </p>
+            <p className="text-xs text-blue-800">
+              {topBuyers.map((b, i) => (
+                <span key={b.id}>
+                  {MEDALS[i] ?? `#${i + 1}`} <strong>{b.name}</strong> ({b.orderCount} orders)
+                  {i < topBuyers.length - 1 ? "  ·  " : ""}
+                </span>
+              ))}
+            </p>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
+// ─── Greeting Banner ──────────────────────────────────────────────────────────
+const GreetingBanner = ({ userName, myProducts }) => {
+  const [greetData] = useState(() => getGreeting(userName, myProducts));
+
   return (
     <motion.div
-      className="mx-4 mb-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 flex items-start gap-2"
-      initial={{ opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
+      className="mx-4 mb-3 bg-gradient-to-r from-green-700 to-green-600 rounded-xl px-4 py-3"
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.1 }}
     >
-      <Flame size={13} className="text-amber-500 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">
-          Trending sa Platform Ngayon
-        </p>
-        <p className="text-xs text-amber-800">
-          {top3.map((t, i) => (
-            <span key={t.name}>
-              {MEDALS[i]} <strong>{t.name}</strong> ({t.sellerCount} sellers)
-              {i < top3.length - 1 ? "  ·  " : ""}
-            </span>
-          ))}
-        </p>
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+          <User size={14} className="text-white" />
+        </div>
+        <div>
+          <p className="text-white text-xs font-semibold leading-snug">{greetData.greeting}</p>
+          <p className="text-green-200 text-[11px] mt-1 leading-snug">{greetData.tip}</p>
+        </div>
       </div>
     </motion.div>
   );
@@ -373,29 +572,91 @@ const MarkdownText = ({ text }) => {
   );
 };
 
+// ─── Chat Bubble ──────────────────────────────────────────────────────────────
+const ChatBubble = ({ msg }) => {
+  const isUser = msg.role === "user";
+  return (
+    <motion.div
+      className={`flex items-end gap-2 ${isUser ? "justify-end" : "justify-start"}`}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+    >
+      {!isUser && (
+        <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center bg-green-700 text-white mb-0.5">
+          <Bot size={13} />
+        </div>
+      )}
+      <div
+        className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-sm ${
+          isUser
+            ? "bg-green-700 text-white rounded-br-sm"
+            : "bg-white border border-gray-100 text-gray-800 rounded-bl-sm"
+        }`}
+      >
+        {isUser ? (
+          <span>{msg.content}</span>
+        ) : (
+          <>
+            <MarkdownText text={msg.content} />
+            {msg.chartData && <TrendChart chartData={msg.chartData} />}
+          </>
+        )}
+      </div>
+      {isUser && (
+        <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center bg-gray-200 text-gray-600 mb-0.5">
+          <User size={13} />
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AiAdvisor = ({ myProducts = [] }) => {
-  const [response, setResponse]     = useState(null);
-  const [chartData, setChartData]   = useState(null);
-  const [activeKey, setActiveKey]   = useState(null);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState(null);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [trendData, setTrendData]   = useState([]);
-  const [trendReady, setTrendReady] = useState(false);
+  const [response, setResponse]       = useState(null);
+  const [chartData, setChartData]     = useState(null);
+  const [activeKey, setActiveKey]     = useState(null);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState(null);
+  const [isExpanded, setIsExpanded]   = useState(true);
+  const [trendData, setTrendData]     = useState([]);
+  const [trendReady, setTrendReady]   = useState(false);
+  const [topBuyers, setTopBuyers]     = useState([]);
+  const [userName, setUserName]       = useState(null);
+  const [chatHistory, setChatHistory] = useState([]); // { role, content, chartData? }
+  const [chatInput, setChatInput]     = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [showChat, setShowChat]       = useState(false);
 
-  const advisorRef = useRef(null);
+  const advisorRef  = useRef(null);
+  const chatEndRef  = useRef(null);
+  const inputRef    = useRef(null);
   const { month, season } = getMonthContext();
   const { prices } = useMarketPrices();
 
-  // Load live trend data once on mount
+  // Load data on mount
   useEffect(() => {
     fetchTrendData().then((data) => {
       setTrendData(data);
       setTrendReady(true);
     });
+    fetchTopBuyers().then(setTopBuyers);
+    fetchUserProfile().then((profile) => {
+      if (profile) {
+        setUserName(profile.full_name || profile.username || null);
+      }
+    });
   }, []);
 
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (showChat) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatHistory, chatLoading, showChat]);
+
+  // ── Quick prompt call ──────────────────────────────────────────────────────
   const callAI = async (key) => {
     if (loading) return;
     setLoading(true);
@@ -403,13 +664,14 @@ const AiAdvisor = ({ myProducts = [] }) => {
     setResponse(null);
     setChartData(null);
     setActiveKey(key);
+    setShowChat(false);
 
     setTimeout(() => {
       advisorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
 
     try {
-      const systemContext = buildContext(myProducts, prices, trendData);
+      const systemContext = buildContext(myProducts, prices, trendData, topBuyers, userName);
       const userText = getQuickPromptText(key, { month, season });
 
       const { data, error: funcError } = await supabase.functions.invoke("chat-advisor", {
@@ -433,12 +695,79 @@ const AiAdvisor = ({ myProducts = [] }) => {
     }
   };
 
-  const handleRefresh = () => {
-    if (loading) return;
+  // ── Free chat send ─────────────────────────────────────────────────────────
+  const handleChatSend = async () => {
+    const text = chatInput.trim();
+    if (!text || chatLoading) return;
+
+    // Keep last 4 exchanges (8 messages) + new one = max 5 pairs
+    const MAX_HISTORY = 8;
+    const trimmedHistory = chatHistory.slice(-MAX_HISTORY);
+
+    const newHistory = [
+      ...trimmedHistory,
+      { role: "user", content: text },
+    ];
+
+    setChatHistory(newHistory);
+    setChatInput("");
+    setChatLoading(true);
+    setShowChat(true);
     setResponse(null);
     setChartData(null);
     setActiveKey(null);
     setError(null);
+
+    try {
+      const systemContext = buildContext(myProducts, prices, trendData, topBuyers, userName);
+
+      // Build messages array for the API (only role + content)
+      const messages = newHistory.map(({ role, content }) => ({ role, content }));
+
+      const { data, error: funcError } = await supabase.functions.invoke("chat-advisor", {
+        body: { systemContext, messages },
+      });
+
+      if (funcError) throw funcError;
+
+      const raw =
+        data?.choices?.[0]?.message?.content?.trim() ||
+        "Pasensya na, hindi makasagot ngayon. Subukang muli.";
+
+      const { text: aiText, chartData: parsed } = parseAIResponse(raw);
+
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: aiText, chartData: parsed || null },
+      ]);
+    } catch (err) {
+      console.error("Chat error:", err);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: `⚠️ May error: ${err.message}` },
+      ]);
+    } finally {
+      setChatLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSend();
+    }
+  };
+
+  const handleRefresh = () => {
+    if (loading || chatLoading) return;
+    setResponse(null);
+    setChartData(null);
+    setActiveKey(null);
+    setError(null);
+    setChatHistory([]);
+    setShowChat(false);
+    setChatInput("");
   };
 
   const activePrompt = QUICK_PROMPTS.find((p) => p.key === activeKey);
@@ -475,13 +804,13 @@ const AiAdvisor = ({ myProducts = [] }) => {
           <div className="flex items-center gap-2">
             <motion.button
               onClick={handleRefresh}
-              disabled={loading}
+              disabled={loading || chatLoading}
               className="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              whileHover={{ scale: loading ? 1 : 1.05 }}
-              whileTap={{ scale: loading ? 1 : 0.95 }}
+              whileHover={{ scale: (loading || chatLoading) ? 1 : 1.05 }}
+              whileTap={{ scale: (loading || chatLoading) ? 1 : 0.95 }}
               title="I-reset"
             >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={(loading || chatLoading) ? "animate-spin" : ""} />
             </motion.button>
             <motion.button
               onClick={() => setIsExpanded((p) => !p)}
@@ -508,15 +837,15 @@ const AiAdvisor = ({ myProducts = [] }) => {
             <div className="pt-4">
               <AnimatePresence mode="wait">
 
-                {/* Loading */}
+                {/* Loading (quick prompt) */}
                 {loading && (
                   <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <SlideshowLoader promptKey={activeKey} />
                   </motion.div>
                 )}
 
-                {/* Response */}
-                {!loading && (response || error) && (
+                {/* Quick Prompt Response */}
+                {!loading && !showChat && (response || error) && (
                   <motion.div
                     key="response"
                     className="mx-4 mb-4 rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-white"
@@ -538,7 +867,6 @@ const AiAdvisor = ({ myProducts = [] }) => {
                         )}
                       </div>
                     )}
-
                     {error ? (
                       <div className="bg-red-50 p-4 flex items-start gap-2 text-sm text-red-600">
                         <X size={16} className="flex-shrink-0 mt-0.5" />
@@ -553,8 +881,30 @@ const AiAdvisor = ({ myProducts = [] }) => {
                   </motion.div>
                 )}
 
+                {/* Chat Thread */}
+                {showChat && (
+                  <motion.div
+                    key="chat"
+                    className="mx-4 mb-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {/* Messages */}
+                    <div className="px-3 py-3 space-y-3 max-h-72 overflow-y-auto">
+                      {chatHistory.map((msg, i) => (
+                        <ChatBubble key={i} msg={msg} />
+                      ))}
+                      {chatLoading && (
+                        <SlideshowLoader promptKey="chat" />
+                      )}
+                      <div ref={chatEndRef} />
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Idle */}
-                {!loading && !response && !error && (
+                {!loading && !response && !error && !showChat && (
                   <motion.div
                     key="idle"
                     className="pb-2"
@@ -562,13 +912,24 @@ const AiAdvisor = ({ myProducts = [] }) => {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    {trendReady && <TrendingTicker trendData={trendData} />}
+                    {/* Greeting banner */}
+                    <GreetingBanner userName={userName} myProducts={myProducts} />
+
+                    {/* Trending section */}
+                    {trendReady && (
+                      <TrendingSection
+                        trendData={trendData}
+                        topBuyers={topBuyers}
+                        myProducts={myProducts}
+                        userName={userName}
+                      />
+                    )}
+
                     <div className="px-4 text-center">
-                      <div className="flex items-center justify-center gap-2 py-4">
+                      <div className="flex items-center justify-center gap-2 py-3">
                         <Sparkles size={14} className="text-gray-300" />
                         <p className="text-gray-400 text-xs">
-                          Piliin ang kategorya at alamin ang mga rekomendasyon at
-                          tips para mas gumanda ang ani mo!
+                          Piliin ang kategorya o mag-type ng tanong sa ibaba!
                         </p>
                         <Sparkles size={14} className="text-gray-300" />
                       </div>
@@ -579,13 +940,21 @@ const AiAdvisor = ({ myProducts = [] }) => {
               </AnimatePresence>
             </div>
 
-            {/* 4 Prompt Buttons */}
-            <div className="grid grid-cols-2 gap-2.5 px-4 pb-4">
+            {/* 4 Quick Prompt Buttons — hidden once a chat conversation starts */}
+            <AnimatePresence>
+            {!showChat && (
+            <motion.div
+              key="quick-prompts"
+              className="grid grid-cols-2 gap-2.5 px-4 pb-3"
+              initial={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: "hidden" }}
+              transition={{ duration: 0.25 }}
+            >
               {QUICK_PROMPTS.map((qp, i) => (
                 <motion.button
                   key={qp.key}
                   onClick={() => callAI(qp.key)}
-                  disabled={loading}
+                  disabled={loading || chatLoading}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
@@ -600,7 +969,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       ? "border-green-600 ring-2 ring-green-200 shadow-md"
                       : "border-gray-200"}
                   `}
-                  whileTap={{ scale: loading ? 1 : 0.97 }}
+                  whileTap={{ scale: (loading || chatLoading) ? 1 : 0.97 }}
                 >
                   {activeKey === qp.key && !loading && (
                     <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-600" />
@@ -611,6 +980,38 @@ const AiAdvisor = ({ myProducts = [] }) => {
                   </span>
                 </motion.button>
               ))}
+            </motion.div>
+            )}
+            </AnimatePresence>
+
+            {/* ── Free Chat Input ── */}
+            <div className="px-4 pb-4">
+              <div className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-3 py-2 shadow-sm focus-within:border-green-400 focus-within:ring-2 focus-within:ring-green-100 transition-all">
+                <textarea
+                  ref={inputRef}
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Magtanong tungkol sa pagsasaka, presyo, o pagbebenta..."
+                  rows={1}
+                  disabled={loading || chatLoading}
+                  className="flex-1 resize-none bg-transparent text-xs text-gray-700 placeholder-gray-400 outline-none leading-relaxed py-1 disabled:opacity-50"
+                  style={{ maxHeight: 80 }}
+                  onInput={(e) => {
+                    e.target.style.height = "auto";
+                    e.target.style.height = Math.min(e.target.scrollHeight, 80) + "px";
+                  }}
+                />
+                <motion.button
+                  onClick={handleChatSend}
+                  disabled={!chatInput.trim() || loading || chatLoading}
+                  className="w-8 h-8 rounded-xl bg-green-700 text-white flex items-center justify-center flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  whileHover={{ scale: chatInput.trim() ? 1.05 : 1 }}
+                  whileTap={{ scale: chatInput.trim() ? 0.95 : 1 }}
+                >
+                  <Send size={13} />
+                </motion.button>
+              </div>
             </div>
 
             <p className="text-center text-[10px] text-gray-400 pb-3 px-4">

@@ -356,7 +356,9 @@ export default function CategoriesPage() {
 
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleSaveContact(seller.profiles.id)}
+                            onClick={() =>
+                              handleSaveContact(seller.profiles.id)
+                            }
                             className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
                           >
                             Save Contact
@@ -368,7 +370,8 @@ export default function CategoriesPage() {
                               id: seller.id,
                               name: selectedProduct.name,
                               price: seller.price,
-                              image_url: seller.image_url || selectedProduct.image_url,
+                              image_url:
+                                seller.image_url || selectedProduct.image_url,
                               quantity_kg: seller.quantity_kg,
                             }}
                             className="flex-1 !rounded-lg !py-2 !text-sm"
@@ -448,9 +451,14 @@ export default function CategoriesPage() {
             </div>
           </div>
         ) : (
-          <h1 className="text-center text-2xl sm:text-4xl font-bold text-gray-800 mb-6">
-            Categories
-          </h1>
+          <div>
+            <h1 className="text-center text-2xl sm:text-4xl font-bold text-gray-800 mb-2">
+              Categories
+            </h1>
+            <p className="text-center text-sm text-gray-500 mb-6">
+              Browse all product categories
+            </p>
+          </div>
         )}
 
         {!name && (
