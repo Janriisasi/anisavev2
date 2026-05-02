@@ -109,7 +109,7 @@ const fetchUserProfile = async () => {
       .single();
 
     if (error) throw error;
-    return data;
+    return { ...data, id: user.id };
   } catch (err) {
     console.error("Profile fetch error:", err);
     return null;
@@ -129,7 +129,7 @@ const getMonthContext = () => {
   return { month, year, season, currentMonth };
 };
 
-const buildContext = (myProducts, prices, trendData, topBuyers, userName) => {
+const buildContext = (myProducts, prices, trendData, topBuyers, userName, userId) => {
   const { month, year, season } = getMonthContext();
 
   const allCrops = [];
@@ -160,29 +160,57 @@ PALIWANAG:
 - Gamitin ang data na ito bilang pangunahing batayan sa mga tanong tungkol sa trends`
       : "\n(Walang live trend data na available ngayon.)";
 
+  // ── Buyer rank awareness ──────────────────────────────────────────────────
+  const userBuyerRank = userId
+    ? topBuyers.findIndex((b) => b.id === userId)
+    : -1; // 0 = top 1, 1 = top 2, etc.
+  const isTopBuyer = userBuyerRank === 0;
+  const isInTopBuyers = userBuyerRank >= 0;
+
   const buyerBlock =
     topBuyers.length > 0
       ? `
 TOP BUYERS SA PLATFORM (base sa bilang ng approved orders):
-${topBuyers.map((b, i) => `  ${i + 1}. ${b.name} — ${b.orderCount} approved order${b.orderCount !== 1 ? "s" : ""}`).join("\n")}`
+${topBuyers.map((b, i) => {
+  const isCurrentUser = userId && b.id === userId;
+  const label = isCurrentUser ? `${b.name} (ITO ANG KASALUKUYANG USER — tukuyin bilang "ikaw" sa sagot)` : b.name;
+  return `  ${i + 1}. ${label} — ${b.orderCount} approved order${b.orderCount !== 1 ? "s" : ""}`;
+}).join("\n")}`
       : "\n(Walang buyer data na available.)";
+
+  // ── User achievement status ───────────────────────────────────────────────
+  const achievementBlock = isTopBuyer
+    ? `
+USER ACHIEVEMENT:
+- Ang kasalukuyang user ay ang PINAKA-AKTIBONG BUYER (#1) sa buong platform ngayon!
+- I-acknowledge ito nang may pagpupuri at higit sa lahat, i-motivate sila na patuloy na suportahan ang mga lokal na magsasaka.
+- Maaari rin silang hikayatin na subukan ang mga bagong produkto mula sa mga trending na magsasaka.`
+    : isInTopBuyers
+    ? `
+USER ACHIEVEMENT:
+- Ang kasalukuyang user ay nasa Top ${userBuyerRank + 1} buyers ng platform!
+- Banggitin ito nang may papuri at himukin silang umabot sa #1 spot.`
+    : "";
 
   const hasProducts = myProducts.length > 0;
   const sellingStatus = hasProducts
-    ? `Ang magsasaka ay may ${myProducts.length} produkto na nakalista: ${myProductNames}`
-    : "Ang magsasaka ay WALA pang nakalista na produkto sa platform.";
+    ? `Ang kasalukuyang user ay may ${myProducts.length} produkto na nakalista sa platform: ${myProductNames}. Sila ay isang SELLER/MAGSASAKA na aktibo sa AniSave.`
+    : "Ang kasalukuyang user ay WALA pang nakalista na produkto sa platform. Himukin silang maglista ng kanilang mga produkto.";
 
-  const greeting = userName
-    ? `Ang pangalan ng gumagamit ay ${userName}.`
-    : "";
+  const userInfo = userName
+    ? `Ang pangalan ng kasalukuyang user (ang taong kausap mo) ay "${userName}". Tukuyin siya bilang "ikaw" o gamitin ang kanyang first name sa mga personal na sagot — HUWAG gamitin ang buong pangalan niya sa sagot.`
+    : "Hindi pa alam ang pangalan ng kasalukuyang user.";
 
   return `
 Ikaw ay isang AI Farming Advisor ng AniSave para sa mga magsasaka sa Pilipinas.
-${greeting}
+
+KASALUKUYANG USER:
+${userInfo}
+${sellingStatus}
+${achievementBlock}
 
 Kasalukuyang Buwan: ${month} ${year}
 Kasalukuyang Season: ${season}
-${sellingStatus}
 
 OPISYAL NA PRESYO NG MGA PRODUKTO (₱/kg mula sa DA):
 ${allCrops.map((c) => `  • ${c.name} (${c.category}): ₱${c.price}`).join("\n")}
@@ -191,13 +219,15 @@ ${buyerBlock}
 
 MAHALAGANG PATAKARAN:
 - Sumagot LAGING sa wikang Tagalog.
+- HUWAG KAILANMAN gamitin ang buong pangalan ng user sa loob ng sagot — gamitin ang "ikaw", "kayo", o first name lang.
 - Gamitin PALAGI ang Live Market Trend Data kapag nagtanong tungkol sa pinakamabenta o pinaka-popular.
 - Maging MAIKLI at TUWID sa punto — walang mahabang paliwanag.
 - Gumamit ng bullet points at emojis para madaling basahin.
 - Maximum 180 salita lang ang sagot (hindi kasama ang chart data).
 - TANGGIHAN ang mga tanong na HINDI tungkol sa pagsasaka, agrikultura, pagbebenta ng produktong pang-bukid, o ekonomiya ng magsasaka. Kung ang tanong ay hindi agrikultural (hal. programming, showbiz, sports, general trivia), sumagot ng: "Paumanhin! Ako ay isang AI Farming Advisor lamang. Narito ako para sagutin ang mga tanong tungkol sa pagsasaka, presyo ng produkto, at agrikultura. Para sa ibang paksa, mangyaring gumamit ng ibang AI assistant. 🌾"
-- Kung ang magsasaka ay WALA pang nakalista na produkto, himukin silang maglista na.
-- Kung may top buyers, banggitin sila kapag may tanong tungkol sa pagbebenta.
+- Kung ang user ay WALA pang nakalista na produkto, himukin silang maglista na.
+- Kung ang user ay TOP BUYER, purihin sila at i-motivate na patuloy na suportahan ang mga lokal na magsasaka.
+- Kung may top buyers, banggitin sila (pero ang current user, "ikaw" lang ang tawag) kapag may tanong tungkol sa pagbebenta.
 
 CHART INSTRUCTIONS:
 Kapag ang sagot ay may ranking o comparison (hal. pinakamabenta, pinaka-profitable, pinakamabuting itanim), DAPAT mag-include ng chart sa DULO ng sagot.
@@ -329,7 +359,7 @@ const SlideshowLoader = ({ promptKey }) => {
   }, [messages.length]);
 
   return (
-    <div className="flex items-start gap-3 px-4 pb-4">
+    <div className="flex items-start gap-3 pb-2">
       <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center bg-green-700 text-white shadow-sm mt-0.5">
         <Bot size={15} />
       </div>
@@ -421,10 +451,14 @@ const TrendChart = ({ chartData }) => {
 };
 
 // ─── Enhanced Trending Ticker ─────────────────────────────────────────────────
-const TrendingSection = ({ trendData, topBuyers, myProducts, userName }) => {
+const TrendingSection = ({ trendData, topBuyers, myProducts, userName, userId }) => {
   const firstName = userName ? userName.split(" ")[0] : null;
   const top3 = trendData.slice(0, 3);
   const hasProducts = myProducts.length > 0;
+
+  const userBuyerRank = userId ? topBuyers.findIndex((b) => b.id === userId) : -1;
+  const isTopBuyer = userBuyerRank === 0;
+  const isInTopBuyers = userBuyerRank >= 0;
 
   return (
     <div className="mx-4 mb-3 space-y-2">
@@ -449,6 +483,49 @@ const TrendingSection = ({ trendData, topBuyers, myProducts, userName }) => {
                   {i < top3.length - 1 ? "  ·  " : ""}
                 </span>
               ))}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Achievement banner — top buyer motivation */}
+      {isTopBuyer && (
+        <motion.div
+          className="bg-yellow-50 border border-yellow-300 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
+            🏆
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
+              Ikaw ang Top Buyer ngayon!
+            </p>
+            <p className="text-xs text-yellow-800">
+              {firstName ? `${firstName}, patuloy` : "Patuloy"} kang sumusuporta sa mga lokal na magsasaka — salamat! 🌾
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {!isTopBuyer && isInTopBuyers && (
+        <motion.div
+          className="bg-yellow-50 border border-yellow-300 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
+            ⭐
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
+              Top #{userBuyerRank + 1} Buyer ka!
+            </p>
+            <p className="text-xs text-yellow-800">
+              Malapit ka na sa #1! Tuloy-tuloy lang sa pagsuporta sa ating mga magsasaka. 💪
             </p>
           </div>
         </motion.div>
@@ -497,12 +574,17 @@ const TrendingSection = ({ trendData, topBuyers, myProducts, userName }) => {
               Pinaka-Active na Buyers
             </p>
             <p className="text-xs text-blue-800">
-              {topBuyers.map((b, i) => (
-                <span key={b.id}>
-                  {MEDALS[i] ?? `#${i + 1}`} <strong>{b.name}</strong> ({b.orderCount} orders)
-                  {i < topBuyers.length - 1 ? "  ·  " : ""}
-                </span>
-              ))}
+              {topBuyers.map((b, i) => {
+                const isMe = userId && b.id === userId;
+                return (
+                  <span key={b.id}>
+                    {MEDALS[i] ?? `#${i + 1}`}{" "}
+                    <strong>{isMe ? "Ikaw" : b.name}</strong>{" "}
+                    ({b.orderCount} orders)
+                    {i < topBuyers.length - 1 ? "  ·  " : ""}
+                  </span>
+                );
+              })}
             </p>
           </div>
         </motion.div>
@@ -624,6 +706,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
   const [trendReady, setTrendReady]   = useState(false);
   const [topBuyers, setTopBuyers]     = useState([]);
   const [userName, setUserName]       = useState(null);
+  const [userId, setUserId]           = useState(null);
   const [chatHistory, setChatHistory] = useState([]); // { role, content, chartData? }
   const [chatInput, setChatInput]     = useState("");
   const [chatLoading, setChatLoading] = useState(false);
@@ -645,6 +728,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
     fetchUserProfile().then((profile) => {
       if (profile) {
         setUserName(profile.full_name || profile.username || null);
+        setUserId(profile.id || null);
       }
     });
   }, []);
@@ -671,7 +755,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
     }, 50);
 
     try {
-      const systemContext = buildContext(myProducts, prices, trendData, topBuyers, userName);
+      const systemContext = buildContext(myProducts, prices, trendData, topBuyers, userName, userId);
       const userText = getQuickPromptText(key, { month, season });
 
       const { data, error: funcError } = await supabase.functions.invoke("chat-advisor", {
@@ -719,7 +803,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
     setError(null);
 
     try {
-      const systemContext = buildContext(myProducts, prices, trendData, topBuyers, userName);
+      const systemContext = buildContext(myProducts, prices, trendData, topBuyers, userName, userId);
 
       // Build messages array for the API (only role + content)
       const messages = newHistory.map(({ role, content }) => ({ role, content }));
@@ -922,6 +1006,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                         topBuyers={topBuyers}
                         myProducts={myProducts}
                         userName={userName}
+                        userId={userId}
                       />
                     )}
 
