@@ -15,6 +15,10 @@ import {
   User,
   ShoppingBag,
   Star,
+  Sprout,
+  ChartLine,
+  HandCoins,
+  Lightbulb,
 } from "lucide-react";
 import supabase from "../lib/supabase";
 import { useMarketPrices } from "../contexts/marketPricesContext";
@@ -259,10 +263,10 @@ const parseAIResponse = (raw) => {
 
 // ─── Quick Prompts ────────────────────────────────────────────────────────────
 const QUICK_PROMPTS = [
-  { key: "plant", emoji: "🌱", label: "Pinakamabuting Itanim Ngayon" },
-  { key: "price", emoji: "📈", label: "Presyo sa Susunod na Linggo" },
-  { key: "sell",  emoji: "💰", label: "Pinakamabentang Produkto" },
-  { key: "tips",  emoji: "💡", label: "Mga Tips sa Pagsasaka" },
+  { key: "plant", icon: Sprout,     label: "Pinakamabuting Itanim Ngayon" },
+  { key: "price", icon: ChartLine,  label: "Presyo sa Susunod na Linggo" },
+  { key: "sell",  icon: HandCoins,  label: "Pinakamabentang Produkto" },
+  { key: "tips",  icon: Lightbulb,  label: "Mga Tips sa Pagsasaka" },
 ];
 
 const getQuickPromptText = (key, { month, season }) =>
@@ -461,8 +465,8 @@ const TrendingSection = ({ trendData, topBuyers, myProducts, userName, userId })
   const isInTopBuyers = userBuyerRank >= 0;
 
   return (
-    <div className="mx-4 mb-3 space-y-2">
-      {/* Hot products ticker */}
+    <div className="mx-4 mb-1 space-y-2">
+      {/* Hot products ticker — only shown when trendData is passed (not from idle, which passes []) */}
       {top3.length > 0 && (
         <motion.div
           className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
@@ -599,7 +603,7 @@ const GreetingBanner = ({ userName, myProducts }) => {
 
   return (
     <motion.div
-      className="mx-4 mb-3 bg-gradient-to-r from-green-700 to-green-600 rounded-xl px-4 py-3"
+      className="mx-4 mb-5 bg-gradient-to-r from-green-700 to-green-600 rounded-xl px-4 py-3"
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.1 }}
@@ -865,8 +869,9 @@ const AiAdvisor = ({ myProducts = [] }) => {
       transition={{ delay: 0.35, duration: 0.5 }}
     >
       {/* ── Header ── */}
-      <div className="bg-green-700 px-5 py-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-green-700 px-5 pt-4 pb-4 rounded-t-3xl">
+        {/* Top row */}
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
               <Leaf className="w-5 h-5 text-white" />
@@ -877,11 +882,6 @@ const AiAdvisor = ({ myProducts = [] }) => {
               </h3>
               <p className="text-green-200 text-xs mt-0.5 flex items-center gap-1.5">
                 {month} · {season}
-                {trendReady && trendData.length > 0 && (
-                  <span className="inline-flex items-center gap-0.5 bg-white/20 rounded-full px-1.5 py-0.5 text-[9px] font-semibold">
-                    <TrendingUp size={8} /> Live Trends
-                  </span>
-                )}
               </p>
             </div>
           </div>
@@ -906,6 +906,107 @@ const AiAdvisor = ({ myProducts = [] }) => {
             </motion.button>
           </div>
         </div>
+
+        {/* Market Trends pill strip — inside the green header */}
+        {trendReady && trendData.length > 0 && (
+          <div className="mb-0">
+            {/* White card with label + horizontal scroll */}
+            <div className="bg-white rounded-2xl px-3 pt-2.5 pb-3">
+              <div className="flex items-center gap-1.5 mb-2">
+                <TrendingUp size={11} className="text-red-500" />
+                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                  Market Trends
+                </span>
+              </div>
+              <div
+                className="flex gap-2 overflow-x-auto pb-0.5"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {trendData.slice(0, 8).map((t, i) => {
+                  const productImages = {
+                    Eggplant: "/images/eggplant.webp",
+                    Tomato: "/images/tomato.webp",
+                    Cabbage: "/images/cabbage.webp",
+                    Carrot: "/images/carrots.webp",
+                    Potato: "/images/potato.webp",
+                    Squash: "/images/squash.webp",
+                    "String Beans": "/images/54EDF324AD7242CA.png!c750x0.webp",
+                    Ampalaya: "/images/107992536.webp",
+                    Okra: "/images/okra.webp",
+                    Pechay: "/images/pechay.webp",
+                    "Bell Pepper": "/images/bellpepper.webp",
+                    Broccoli: "/images/broccoli.webp",
+                    "Lettuce (Green Ice)": "/images/lettuce_green.webp",
+                    "Lettuce (Iceberg)": "/images/lettuce_iceberg.webp",
+                    "Lettuce (Romaine)": "/images/lettuce_romaine.webp",
+                    Sitao: "/images/sitao.webp",
+                    Mango: "/images/mango.webp",
+                    "Banana (Lakatan)": "/images/lakatan.webp",
+                    "Banana (Latundan)": "/images/latundan.webp",
+                    "Banana (Saba)": "/images/saba.webp",
+                    Calamansi: "/images/calamansi.webp",
+                    Papaya: "/images/papaya.webp",
+                    Pineapple: "/images/pineapple.webp",
+                    Watermelon: "/images/watermelon.webp",
+                    Lanzones: "/images/lanzones.webp",
+                    Rambutan: "/images/rambutan.webp",
+                    Durian: "/images/durian.webp",
+                    Guyabano: "/images/guyabano.webp",
+                    Avocado: "/images/avocado.webp",
+                    Melon: "/images/melon.webp",
+                    Pomelo: "/images/pomelo.webp",
+                    "Rice (Local Fancy White)": "/images/rice_fancywhite.webp",
+                    "Rice (Local Premium 5% broken)": "/images/rice_premium.webp",
+                    "Rice (Local Well Milled)": "/images/will_milled_rice.webp",
+                    "Rice (Local Regular Milled)": "/images/rice_wellmilled.webp",
+                    "Corn (White Cob, Glutinous)": "/images/white_cob_corn.webp",
+                    "Corn (Yellow Cob, Sweet)": "/images/yellowcob_cornsweet.webp",
+                    "Corn Grits (White, Food Grade)": "/images/whitecorn_grits_foodgrade.webp",
+                    "Corn Grits (Yellow, Food Grade)": "/images/yellowcorn_grits_foodgrade.webp",
+                    "Corn Cracked (Yellow, Feed Grade)": "/images/yellowcob_corn_feedgrade.webp",
+                    "Corn Grits (Feed Grade)": "/images/corngrits.webp",
+                    Sorghum: "/images/sorghum.webp",
+                    Millet: "/images/millet.webp",
+                    Ginger: "/images/ginger.webp",
+                    Garlic: "/images/garlic.webp",
+                    "Red Onion": "/images/onion.webp",
+                    Chili: "/images/chili.webp",
+                    Lemongrass: "/images/lemongrass.webp",
+                    Basil: "/images/basil.webp",
+                    Turmeric: "/images/turmeric.webp",
+                  };
+                  const imgSrc = productImages[t.name];
+                  return (
+                    <motion.div
+                      key={t.name}
+                      className="flex-shrink-0 flex items-center gap-2 bg-gray-100 rounded-xl px-2.5 py-1.5"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                    >
+                      {/* Square product image */}
+                      <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 bg-white">
+                        {imgSrc ? (
+                          <img
+                            src={imgSrc}
+                            alt={t.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-base">🌾</div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold text-gray-800 leading-tight">{t.name}</p>
+                        <p className="text-[9px] text-gray-500 leading-tight">{t.sellerCount} sellers</p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Body ── */}
@@ -916,7 +1017,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="bg-gray-50"
+            className="bg-white"
           >
             <div className="pt-4">
               <AnimatePresence mode="wait">
@@ -969,7 +1070,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                 {showChat && (
                   <motion.div
                     key="chat"
-                    className="mx-4 mb-4"
+                    className="mx-4 mb-4 mt-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -999,26 +1100,16 @@ const AiAdvisor = ({ myProducts = [] }) => {
                     {/* Greeting banner */}
                     <GreetingBanner userName={userName} myProducts={myProducts} />
 
-                    {/* Trending section */}
+                    {/* Achievement / nudge banners only (trends are in header) */}
                     {trendReady && (
                       <TrendingSection
-                        trendData={trendData}
+                        trendData={[]}
                         topBuyers={topBuyers}
                         myProducts={myProducts}
                         userName={userName}
                         userId={userId}
                       />
                     )}
-
-                    <div className="px-4 text-center">
-                      <div className="flex items-center justify-center gap-2 py-3">
-                        <Sparkles size={14} className="text-gray-300" />
-                        <p className="text-gray-400 text-xs">
-                          Piliin ang kategorya o mag-type ng tanong sa ibaba!
-                        </p>
-                        <Sparkles size={14} className="text-gray-300" />
-                      </div>
-                    </div>
                   </motion.div>
                 )}
 
@@ -1030,7 +1121,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             {!showChat && (
             <motion.div
               key="quick-prompts"
-              className="grid grid-cols-2 gap-2.5 px-4 pb-3"
+              className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-4 pt-4 pb-3"
               initial={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: "hidden" }}
               transition={{ duration: 0.25 }}
@@ -1045,8 +1136,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
                   transition={{ delay: i * 0.06 }}
                   className={`
                     relative overflow-hidden
-                    bg-white border rounded-2xl p-3.5
-                    flex flex-col items-center gap-1.5 shadow-sm
+                    bg-white border rounded-2xl p-4
+                    flex flex-col items-center gap-2 shadow-sm
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-all duration-200
                     hover:shadow-md hover:border-green-300 hover:-translate-y-0.5
@@ -1059,8 +1150,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
                   {activeKey === qp.key && !loading && (
                     <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-600" />
                   )}
-                  <span className="text-xl">{qp.emoji}</span>
-                  <span className="text-[11px] font-semibold text-center leading-tight text-gray-700">
+                  <qp.icon size={24} className="text-green-700" />
+                  <span className="text-xs font-semibold text-center leading-tight text-gray-700">
                     {qp.label}
                   </span>
                 </motion.button>
@@ -1068,6 +1159,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             </motion.div>
             )}
             </AnimatePresence>
+
 
             {/* ── Free Chat Input ── */}
             <div className="px-4 pb-4">
