@@ -58,7 +58,9 @@ const fetchTrendData = async () => {
         avgPrice:
           item.prices.length > 0
             ? parseFloat(
-                (item.prices.reduce((a, b) => a + b, 0) / item.prices.length).toFixed(2)
+                (
+                  item.prices.reduce((a, b) => a + b, 0) / item.prices.length
+                ).toFixed(2),
               )
             : 0,
       }))
@@ -103,7 +105,9 @@ const fetchTopBuyers = async () => {
 // ─── Fetch current user profile ───────────────────────────────────────────────
 const fetchUserProfile = async () => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return null;
 
     const { data, error } = await supabase
@@ -133,7 +137,14 @@ const getMonthContext = () => {
   return { month, year, season, currentMonth };
 };
 
-const buildContext = (myProducts, prices, trendData, topBuyers, userName, userId) => {
+const buildContext = (
+  myProducts,
+  prices,
+  trendData,
+  topBuyers,
+  userName,
+  userId,
+) => {
   const { month, year, season } = getMonthContext();
 
   const allCrops = [];
@@ -154,7 +165,7 @@ LIVE MARKET TREND DATA (aktwal na listings ng mga magsasaka sa AniSave ngayon):
 ${top15
   .map(
     (t, i) =>
-      `  ${i + 1}. ${t.name} (${t.category}) — ${t.sellerCount} seller${t.sellerCount !== 1 ? "s" : ""}, ${t.totalQty} kg available, avg farm price ₱${t.avgPrice}/kg`
+      `  ${i + 1}. ${t.name} (${t.category}) — ${t.sellerCount} seller${t.sellerCount !== 1 ? "s" : ""}, ${t.totalQty} kg available, avg farm price ₱${t.avgPrice}/kg`,
   )
   .join("\n")}
 
@@ -175,11 +186,15 @@ PALIWANAG:
     topBuyers.length > 0
       ? `
 TOP BUYERS SA PLATFORM (base sa bilang ng approved orders):
-${topBuyers.map((b, i) => {
-  const isCurrentUser = userId && b.id === userId;
-  const label = isCurrentUser ? `${b.name} (ITO ANG KASALUKUYANG USER — tukuyin bilang "ikaw" sa sagot)` : b.name;
-  return `  ${i + 1}. ${label} — ${b.orderCount} approved order${b.orderCount !== 1 ? "s" : ""}`;
-}).join("\n")}`
+${topBuyers
+  .map((b, i) => {
+    const isCurrentUser = userId && b.id === userId;
+    const label = isCurrentUser
+      ? `${b.name} (ITO ANG KASALUKUYANG USER — tukuyin bilang "ikaw" sa sagot)`
+      : b.name;
+    return `  ${i + 1}. ${label} — ${b.orderCount} approved order${b.orderCount !== 1 ? "s" : ""}`;
+  })
+  .join("\n")}`
       : "\n(Walang buyer data na available.)";
 
   // ── User achievement status ───────────────────────────────────────────────
@@ -190,11 +205,11 @@ USER ACHIEVEMENT:
 - I-acknowledge ito nang may pagpupuri at higit sa lahat, i-motivate sila na patuloy na suportahan ang mga lokal na magsasaka.
 - Maaari rin silang hikayatin na subukan ang mga bagong produkto mula sa mga trending na magsasaka.`
     : isInTopBuyers
-    ? `
+      ? `
 USER ACHIEVEMENT:
 - Ang kasalukuyang user ay nasa Top ${userBuyerRank + 1} buyers ng platform!
 - Banggitin ito nang may papuri at himukin silang umabot sa #1 spot.`
-    : "";
+      : "";
 
   const hasProducts = myProducts.length > 0;
   const sellingStatus = hasProducts
@@ -263,19 +278,19 @@ const parseAIResponse = (raw) => {
 
 // ─── Quick Prompts ────────────────────────────────────────────────────────────
 const QUICK_PROMPTS = [
-  { key: "plant", icon: Sprout,     label: "Pinakamabuting Itanim Ngayon" },
-  { key: "price", icon: ChartLine,  label: "Presyo sa Susunod na Linggo" },
-  { key: "sell",  icon: HandCoins,  label: "Pinakamabentang Produkto" },
-  { key: "tips",  icon: Lightbulb,  label: "Mga Tips sa Pagsasaka" },
+  { key: "plant", icon: Sprout, label: "Pinakamabuting Itanim Ngayon" },
+  { key: "price", icon: ChartLine, label: "Presyo sa Susunod na Linggo" },
+  { key: "sell", icon: HandCoins, label: "Pinakamabentang Produkto" },
+  { key: "tips", icon: Lightbulb, label: "Mga Tips sa Pagsasaka" },
 ];
 
 const getQuickPromptText = (key, { month, season }) =>
   ({
     plant: `Buwan ng ${month}, ${season}. Base sa live trend data at presyo, aling 5 pananim ang pinaka-magandang itanim NGAYON? Ibigay ang: pangalan, araw bago anihin, at presyo. Gumawa ng chart gamit ang quantity available bilang value. Sagot sa Tagalog, maikli lang.`,
     price: `Base sa seasonal trends ng Pilipinas ngayong ${month} at sa live data, aling 5 produkto ang malamang na TATAAS ang presyo sa susunod na 1-2 linggo? Ibigay ang dahilan at gumawa ng chart. Sagot sa Tagalog, maikli lang.`,
-    sell:  `Base sa LIVE MARKET TREND DATA, aling 5 produkto ang PINAKAMABENTA at PINAKA-IN-DEMAND sa AniSave NGAYON? Gamitin ang seller count bilang pangunahing batayan. I-rank at gumawa ng chart ng seller count. Sagot sa Tagalog, maikli lang.`,
-    tips:  `Bigyan mo ako ng 5 praktikal na tips sa pagsasaka ngayong ${month} sa Pilipinas. Kasama na ang panahon, mga peste, lupa, at tamang oras ng pagbebenta. Sagot sa Tagalog, maikli lang.`,
-  }[key]);
+    sell: `Base sa LIVE MARKET TREND DATA, aling 5 produkto ang PINAKAMABENTA at PINAKA-IN-DEMAND sa AniSave NGAYON? Gamitin ang seller count bilang pangunahing batayan. I-rank at gumawa ng chart ng seller count. Sagot sa Tagalog, maikli lang.`,
+    tips: `Bigyan mo ako ng 5 praktikal na tips sa pagsasaka ngayong ${month} sa Pilipinas. Kasama na ang panahon, mga peste, lupa, at tamang oras ng pagbebenta. Sagot sa Tagalog, maikli lang.`,
+  })[key];
 
 // ─── Loading Messages ─────────────────────────────────────────────────────────
 const LOADING_MESSAGES = {
@@ -322,7 +337,11 @@ const getGreeting = (userName, myProducts) => {
   const firstName = userName ? userName.split(" ")[0] : null;
   const hour = new Date().getHours();
   const timeGreet =
-    hour < 12 ? "Magandang umaga" : hour < 18 ? "Magandang hapon" : "Magandang gabi";
+    hour < 12
+      ? "Magandang umaga"
+      : hour < 18
+        ? "Magandang hapon"
+        : "Magandang gabi";
 
   const greetings = firstName
     ? [
@@ -358,7 +377,10 @@ const SlideshowLoader = ({ promptKey }) => {
   const messages = LOADING_MESSAGES[promptKey] || DEFAULT_LOADING;
   const [index, setIndex] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setIndex((p) => (p + 1) % messages.length), 1800);
+    const t = setInterval(
+      () => setIndex((p) => (p + 1) % messages.length),
+      1800,
+    );
     return () => clearInterval(t);
   }, [messages.length]);
 
@@ -387,10 +409,34 @@ const SlideshowLoader = ({ promptKey }) => {
 
 // ─── Animated Horizontal Bar Chart ───────────────────────────────────────────
 const CHART_COLORS = {
-  green:  { bar: "#16a34a", bg: "#f0fdf4", header: "#dcfce7", text: "#15803d", track: "#bbf7d0" },
-  blue:   { bar: "#2563eb", bg: "#eff6ff", header: "#dbeafe", text: "#1d4ed8", track: "#bfdbfe" },
-  amber:  { bar: "#d97706", bg: "#fffbeb", header: "#fef3c7", text: "#b45309", track: "#fde68a" },
-  purple: { bar: "#7c3aed", bg: "#faf5ff", header: "#ede9fe", text: "#6d28d9", track: "#e9d5ff" },
+  green: {
+    bar: "#16a34a",
+    bg: "#f0fdf4",
+    header: "#dcfce7",
+    text: "#15803d",
+    track: "#bbf7d0",
+  },
+  blue: {
+    bar: "#2563eb",
+    bg: "#eff6ff",
+    header: "#dbeafe",
+    text: "#1d4ed8",
+    track: "#bfdbfe",
+  },
+  amber: {
+    bar: "#d97706",
+    bg: "#fffbeb",
+    header: "#fef3c7",
+    text: "#b45309",
+    track: "#fde68a",
+  },
+  purple: {
+    bar: "#7c3aed",
+    bg: "#faf5ff",
+    header: "#ede9fe",
+    text: "#6d28d9",
+    track: "#e9d5ff",
+  },
 };
 const MEDALS = ["🥇", "🥈", "🥉"];
 
@@ -402,7 +448,7 @@ const TrendChart = ({ chartData }) => {
 
   const formatVal = (v) => {
     if (unit === "piso") return `₱${v}`;
-    if (unit === "kg")   return `${v} kg`;
+    if (unit === "kg") return `${v} kg`;
     return `${v} ${unit}`;
   };
 
@@ -414,7 +460,10 @@ const TrendChart = ({ chartData }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15, duration: 0.4 }}
     >
-      <div className="px-4 py-2.5 flex items-center gap-2" style={{ background: c.header }}>
+      <div
+        className="px-4 py-2.5 flex items-center gap-2"
+        style={{ background: c.header }}
+      >
         <BarChart2 size={13} style={{ color: c.text }} />
         <span className="text-xs font-semibold" style={{ color: c.text }}>
           {title}
@@ -430,7 +479,10 @@ const TrendChart = ({ chartData }) => {
                   <span className="text-sm">{MEDALS[i] ?? `#${i + 1}`}</span>
                   {label}
                 </span>
-                <span className="text-xs font-bold tabular-nums" style={{ color: c.text }}>
+                <span
+                  className="text-xs font-bold tabular-nums"
+                  style={{ color: c.text }}
+                >
                   {formatVal(values[i])}
                 </span>
               </div>
@@ -443,7 +495,11 @@ const TrendChart = ({ chartData }) => {
                   style={{ background: c.bar, opacity: i === 0 ? 1 : 0.75 }}
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.max(pct, 3)}%` }}
-                  transition={{ delay: 0.1 + i * 0.06, duration: 0.55, ease: "easeOut" }}
+                  transition={{
+                    delay: 0.1 + i * 0.06,
+                    duration: 0.55,
+                    ease: "easeOut",
+                  }}
                 />
               </div>
             </div>
@@ -455,12 +511,20 @@ const TrendChart = ({ chartData }) => {
 };
 
 // ─── Enhanced Trending Ticker ─────────────────────────────────────────────────
-const TrendingSection = ({ trendData, topBuyers, myProducts, userName, userId }) => {
+const TrendingSection = ({
+  trendData,
+  topBuyers,
+  myProducts,
+  userName,
+  userId,
+}) => {
   const firstName = userName ? userName.split(" ")[0] : null;
   const top3 = trendData.slice(0, 3);
   const hasProducts = myProducts.length > 0;
 
-  const userBuyerRank = userId ? topBuyers.findIndex((b) => b.id === userId) : -1;
+  const userBuyerRank = userId
+    ? topBuyers.findIndex((b) => b.id === userId)
+    : -1;
   const isTopBuyer = userBuyerRank === 0;
   const isInTopBuyers = userBuyerRank >= 0;
 
@@ -483,7 +547,8 @@ const TrendingSection = ({ trendData, topBuyers, myProducts, userName, userId })
             <p className="text-xs text-amber-800">
               {top3.map((t, i) => (
                 <span key={t.name}>
-                  {MEDALS[i]} <strong>{t.name}</strong> ({t.sellerCount} sellers)
+                  {MEDALS[i]} <strong>{t.name}</strong> ({t.sellerCount}{" "}
+                  sellers)
                   {i < top3.length - 1 ? "  ·  " : ""}
                 </span>
               ))}
@@ -508,7 +573,8 @@ const TrendingSection = ({ trendData, topBuyers, myProducts, userName, userId })
               Ikaw ang Top Buyer ngayon!
             </p>
             <p className="text-xs text-yellow-800">
-              {firstName ? `${firstName}, patuloy` : "Patuloy"} kang sumusuporta sa mga lokal na magsasaka — salamat! 🌾
+              {firstName ? `${firstName}, patuloy` : "Patuloy"} kang sumusuporta
+              sa mga lokal na magsasaka — salamat! 🌾
             </p>
           </div>
         </motion.div>
@@ -529,7 +595,8 @@ const TrendingSection = ({ trendData, topBuyers, myProducts, userName, userId })
               Top #{userBuyerRank + 1} Buyer ka!
             </p>
             <p className="text-xs text-yellow-800">
-              Malapit ka na sa #1! Tuloy-tuloy lang sa pagsuporta sa ating mga magsasaka. 💪
+              Malapit ka na sa #1! Tuloy-tuloy lang sa pagsuporta sa ating mga
+              magsasaka. 💪
             </p>
           </div>
         </motion.div>
@@ -551,7 +618,8 @@ const TrendingSection = ({ trendData, topBuyers, myProducts, userName, userId })
               Simulan na ang Pagbebenta!
             </p>
             <p className="text-xs text-green-800">
-              {firstName ? `${firstName}, mag` : "Mag"}-list na ng iyong produkto at kumita ngayon! 🌾{" "}
+              {firstName ? `${firstName}, mag` : "Mag"}-list na ng iyong
+              produkto at kumita ngayon! 🌾{" "}
               {top3.length > 0 && (
                 <span>
                   Mataas ang demand sa <strong>{top3[0].name}</strong> ngayon.
@@ -583,8 +651,8 @@ const TrendingSection = ({ trendData, topBuyers, myProducts, userName, userId })
                 return (
                   <span key={b.id}>
                     {MEDALS[i] ?? `#${i + 1}`}{" "}
-                    <strong>{isMe ? "Ikaw" : b.name}</strong>{" "}
-                    ({b.orderCount} orders)
+                    <strong>{isMe ? "Ikaw" : b.name}</strong> ({b.orderCount}{" "}
+                    orders)
                     {i < topBuyers.length - 1 ? "  ·  " : ""}
                   </span>
                 );
@@ -603,18 +671,22 @@ const GreetingBanner = ({ userName, myProducts }) => {
 
   return (
     <motion.div
-      className="mx-4 mb-5 bg-gradient-to-r from-green-700 to-green-600 rounded-xl px-4 py-3"
+      className="mx-4 mb-5 bg-green-50 border border-green-300 rounded-xl px-4 py-3"
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.1 }}
     >
       <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-          <User size={14} className="text-white" />
+        <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
+          <User size={14} className="text-green-700" />
         </div>
         <div>
-          <p className="text-white text-xs font-semibold leading-snug">{greetData.greeting}</p>
-          <p className="text-green-200 text-[11px] mt-1 leading-snug">{greetData.tip}</p>
+          <p className="text-green-700 text-xs font-semibold leading-snug">
+            {greetData.greeting}
+          </p>
+          <p className="text-green-600 text-[11px] mt-1 leading-snug">
+            {greetData.tip}
+          </p>
         </div>
       </div>
     </motion.div>
@@ -640,7 +712,9 @@ const MarkdownText = ({ text }) => {
         if (numMatch)
           return (
             <div key={i} className="flex gap-2">
-              <span className="font-semibold text-green-700 flex-shrink-0">{numMatch[1]}</span>
+              <span className="font-semibold text-green-700 flex-shrink-0">
+                {numMatch[1]}
+              </span>
               <span>{renderInline(numMatch[2])}</span>
             </div>
           );
@@ -700,25 +774,25 @@ const ChatBubble = ({ msg }) => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AiAdvisor = ({ myProducts = [] }) => {
-  const [response, setResponse]       = useState(null);
-  const [chartData, setChartData]     = useState(null);
-  const [activeKey, setActiveKey]     = useState(null);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState(null);
-  const [isExpanded, setIsExpanded]   = useState(true);
-  const [trendData, setTrendData]     = useState([]);
-  const [trendReady, setTrendReady]   = useState(false);
-  const [topBuyers, setTopBuyers]     = useState([]);
-  const [userName, setUserName]       = useState(null);
-  const [userId, setUserId]           = useState(null);
+  const [response, setResponse] = useState(null);
+  const [chartData, setChartData] = useState(null);
+  const [activeKey, setActiveKey] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [trendData, setTrendData] = useState([]);
+  const [trendReady, setTrendReady] = useState(false);
+  const [topBuyers, setTopBuyers] = useState([]);
+  const [userName, setUserName] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]); // { role, content, chartData? }
-  const [chatInput, setChatInput]     = useState("");
+  const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const [showChat, setShowChat]       = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
-  const advisorRef  = useRef(null);
-  const chatEndRef  = useRef(null);
-  const inputRef    = useRef(null);
+  const advisorRef = useRef(null);
+  const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
   const { month, season } = getMonthContext();
   const { prices } = useMarketPrices();
 
@@ -755,16 +829,29 @@ const AiAdvisor = ({ myProducts = [] }) => {
     setShowChat(false);
 
     setTimeout(() => {
-      advisorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      advisorRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 50);
 
     try {
-      const systemContext = buildContext(myProducts, prices, trendData, topBuyers, userName, userId);
+      const systemContext = buildContext(
+        myProducts,
+        prices,
+        trendData,
+        topBuyers,
+        userName,
+        userId,
+      );
       const userText = getQuickPromptText(key, { month, season });
 
-      const { data, error: funcError } = await supabase.functions.invoke("chat-advisor", {
-        body: { systemContext, userText },
-      });
+      const { data, error: funcError } = await supabase.functions.invoke(
+        "chat-advisor",
+        {
+          body: { systemContext, userText },
+        },
+      );
 
       if (funcError) throw funcError;
 
@@ -792,10 +879,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
     const MAX_HISTORY = 8;
     const trimmedHistory = chatHistory.slice(-MAX_HISTORY);
 
-    const newHistory = [
-      ...trimmedHistory,
-      { role: "user", content: text },
-    ];
+    const newHistory = [...trimmedHistory, { role: "user", content: text }];
 
     setChatHistory(newHistory);
     setChatInput("");
@@ -807,14 +891,27 @@ const AiAdvisor = ({ myProducts = [] }) => {
     setError(null);
 
     try {
-      const systemContext = buildContext(myProducts, prices, trendData, topBuyers, userName, userId);
+      const systemContext = buildContext(
+        myProducts,
+        prices,
+        trendData,
+        topBuyers,
+        userName,
+        userId,
+      );
 
       // Build messages array for the API (only role + content)
-      const messages = newHistory.map(({ role, content }) => ({ role, content }));
+      const messages = newHistory.map(({ role, content }) => ({
+        role,
+        content,
+      }));
 
-      const { data, error: funcError } = await supabase.functions.invoke("chat-advisor", {
-        body: { systemContext, messages },
-      });
+      const { data, error: funcError } = await supabase.functions.invoke(
+        "chat-advisor",
+        {
+          body: { systemContext, messages },
+        },
+      );
 
       if (funcError) throw funcError;
 
@@ -890,11 +987,14 @@ const AiAdvisor = ({ myProducts = [] }) => {
               onClick={handleRefresh}
               disabled={loading || chatLoading}
               className="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              whileHover={{ scale: (loading || chatLoading) ? 1 : 1.05 }}
-              whileTap={{ scale: (loading || chatLoading) ? 1 : 0.95 }}
+              whileHover={{ scale: loading || chatLoading ? 1 : 1.05 }}
+              whileTap={{ scale: loading || chatLoading ? 1 : 0.95 }}
               title="I-reset"
             >
-              <RefreshCw size={14} className={(loading || chatLoading) ? "animate-spin" : ""} />
+              <RefreshCw
+                size={14}
+                className={loading || chatLoading ? "animate-spin" : ""}
+              />
             </motion.button>
             <motion.button
               onClick={() => setIsExpanded((p) => !p)}
@@ -956,14 +1056,21 @@ const AiAdvisor = ({ myProducts = [] }) => {
                     Melon: "/images/melon.webp",
                     Pomelo: "/images/pomelo.webp",
                     "Rice (Local Fancy White)": "/images/rice_fancywhite.webp",
-                    "Rice (Local Premium 5% broken)": "/images/rice_premium.webp",
+                    "Rice (Local Premium 5% broken)":
+                      "/images/rice_premium.webp",
                     "Rice (Local Well Milled)": "/images/will_milled_rice.webp",
-                    "Rice (Local Regular Milled)": "/images/rice_wellmilled.webp",
-                    "Corn (White Cob, Glutinous)": "/images/white_cob_corn.webp",
-                    "Corn (Yellow Cob, Sweet)": "/images/yellowcob_cornsweet.webp",
-                    "Corn Grits (White, Food Grade)": "/images/whitecorn_grits_foodgrade.webp",
-                    "Corn Grits (Yellow, Food Grade)": "/images/yellowcorn_grits_foodgrade.webp",
-                    "Corn Cracked (Yellow, Feed Grade)": "/images/yellowcob_corn_feedgrade.webp",
+                    "Rice (Local Regular Milled)":
+                      "/images/rice_wellmilled.webp",
+                    "Corn (White Cob, Glutinous)":
+                      "/images/white_cob_corn.webp",
+                    "Corn (Yellow Cob, Sweet)":
+                      "/images/yellowcob_cornsweet.webp",
+                    "Corn Grits (White, Food Grade)":
+                      "/images/whitecorn_grits_foodgrade.webp",
+                    "Corn Grits (Yellow, Food Grade)":
+                      "/images/yellowcorn_grits_foodgrade.webp",
+                    "Corn Cracked (Yellow, Feed Grade)":
+                      "/images/yellowcob_corn_feedgrade.webp",
                     "Corn Grits (Feed Grade)": "/images/corngrits.webp",
                     Sorghum: "/images/sorghum.webp",
                     Millet: "/images/millet.webp",
@@ -993,12 +1100,18 @@ const AiAdvisor = ({ myProducts = [] }) => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-base">🌾</div>
+                          <div className="w-full h-full flex items-center justify-center text-base">
+                            🌾
+                          </div>
                         )}
                       </div>
                       <div>
-                        <p className="text-[11px] font-semibold text-gray-800 leading-tight">{t.name}</p>
-                        <p className="text-[9px] text-gray-500 leading-tight">{t.sellerCount} sellers</p>
+                        <p className="text-[11px] font-semibold text-gray-800 leading-tight">
+                          {t.name}
+                        </p>
+                        <p className="text-[9px] text-gray-500 leading-tight">
+                          {t.sellerCount} sellers
+                        </p>
                       </div>
                     </motion.div>
                   );
@@ -1021,10 +1134,14 @@ const AiAdvisor = ({ myProducts = [] }) => {
           >
             <div className="pt-4">
               <AnimatePresence mode="wait">
-
                 {/* Loading (quick prompt) */}
                 {loading && (
-                  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
                     <SlideshowLoader promptKey={activeKey} />
                   </motion.div>
                 )}
@@ -1080,9 +1197,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       {chatHistory.map((msg, i) => (
                         <ChatBubble key={i} msg={msg} />
                       ))}
-                      {chatLoading && (
-                        <SlideshowLoader promptKey="chat" />
-                      )}
+                      {chatLoading && <SlideshowLoader promptKey="chat" />}
                       <div ref={chatEndRef} />
                     </div>
                   </motion.div>
@@ -1098,7 +1213,10 @@ const AiAdvisor = ({ myProducts = [] }) => {
                     exit={{ opacity: 0 }}
                   >
                     {/* Greeting banner */}
-                    <GreetingBanner userName={userName} myProducts={myProducts} />
+                    <GreetingBanner
+                      userName={userName}
+                      myProducts={myProducts}
+                    />
 
                     {/* Achievement / nudge banners only (trends are in header) */}
                     {trendReady && (
@@ -1112,54 +1230,59 @@ const AiAdvisor = ({ myProducts = [] }) => {
                     )}
                   </motion.div>
                 )}
-
               </AnimatePresence>
             </div>
 
             {/* 4 Quick Prompt Buttons — hidden once a chat conversation starts */}
             <AnimatePresence>
-            {!showChat && (
-            <motion.div
-              key="quick-prompts"
-              className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-4 pt-4 pb-3"
-              initial={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: "hidden" }}
-              transition={{ duration: 0.25 }}
-            >
-              {QUICK_PROMPTS.map((qp, i) => (
-                <motion.button
-                  key={qp.key}
-                  onClick={() => callAI(qp.key)}
-                  disabled={loading || chatLoading}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className={`
+              {!showChat && (
+                <motion.div
+                  key="quick-prompts"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-4 pt-4 pb-3"
+                  initial={{ opacity: 1, height: "auto" }}
+                  exit={{
+                    opacity: 0,
+                    height: 0,
+                    marginBottom: 0,
+                    overflow: "hidden",
+                  }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {QUICK_PROMPTS.map((qp, i) => (
+                    <motion.button
+                      key={qp.key}
+                      onClick={() => callAI(qp.key)}
+                      disabled={loading || chatLoading}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      className={`
                     relative overflow-hidden
                     bg-white border rounded-2xl p-4
                     flex flex-col items-center gap-2 shadow-sm
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-all duration-200
                     hover:shadow-md hover:border-green-300 hover:-translate-y-0.5
-                    ${activeKey === qp.key && !loading
-                      ? "border-green-600 ring-2 ring-green-200 shadow-md"
-                      : "border-gray-200"}
+                    ${
+                      activeKey === qp.key && !loading
+                        ? "border-green-600 ring-2 ring-green-200 shadow-md"
+                        : "border-gray-200"
+                    }
                   `}
-                  whileTap={{ scale: (loading || chatLoading) ? 1 : 0.97 }}
-                >
-                  {activeKey === qp.key && !loading && (
-                    <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-600" />
-                  )}
-                  <qp.icon size={24} className="text-green-700" />
-                  <span className="text-xs font-semibold text-center leading-tight text-gray-700">
-                    {qp.label}
-                  </span>
-                </motion.button>
-              ))}
-            </motion.div>
-            )}
+                      whileTap={{ scale: loading || chatLoading ? 1 : 0.97 }}
+                    >
+                      {activeKey === qp.key && !loading && (
+                        <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-600" />
+                      )}
+                      <qp.icon size={24} className="text-green-700" />
+                      <span className="text-xs font-semibold text-center leading-tight text-gray-700">
+                        {qp.label}
+                      </span>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
             </AnimatePresence>
-
 
             {/* ── Free Chat Input ── */}
             <div className="px-4 pb-4">
@@ -1169,14 +1292,15 @@ const AiAdvisor = ({ myProducts = [] }) => {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Magtanong tungkol sa pagsasaka, presyo, o pagbebenta..."
+                  placeholder="Ano ang inyong mga katanungan o nais malaman?"
                   rows={1}
                   disabled={loading || chatLoading}
                   className="flex-1 resize-none bg-transparent text-xs text-gray-700 placeholder-gray-400 outline-none leading-relaxed py-1 disabled:opacity-50"
                   style={{ maxHeight: 80 }}
                   onInput={(e) => {
                     e.target.style.height = "auto";
-                    e.target.style.height = Math.min(e.target.scrollHeight, 80) + "px";
+                    e.target.style.height =
+                      Math.min(e.target.scrollHeight, 80) + "px";
                   }}
                 />
                 <motion.button
