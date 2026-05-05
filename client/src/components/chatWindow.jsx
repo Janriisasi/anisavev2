@@ -1,15 +1,26 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Send, Circle, ShoppingBag, X, MoreVertical, UserPlus, UserMinus, Trash2, ImageIcon, Star } from 'lucide-react';
-import { compressImage } from '../utils/imageCompression';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowLeft,
+  Send,
+  Circle,
+  ShoppingBag,
+  X,
+  MoreVertical,
+  UserPlus,
+  UserMinus,
+  Trash2,
+  ImageIcon,
+  Star,
+} from "lucide-react";
+import { compressImage } from "../utils/imageCompression";
 
-import { formatDistanceToNow } from 'date-fns';
-import supabase from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
-import toast from 'react-hot-toast';
-import DeleteConfirmationModal from './deleteConfirmation';
-import PostTransactionRatingModal from './postTransactionRatingModal';
-
+import { formatDistanceToNow } from "date-fns";
+import supabase from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
+import toast from "react-hot-toast";
+import DeleteConfirmationModal from "./deleteConfirmation";
+import PostTransactionRatingModal from "./postTransactionRatingModal";
 
 // How old last_activity can be before we treat the user as offline (must match usePresence.js)
 const STALE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
@@ -21,10 +32,15 @@ function isPresenceOnline(presence) {
   return age < STALE_THRESHOLD_MS;
 }
 
-export default function ChatWindow({ conversation, onBack, onUnreadChange, productContext = null }) {
+export default function ChatWindow({
+  conversation,
+  onBack,
+  onUnreadChange,
+  productContext = null,
+}) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
@@ -37,7 +53,8 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
   const inputRef = useRef(null);
   const channelsRef = useRef([]);
   // Product context card — shown at top of chat when opened from a product
-  const [shownProductContext, setShownProductContext] = useState(productContext);
+  const [shownProductContext, setShownProductContext] =
+    useState(productContext);
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -49,7 +66,6 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
   const [uploadingImage, setUploadingImage] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState(null);
 
-
   // Keep context in sync if the prop changes (e.g. user opens another product chat)
   useEffect(() => {
     setShownProductContext(productContext);
@@ -60,7 +76,7 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
 
   // ─── Cleanup helper ──────────────────────────────────────────────────────────
   const cleanupChannels = useCallback(() => {
-    channelsRef.current.forEach(ch => ch.unsubscribe());
+    channelsRef.current.forEach((ch) => ch.unsubscribe());
     channelsRef.current = [];
   }, []);
 
@@ -79,7 +95,7 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
         setShowMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
     // ── 1. Real-time messages ─────────────────────────────────────────────────
     // IMPORTANT: We intentionally omit the `filter` from postgres_changes.
@@ -91,11 +107,11 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     const msgChannel = supabase
       .channel(`chat-messages:${conversation.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
           // NO filter here — we filter in the callback instead
         },
         (payload) => {
@@ -107,19 +123,19 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
           // Skip own messages — already added optimistically in sendMessage
           if (incoming.sender_id === user.id) return;
 
-          setMessages(prev => {
-            if (prev.find(m => m.id === incoming.id)) return prev;
+          setMessages((prev) => {
+            if (prev.find((m) => m.id === incoming.id)) return prev;
             return [...prev, incoming];
           });
 
           markAsRead();
           scrollToBottom();
-        }
+        },
       )
       .subscribe((status) => {
-        console.log('Chat realtime status:', status);
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.warn('Realtime channel failed — starting polling fallback');
+        console.log("Chat realtime status:", status);
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.warn("Realtime channel failed — starting polling fallback");
           startPollingFallback();
         }
       });
@@ -134,16 +150,16 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     const presenceChannel = supabase
       .channel(`presence-watch:${otherUser.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_presence',
+          event: "UPDATE",
+          schema: "public",
+          table: "user_presence",
           filter: `user_id=eq.${otherUser.id}`,
         },
         (payload) => {
           setPresenceData(payload.new);
-        }
+        },
       )
       .subscribe();
 
@@ -152,26 +168,26 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     // ── 3. Typing indicators ──────────────────────────────────────────────────
     const typingChannel = supabase.channel(`typing:${conversation.id}`, {
       config: {
-        broadcast: { ack: false }
-      }
+        broadcast: { ack: false },
+      },
     });
 
     typingChannelRef.current = typingChannel;
 
     typingChannel
-      .on(
-        'broadcast',
-        { event: 'typing' },
-        (payload) => {
-          if (payload.payload?.user_id && payload.payload.user_id !== user.id) {
-            setOtherUserTyping(payload.payload.is_typing);
-            if (otherTypingTimeoutRef.current) clearTimeout(otherTypingTimeoutRef.current);
-            if (payload.payload.is_typing) {
-              otherTypingTimeoutRef.current = setTimeout(() => setOtherUserTyping(false), 3000);
-            }
+      .on("broadcast", { event: "typing" }, (payload) => {
+        if (payload.payload?.user_id && payload.payload.user_id !== user.id) {
+          setOtherUserTyping(payload.payload.is_typing);
+          if (otherTypingTimeoutRef.current)
+            clearTimeout(otherTypingTimeoutRef.current);
+          if (payload.payload.is_typing) {
+            otherTypingTimeoutRef.current = setTimeout(
+              () => setOtherUserTyping(false),
+              3000,
+            );
           }
         }
-      )
+      })
       .subscribe();
 
     channelsRef.current.push(typingChannel);
@@ -183,10 +199,9 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
       cleanupChannels();
       clearInterval(presenceTimer);
       stopPollingFallback();
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [conversation.id, user?.id]); // stable deps — avoids re-subscribing on every render
-
 
   useEffect(() => {
     scrollToBottom();
@@ -201,22 +216,26 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     pollIntervalRef.current = setInterval(async () => {
       try {
         const { data } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversation.id)
-          .order('created_at', { ascending: true });
+          .from("messages")
+          .select("*")
+          .eq("conversation_id", conversation.id)
+          .order("created_at", { ascending: true });
         if (!data) return;
         // Merge: add any messages not already in state (dedup by id)
-        setMessages(prev => {
-          const existingIds = new Set(prev.map(m => m.id));
-          const newOnes = data.filter(m => !existingIds.has(m.id));
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id));
+          const newOnes = data.filter((m) => !existingIds.has(m.id));
           if (newOnes.length === 0) return prev;
           // scroll only when there are actually new messages
-          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
+          setTimeout(
+            () =>
+              messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+            80,
+          );
           return [...prev, ...newOnes];
         });
       } catch (e) {
-        console.error('Polling error:', e);
+        console.error("Polling error:", e);
       }
     }, 4000); // every 4 s
   };
@@ -233,10 +252,10 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversation.id)
-        .order('created_at', { ascending: true });
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", conversation.id)
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
       setMessages(data || []);
@@ -245,9 +264,11 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
       // Collect all order_ids referenced in ORDER_CONFIRM messages in this chat.
       const orderIds = [];
       for (const msg of data || []) {
-        if (msg.content.startsWith('[ORDER_CONFIRM:')) {
+        if (msg.content.startsWith("[ORDER_CONFIRM:")) {
           try {
-            const jsonStr = msg.content.split(']\n')[0].replace('[ORDER_CONFIRM:', '');
+            const jsonStr = msg.content
+              .split("]\n")[0]
+              .replace("[ORDER_CONFIRM:", "");
             const parsed = JSON.parse(jsonStr);
             if (parsed.order_id) orderIds.push(parsed.order_id);
           } catch {}
@@ -255,13 +276,13 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
       }
       if (orderIds.length > 0) {
         const { data: orders } = await supabase
-          .from('orders')
-          .select('id, status')
-          .in('id', orderIds);
+          .from("orders")
+          .select("id, status")
+          .in("id", orderIds);
         if (orders) {
           const map = {};
           for (const o of orders) {
-            if (o.status === 'approved' || o.status === 'declined') {
+            if (o.status === "approved" || o.status === "declined") {
               map[o.id] = o.status;
             }
           }
@@ -269,8 +290,8 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
         }
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
-      toast.error('Failed to load messages');
+      console.error("Error fetching messages:", error);
+      toast.error("Failed to load messages");
     } finally {
       setLoading(false);
     }
@@ -279,9 +300,9 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
   const fetchPresence = async () => {
     try {
       const { data, error } = await supabase
-        .from('user_presence')
-        .select('*')
-        .eq('user_id', otherUser.id)
+        .from("user_presence")
+        .select("*")
+        .eq("user_id", otherUser.id)
         .single();
 
       if (error) {
@@ -290,7 +311,7 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
       }
       setPresenceData(data);
     } catch (error) {
-      console.error('Error fetching presence:', error);
+      console.error("Error fetching presence:", error);
     }
   };
 
@@ -298,14 +319,14 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     if (!user || !otherUser) return;
     try {
       const { data } = await supabase
-        .from('saved_contacts')
-        .select('id')
-        .eq('buyer_id', user.id)
-        .eq('farmer_id', otherUser.id)
+        .from("saved_contacts")
+        .select("id")
+        .eq("buyer_id", user.id)
+        .eq("farmer_id", otherUser.id)
         .maybeSingle();
       setIsSaved(!!data);
     } catch (error) {
-      console.error('Error checking contact status:', error);
+      console.error("Error checking contact status:", error);
     }
   };
 
@@ -317,38 +338,36 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
       setActionLoading(true);
       if (isSaved) {
         const { error } = await supabase
-          .from('saved_contacts')
+          .from("saved_contacts")
           .delete()
-          .eq('buyer_id', user.id)
-          .eq('farmer_id', otherUser.id);
-        
+          .eq("buyer_id", user.id)
+          .eq("farmer_id", otherUser.id);
+
         if (error) throw error;
         setIsSaved(false);
-        toast.success('Contact removed');
+        toast.success("Contact removed");
       } else {
         // ✅ Fetch other user's contact info first, then store snapshot
         const { data: farmerProfile } = await supabase
-          .from('profiles')
-          .select('contact_number, address')
-          .eq('id', otherUser.id)
+          .from("profiles")
+          .select("contact_number, address")
+          .eq("id", otherUser.id)
           .single();
 
-        const { error } = await supabase
-          .from('saved_contacts')
-          .insert({
-            buyer_id: user.id,
-            farmer_id: otherUser.id,
-            contact_number: farmerProfile?.contact_number || null,
-            address: farmerProfile?.address || null,
-          });
-        
+        const { error } = await supabase.from("saved_contacts").insert({
+          buyer_id: user.id,
+          farmer_id: otherUser.id,
+          contact_number: farmerProfile?.contact_number || null,
+          address: farmerProfile?.address || null,
+        });
+
         if (error) throw error;
         setIsSaved(true);
-        toast.success('Contact saved');
+        toast.success("Contact saved");
       }
     } catch (error) {
-      console.error('Error toggling contact save:', error);
-      toast.error('Failed to update contact');
+      console.error("Error toggling contact save:", error);
+      toast.error("Failed to update contact");
     } finally {
       setActionLoading(false);
       setShowMenu(false);
@@ -361,17 +380,17 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     try {
       setActionLoading(true);
       const { error } = await supabase
-        .from('conversations')
+        .from("conversations")
         .delete()
-        .eq('id', conversation.id);
+        .eq("id", conversation.id);
 
       if (error) throw error;
-      
-      toast.success('Chat deleted');
+
+      toast.success("Chat deleted");
       onBack();
     } catch (error) {
-      console.error('Error deleting conversation:', error);
-      toast.error('Failed to delete chat');
+      console.error("Error deleting conversation:", error);
+      toast.error("Failed to delete chat");
     } finally {
       setActionLoading(false);
       setShowDeleteModal(false);
@@ -379,15 +398,15 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     }
   };
 
-
   const markAsRead = async () => {
-
     try {
-      await supabase.rpc('mark_conversation_as_read', { conv_id: conversation.id });
-      const { data } = await supabase.rpc('get_unread_count');
+      await supabase.rpc("mark_conversation_as_read", {
+        conv_id: conversation.id,
+      });
+      const { data } = await supabase.rpc("get_unread_count");
       if (onUnreadChange) onUnreadChange(data || 0);
     } catch (error) {
-      console.error('Error marking as read:', error);
+      console.error("Error marking as read:", error);
     }
   };
 
@@ -408,13 +427,13 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     try {
       if (typingChannelRef.current) {
         await typingChannelRef.current.send({
-          type: 'broadcast',
-          event: 'typing',
+          type: "broadcast",
+          event: "typing",
           payload: { user_id: user.id, is_typing: typing },
         });
       }
     } catch (error) {
-      console.error('Error sending typing indicator:', error);
+      console.error("Error sending typing indicator:", error);
     }
   };
 
@@ -424,8 +443,8 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     if (!file) return;
 
     // Only allow image types
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
       return;
     }
 
@@ -434,7 +453,7 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     setImagePreview({ file, previewUrl });
 
     // Reset file input so the same file can be re-selected
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const cancelImagePreview = () => {
@@ -446,17 +465,20 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     setUploadingImage(true);
     try {
       const compressed = await compressImage(file);
-      const ext = compressed.type.split('/')[1] || 'jpg';
+      const ext = compressed.type.split("/")[1] || "jpg";
       const path = `chat-images/${conversation.id}/${Date.now()}-${user.id}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('chat-images')
-        .upload(path, compressed, { contentType: compressed.type, upsert: false });
+        .from("chat-images")
+        .upload(path, compressed, {
+          contentType: compressed.type,
+          upsert: false,
+        });
 
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from('chat-images')
+        .from("chat-images")
         .getPublicUrl(path);
 
       return urlData.publicUrl;
@@ -471,7 +493,7 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     const sanitizedMessage = newMessage.trim();
     if (!sanitizedMessage && !imagePreview) return;
     if (sanitizedMessage.length > 2000) {
-      toast.error('Message too long (max 2000 characters)');
+      toast.error("Message too long (max 2000 characters)");
       return;
     }
 
@@ -483,8 +505,8 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
         try {
           imageUrl = await uploadImage(imagePreview.file);
         } catch (err) {
-          console.error('Image upload failed:', err);
-          toast.error('Failed to upload image');
+          console.error("Image upload failed:", err);
+          toast.error("Failed to upload image");
           setSending(false);
           return;
         }
@@ -492,9 +514,10 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
       }
 
       // Build content — image tag, text, or both
-      let finalContent = '';
+      let finalContent = "";
       if (imageUrl) finalContent += `[IMAGE:${imageUrl}]`;
-      if (sanitizedMessage) finalContent += (imageUrl ? '\n' : '') + sanitizedMessage;
+      if (sanitizedMessage)
+        finalContent += (imageUrl ? "\n" : "") + sanitizedMessage;
 
       if (shownProductContext) {
         const contextData = {
@@ -502,18 +525,18 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
           price: shownProductContext.price,
           image_url: shownProductContext.image_url,
           quantity_kg: shownProductContext.quantity_kg,
-          id: shownProductContext.id
+          id: shownProductContext.id,
         };
         finalContent = `[PRODUCT_CONTEXT:${JSON.stringify(contextData)}]\n${finalContent || sanitizedMessage}`;
         setShownProductContext(null);
       }
 
-      setNewMessage('');
+      setNewMessage("");
       setIsTyping(false);
       updateTypingIndicator(false);
 
       const { data, error } = await supabase
-        .from('messages')
+        .from("messages")
         .insert({
           conversation_id: conversation.id,
           sender_id: user.id,
@@ -525,16 +548,16 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
 
       if (error) throw error;
 
-      setMessages(prev => {
-        if (prev.find(m => m.id === data.id)) return prev;
+      setMessages((prev) => {
+        if (prev.find((m) => m.id === data.id)) return prev;
         return [...prev, data];
       });
 
       inputRef.current?.focus();
       scrollToBottom();
     } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
       setNewMessage(newMessage);
     } finally {
       setSending(false);
@@ -543,30 +566,32 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
 
   // ─── Helpers ──────────────────────────────────────────────────────────────────
   const scrollToBottom = () => {
-    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
+    setTimeout(
+      () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+      80,
+    );
   };
 
   const formatTime = (timestamp) => {
     try {
-      return new Date(timestamp).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
+      return new Date(timestamp).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
         hour12: true,
       });
     } catch {
-      return '';
+      return "";
     }
   };
 
   const formatLastSeen = (timestamp) => {
-    if (!timestamp) return 'Offline';
+    if (!timestamp) return "Offline";
     try {
       return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
     } catch {
-      return 'Offline';
+      return "Offline";
     }
   };
-
 
   // ─── Order approve / decline from chat ───────────────────────────────────────
   const [orderActionLoading, setOrderActionLoading] = useState(null);
@@ -577,52 +602,81 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     const orderId = order.order_id;
     setOrderActionLoading(orderId);
     // Optimistically mark as acted so buttons disappear immediately
-    setActedOrders(prev => ({ ...prev, [orderId]: action }));
+    setActedOrders((prev) => ({ ...prev, [orderId]: action }));
     try {
-      if (action === 'approved') {
+      if (action === "approved") {
         const { error: updateErr } = await supabase
-          .from('orders')
-          .update({ status: 'approved', seller_responded_at: new Date().toISOString() })
-          .eq('id', orderId);
+          .from("orders")
+          .update({
+            status: "approved",
+            seller_responded_at: new Date().toISOString(),
+          })
+          .eq("id", orderId);
         if (updateErr) throw updateErr;
 
-        await supabase.rpc('decrement_product_inventory', {
-          p_product_id: order.product_id || null,
-          p_quantity: order.quantity_kg,
+        if (order.product_id) {
+          const { data: productData, error: productError } = await supabase
+            .from('products')
+            .select('quantity_kg, status')
+            .eq('id', order.product_id)
+            .single();
+          
+          if (!productError && productData) {
+            const currentQty = parseFloat(productData.quantity_kg) || 0;
+            const newQuantity = Math.max(0, currentQty - order.quantity_kg);
+            const newStatus = newQuantity === 0 ? 'Unavailable' : productData.status;
+
+            const { error: invError } = await supabase
+              .from('products')
+              .update({
+                 quantity_kg: newQuantity,
+                 status: newStatus
+              })
+              .eq('id', order.product_id);
+              
+            if (invError) console.error("Inventory update error:", invError);
+          } else {
+            console.error("Could not fetch product for inventory update");
+          }
+        }
+
+        await supabase.rpc("create_notification", {
+          p_user_id: conversation.otherParticipant.id,
+          p_type: "order_approved",
+          p_title: "🎉 Order Approved!",
+          p_message: `Your order of ${order.quantity_kg} kg of ${order.product_name} has been approved. Total: ₱${order.total_amount}.`,
+          p_data: { order_id: orderId, product_name: order.product_name },
         });
 
-        await supabase.from('notifications').insert({
-          user_id: conversation.otherParticipant.id,
-          type: 'order_approved',
-          title: '🎉 Order Approved!',
-          message: `Your order of ${order.quantity_kg} kg of ${order.product_name} has been approved. Total: ₱${order.total_amount}.`,
-          data: { order_id: orderId, product_name: order.product_name },
-        });
-
-        toast.success('Order approved! Inventory updated.');
+        toast.success("Order approved! Inventory updated.");
       } else {
         const { error: updateErr } = await supabase
-          .from('orders')
-          .update({ status: 'declined', seller_responded_at: new Date().toISOString() })
-          .eq('id', orderId);
+          .from("orders")
+          .update({
+            status: "declined",
+            seller_responded_at: new Date().toISOString(),
+          })
+          .eq("id", orderId);
         if (updateErr) throw updateErr;
 
-        await supabase.from('notifications').insert({
-          user_id: conversation.otherParticipant.id,
-          type: 'order_declined',
-          title: 'Order Declined',
-          message: `Your order of ${order.quantity_kg} kg of ${order.product_name} was declined.`,
-          data: { order_id: orderId, product_name: order.product_name },
+        await supabase.rpc("create_notification", {
+          p_user_id: conversation.otherParticipant.id,
+          p_type: "order_declined",
+          p_title: "Order Declined",
+          p_message: `Your order of ${order.quantity_kg} kg of ${order.product_name} was declined.`,
+          p_data: { order_id: orderId, product_name: order.product_name },
         });
 
-        toast.success('Order declined.');
+        toast.success("Order declined.");
       }
-      setActedOrders(prev => ({ ...prev, [orderId]: action }));
+      setActedOrders((prev) => ({ ...prev, [orderId]: action }));
     } catch (err) {
-      console.error('Order action error:', err);
-      toast.error(`Failed to ${action === 'approved' ? 'approve' : 'decline'} order`);
+      console.error("Order action error:", err);
+      toast.error(
+        `Failed to ${action === "approved" ? "approve" : "decline"} order`,
+      );
       // Revert optimistic update on failure
-      setActedOrders(prev => {
+      setActedOrders((prev) => {
         const next = { ...prev };
         delete next[orderId];
         return next;
@@ -634,9 +688,9 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
 
   const renderMessageContent = (content, isOwn) => {
     // ── ORDER_CONFIRM card ─────────────────────────────────────────────────
-    if (content.startsWith('[ORDER_CONFIRM:')) {
+    if (content.startsWith("[ORDER_CONFIRM:")) {
       try {
-        const jsonStr = content.split(']\n')[0].replace('[ORDER_CONFIRM:', '');
+        const jsonStr = content.split("]\n")[0].replace("[ORDER_CONFIRM:", "");
         const order = JSON.parse(jsonStr);
         const orderId = order.order_id;
         const alreadyActed = actedOrders[orderId];
@@ -645,25 +699,37 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
 
         return (
           <div className="flex flex-col gap-2 min-w-[220px]">
-            <div className={`rounded-2xl overflow-hidden border shadow-sm ${isOwn ? 'border-green-500/40' : 'border-gray-200'}`}>
+            <div
+              className={`rounded-2xl overflow-hidden border shadow-sm ${isOwn ? "border-green-500/40" : "border-gray-200"}`}
+            >
               {/* Product header */}
-              <div className={`flex items-center gap-3 p-3 ${isOwn ? 'bg-green-600' : 'bg-gray-50'}`}>
+              <div
+                className={`flex items-center gap-3 p-3 ${isOwn ? "bg-green-600" : "bg-gray-50"}`}
+              >
                 {order.image_url && (
                   <img
                     src={order.image_url}
                     alt=""
                     className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-white/20"
-                    onError={e => { e.target.style.display = 'none'; }}
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isOwn ? 'text-green-100/70' : 'text-amber-600'}`}>
+                  <p
+                    className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isOwn ? "text-green-100/70" : "text-amber-600"}`}
+                  >
                     Transaction Request
                   </p>
-                  <p className={`font-bold text-sm truncate ${isOwn ? 'text-white' : 'text-gray-800'}`}>
+                  <p
+                    className={`font-bold text-sm truncate ${isOwn ? "text-white" : "text-gray-800"}`}
+                  >
                     {order.product_name}
                   </p>
-                  <div className={`flex gap-3 mt-1 text-xs ${isOwn ? 'text-green-100' : 'text-gray-600'}`}>
+                  <div
+                    className={`flex gap-3 mt-1 text-xs ${isOwn ? "text-green-100" : "text-gray-600"}`}
+                  >
                     <span>{order.quantity_kg} kg</span>
                     <span>·</span>
                     <span>₱{order.price_per_kg}/kg</span>
@@ -672,39 +738,59 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
               </div>
 
               {/* Total row */}
-              <div className={`flex items-center justify-between px-3 py-2 border-t ${isOwn ? 'bg-green-700/50 border-green-500/30' : 'bg-white border-gray-100'}`}>
-                <span className={`text-xs font-medium ${isOwn ? 'text-green-100' : 'text-gray-500'}`}>Estimated Total</span>
-                <span className={`font-bold text-sm ${isOwn ? 'text-white' : 'text-green-700'}`}>₱{order.total_amount}</span>
+              <div
+                className={`flex items-center justify-between px-3 py-2 border-t ${isOwn ? "bg-green-700/50 border-green-500/30" : "bg-white border-gray-100"}`}
+              >
+                <span
+                  className={`text-xs font-medium ${isOwn ? "text-green-100" : "text-gray-500"}`}
+                >
+                  Estimated Total
+                </span>
+                <span
+                  className={`font-bold text-sm ${isOwn ? "text-white" : "text-green-700"}`}
+                >
+                  ₱{order.total_amount}
+                </span>
               </div>
 
               {/* Farmer action buttons */}
               {canAct && (
                 <div className="px-3 pb-3 pt-2 bg-white border-t border-gray-100">
                   {alreadyActed ? (
-                    <div className={`text-center py-2 rounded-xl text-xs font-bold ${
-                      alreadyActed === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-                    }`}>
-                      {alreadyActed === 'approved' ? '\u2713 You approved this order' : '\u2717 You declined this order'}
+                    <div
+                      className={`text-center py-2 rounded-xl text-xs font-bold ${
+                        alreadyActed === "approved"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-600"
+                      }`}
+                    >
+                      {alreadyActed === "approved"
+                        ? "\u2713 You approved this order"
+                        : "\u2717 You declined this order"}
                     </div>
                   ) : (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleOrderAction(order, 'approved')}
+                        onClick={() => handleOrderAction(order, "approved")}
                         disabled={isLoading}
                         className="flex-1 flex items-center justify-center gap-1 py-2 bg-green-700 hover:bg-green-800 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-60"
                       >
-                        {isLoading
-                          ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          : '\u2713 Approve'}
+                        {isLoading ? (
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          "\u2713 Approve"
+                        )}
                       </button>
                       <button
-                        onClick={() => handleOrderAction(order, 'declined')}
+                        onClick={() => handleOrderAction(order, "declined")}
                         disabled={isLoading}
                         className="flex-1 flex items-center justify-center gap-1 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-xl transition-colors disabled:opacity-60"
                       >
-                        {isLoading
-                          ? <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                          : '\u2717 Decline'}
+                        {isLoading ? (
+                          <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          "\u2717 Decline"
+                        )}
                       </button>
                     </div>
                   )}
@@ -713,18 +799,25 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
 
               {/* Buyer sees status + rate button */}
               {isOwn && (
-                <div className={`px-3 pb-2 pt-1 ${isOwn ? 'bg-green-700/40' : 'bg-white'}`}>
+                <div
+                  className={`px-3 pb-2 pt-1 ${isOwn ? "bg-green-700/40" : "bg-white"}`}
+                >
                   {alreadyActed ? (
                     <div className="flex flex-col gap-1.5">
-                      <p className={`text-center text-[10px] font-bold ${alreadyActed === 'approved' ? 'text-green-200' : 'text-red-300'}`}>
-                        {alreadyActed === 'approved' ? '✓ Approved' : '✗ Declined'}
+                      <p
+                        className={`text-center text-[10px] font-bold ${alreadyActed === "approved" ? "text-green-200" : "text-red-300"}`}
+                      >
+                        {alreadyActed === "approved"
+                          ? "✓ Approved"
+                          : "✗ Declined"}
                       </p>
-                      {alreadyActed === 'approved' && (
+                      {alreadyActed === "approved" && (
                         <button
                           onClick={() =>
                             setRatingPrompt({
                               farmerId: otherUser.id,
-                              farmerName: otherUser.full_name || otherUser.username,
+                              farmerName:
+                                otherUser.full_name || otherUser.username,
                               farmerAvatar: otherUser.avatar_url || null,
                               orderSnapshot: {
                                 name: order.product_name,
@@ -741,7 +834,9 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
                       )}
                     </div>
                   ) : (
-                    <p className="text-center text-[10px] text-green-100/80">Waiting for farmer to respond…</p>
+                    <p className="text-center text-[10px] text-green-100/80">
+                      Waiting for farmer to respond…
+                    </p>
                   )}
                 </div>
               )}
@@ -749,21 +844,23 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
           </div>
         );
       } catch (e) {
-        console.error('Failed to parse ORDER_CONFIRM', e);
+        console.error("Failed to parse ORDER_CONFIRM", e);
       }
     }
 
-    if (content.startsWith('[PRODUCT_CONTEXT:')) {
-      const parts = content.split(']\n');
+    if (content.startsWith("[PRODUCT_CONTEXT:")) {
+      const parts = content.split("]\n");
       if (parts.length >= 1) {
         try {
-          const jsonStr = parts[0].replace('[PRODUCT_CONTEXT:', '');
+          const jsonStr = parts[0].replace("[PRODUCT_CONTEXT:", "");
           const product = JSON.parse(jsonStr);
-          const userMessage = parts.slice(1).join(']\n');
+          const userMessage = parts.slice(1).join("]\n");
 
           return (
             <div className="flex flex-col gap-2">
-              <div className={`rounded-xl overflow-hidden border ${isOwn ? 'bg-green-600 border-green-500' : 'bg-gray-50 border-gray-200'} mb-1`}>
+              <div
+                className={`rounded-xl overflow-hidden border ${isOwn ? "bg-green-600 border-green-500" : "bg-gray-50 border-gray-200"} mb-1`}
+              >
                 <div className="flex items-center gap-3 p-2">
                   {product.image_url && (
                     <img
@@ -773,14 +870,28 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
                     />
                   )}
                   <div className="flex-1 min-w-0 pointer-events-none">
-                    <p className={`text-[10px] font-bold uppercase tracking-tight ${isOwn ? 'text-green-100/80' : 'text-gray-500'}`}>Product Inquiry</p>
-                    <p className={`font-bold text-xs truncate ${isOwn ? 'text-white' : 'text-gray-800'}`}>{product.name}</p>
-                    <p className={`text-[11px] font-semibold ${isOwn ? 'text-green-100' : 'text-green-700'}`}>₱{product.price}/kg</p>
+                    <p
+                      className={`text-[10px] font-bold uppercase tracking-tight ${isOwn ? "text-green-100/80" : "text-gray-500"}`}
+                    >
+                      Product Inquiry
+                    </p>
+                    <p
+                      className={`font-bold text-xs truncate ${isOwn ? "text-white" : "text-gray-800"}`}
+                    >
+                      {product.name}
+                    </p>
+                    <p
+                      className={`text-[11px] font-semibold ${isOwn ? "text-green-100" : "text-green-700"}`}
+                    >
+                      ₱{product.price}/kg
+                    </p>
                   </div>
                 </div>
               </div>
               {userMessage && (
-                <p className="text-sm break-words whitespace-pre-wrap">{userMessage}</p>
+                <p className="text-sm break-words whitespace-pre-wrap">
+                  {userMessage}
+                </p>
               )}
             </div>
           );
@@ -791,11 +902,11 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
     }
 
     // Handle image messages (with optional caption)
-    if (content.includes('[IMAGE:')) {
+    if (content.includes("[IMAGE:")) {
       const imageMatch = content.match(/\[IMAGE:(.*?)\]/);
       if (imageMatch) {
         const url = imageMatch[1];
-        const caption = content.replace(/\[IMAGE:.*?\]\n?/, '').trim();
+        const caption = content.replace(/\[IMAGE:.*?\]\n?/, "").trim();
         return (
           <div className="flex flex-col gap-1.5">
             <img
@@ -805,11 +916,13 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
               onClick={() => setLightboxUrl(url)}
             />
             {caption && (
-              <div className={`px-3 py-1.5 rounded-xl text-sm break-words whitespace-pre-wrap ${
-                isOwn
-                  ? 'bg-green-700 text-white self-end'
-                  : 'bg-white text-gray-900 border border-gray-200 self-start'
-              }`}>
+              <div
+                className={`px-3 py-1.5 rounded-xl text-sm break-words whitespace-pre-wrap ${
+                  isOwn
+                    ? "bg-green-700 text-white self-end"
+                    : "bg-white text-gray-900 border border-gray-200 self-start"
+                }`}
+              >
                 {caption}
               </div>
             )}
@@ -858,7 +971,9 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
                 Active now
               </span>
             ) : (
-              <span className="text-gray-500">{formatLastSeen(presenceData?.last_seen)}</span>
+              <span className="text-gray-500">
+                {formatLastSeen(presenceData?.last_seen)}
+              </span>
             )}
           </p>
         </div>
@@ -908,13 +1023,11 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
                   <Trash2 className="w-4 h-4" />
                   <span>Delete Chat</span>
                 </button>
-
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
@@ -931,14 +1044,15 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
             {messages.map((message, index) => {
               const isOwn = message.sender_id === user.id;
               const showAvatar =
-                index === 0 || messages[index - 1].sender_id !== message.sender_id;
+                index === 0 ||
+                messages[index - 1].sender_id !== message.sender_id;
 
               return (
                 <motion.div
                   key={message.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}
+                  className={`flex items-end gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
                 >
                   {!isOwn && showAvatar && (
                     <img
@@ -952,16 +1066,24 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
                   )}
                   {!isOwn && !showAvatar && <div className="w-6" />}
 
-                  <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
+                  <div
+                    className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"} flex flex-col`}
+                  >
                     {(() => {
-                      const isImageMsg = message.content.includes('[IMAGE:') || message.content.startsWith('[ORDER_CONFIRM:');
+                      const isImageMsg =
+                        message.content.includes("[IMAGE:") ||
+                        message.content.startsWith("[ORDER_CONFIRM:");
                       return (
                         <div
-                          className={isImageMsg ? '' : `px-4 py-2 rounded-2xl ${
-                            isOwn
-                              ? 'bg-green-700 text-white rounded-br-sm shadow-sm'
-                              : 'bg-white text-gray-900 rounded-bl-sm border border-gray-200 shadow-sm'
-                          }`}
+                          className={
+                            isImageMsg
+                              ? ""
+                              : `px-4 py-2 rounded-2xl ${
+                                  isOwn
+                                    ? "bg-green-700 text-white rounded-br-sm shadow-sm"
+                                    : "bg-white text-gray-900 rounded-bl-sm border border-gray-200 shadow-sm"
+                                }`
+                          }
                         >
                           {renderMessageContent(message.content, isOwn)}
                         </div>
@@ -994,9 +1116,18 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
                   />
                   <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3">
                     <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
                     </div>
                   </div>
                 </motion.div>
@@ -1022,21 +1153,31 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
                 src={shownProductContext.image_url}
                 alt=""
                 className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-amber-100"
-                onError={(e) => { e.target.style.display = 'none'; }}
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
               />
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1 mb-0.5">
                 <ShoppingBag className="w-2.5 h-2.5 text-amber-600 flex-shrink-0" />
-                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-tight">Inquiry</span>
+                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-tight">
+                  Inquiry
+                </span>
               </div>
-              <p className="font-bold text-gray-800 text-xs truncate leading-tight">{shownProductContext.name}</p>
-              <p className="text-green-700 font-bold text-[11px] leading-tight">₱{shownProductContext.price}/kg</p>
+              <p className="font-bold text-gray-800 text-xs truncate leading-tight">
+                {shownProductContext.name}
+              </p>
+              <p className="text-green-700 font-bold text-[11px] leading-tight">
+                ₱{shownProductContext.price}/kg
+              </p>
             </div>
-            
+
             <button
               onClick={() => {
-                setNewMessage(`Is the ${shownProductContext.name} still available?`);
+                setNewMessage(
+                  `Is the ${shownProductContext.name} still available?`,
+                );
                 inputRef.current?.focus();
               }}
               className="px-2.5 py-1 bg-amber-600 text-white text-[10px] font-bold rounded-lg hover:bg-amber-700 transition-colors shadow-sm whitespace-nowrap"
@@ -1070,8 +1211,13 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
               className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border border-gray-300"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-700 truncate">{imagePreview.file.name}</p>
-              <p className="text-xs text-gray-400">{(imagePreview.file.size / 1024).toFixed(0)} KB → will be compressed</p>
+              <p className="text-xs font-medium text-gray-700 truncate">
+                {imagePreview.file.name}
+              </p>
+              <p className="text-xs text-gray-400">
+                {(imagePreview.file.size / 1024).toFixed(0)} KB → will be
+                compressed
+              </p>
             </div>
             <button
               onClick={cancelImagePreview}
@@ -1084,7 +1230,10 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
       </AnimatePresence>
 
       {/* Input */}
-      <form onSubmit={sendMessage} className="p-3 border-t border-gray-200 bg-white md:rounded-b-2xl">
+      <form
+        onSubmit={sendMessage}
+        className="p-3 border-t border-gray-200 bg-white md:rounded-b-2xl"
+      >
         <div className="flex items-center gap-2">
           {/* Hidden file input */}
           <input
@@ -1116,14 +1265,18 @@ export default function ChatWindow({ conversation, onBack, onUnreadChange, produ
               setNewMessage(e.target.value);
               handleTyping();
             }}
-            placeholder={imagePreview ? 'Add a caption...' : 'Type a message...'}
+            placeholder={
+              imagePreview ? "Add a caption..." : "Type a message..."
+            }
             maxLength={2000}
             className="flex-1 px-4 py-2.5 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
             disabled={sending}
           />
           <motion.button
             type="submit"
-            disabled={(!newMessage.trim() && !imagePreview) || sending || uploadingImage}
+            disabled={
+              (!newMessage.trim() && !imagePreview) || sending || uploadingImage
+            }
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="p-2.5 bg-green-700 text-white rounded-full hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-700"

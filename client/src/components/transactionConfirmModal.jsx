@@ -5,7 +5,7 @@ import supabase from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 
-export default function TransactionConfirmModal({ cartItem, onClose, onSuccess }) {
+export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -46,12 +46,12 @@ export default function TransactionConfirmModal({ cartItem, onClose, onSuccess }
       if (orderError) throw orderError;
 
       // 3. Notify the farmer
-      await supabase.from('notifications').insert({
-        user_id: seller.id,
-        type: 'order_request',
-        title: `New Transaction Request`,
-        message: `A buyer wants to purchase ${cartItem.quantity_kg} kg of ${snapshot.name} for ₱${total}. Please check your Order Requests.`,
-        data: {
+      await supabase.rpc('create_notification', {
+        p_user_id: seller.id,
+        p_type: 'order_request',
+        p_title: `New Order Request`,
+        p_message: `A buyer wants to purchase ${cartItem.quantity_kg} kg of ${snapshot.name} for ₱${total}. Please check your Order Requests.`,
+        p_data: {
           order_id: order.id,
           product_name: snapshot.name,
           quantity_kg: cartItem.quantity_kg,
@@ -75,7 +75,7 @@ export default function TransactionConfirmModal({ cartItem, onClose, onSuccess }
         price_per_kg: cartItem.price_at_add,
         total_amount: parseFloat(total),
         image_url: snapshot.image_url,
-      })}]\nI'd like to confirm my order of ${cartItem.quantity_kg} kg of ${snapshot.name} at ₱${cartItem.price_at_add}/kg. Total: ₱${total}. Please review my transaction request!`;
+      })}]\nI'd like to confirm my order of ${cartItem.quantity_kg} kg of ${snapshot.name} at ₱${cartItem.price_at_add}/kg. Total: ₱${total}. Please review my order request!`;
 
       await supabase.from('messages').insert({
         conversation_id: conversationId,
@@ -88,11 +88,11 @@ export default function TransactionConfirmModal({ cartItem, onClose, onSuccess }
       // 5. Remove from cart
       await supabase.from('cart_items').delete().eq('id', cartItem.id).eq('buyer_id', user.id);
 
-      toast.success('Transaction request sent to farmer!');
+      toast.success('Order request sent to farmer!');
       onSuccess?.();
       onClose();
     } catch (err) {
-      console.error('Transaction confirm error:', err);
+      console.error('Order confirm error:', err);
       toast.error('Failed to send confirmation. Try again.');
     } finally {
       setLoading(false);
@@ -120,7 +120,7 @@ export default function TransactionConfirmModal({ cartItem, onClose, onSuccess }
           <div className="bg-gradient-to-r from-green-800 to-green-700 p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-white" />
-              <span className="font-bold text-white">Send Transaction Request</span>
+              <span className="font-bold text-white">Send Order Request</span>
             </div>
             <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">
               <X className="w-5 h-5 text-white" />

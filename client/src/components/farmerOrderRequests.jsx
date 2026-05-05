@@ -19,14 +19,11 @@ import toast from "react-hot-toast";
 import PostTransactionRatingModal from "./postTransactionRatingModal";
 
 const STATUS_CONFIG = {
-  confirming: {
-    label: "Awaiting Review",
-    color: "text-amber-700",
-    bg: "bg-amber-100",
-  },
-  approved: { label: "Approved", color: "text-green-700", bg: "bg-green-100" },
-  declined: { label: "Declined", color: "text-red-600", bg: "bg-red-100" },
-  cancelled: { label: "Cancelled", color: "text-gray-500", bg: "bg-gray-100" },
+  confirming: { label: "Awaiting Review", color: "text-amber-700", bg: "bg-amber-100" },
+  approved:   { label: "Approved", color: "text-green-700", bg: "bg-green-100" },
+  completed:  { label: "Completed", color: "text-emerald-700", bg: "bg-emerald-100" },
+  declined:   { label: "Declined", color: "text-red-600", bg: "bg-red-100" },
+  cancelled:  { label: "Cancelled", color: "text-gray-500", bg: "bg-gray-100" },
 };
 
 function DeclineReasonModal({ onConfirm, onCancel, loading }) {
@@ -163,24 +160,38 @@ export default function FarmerOrderRequests() {
         .eq("id", order.id);
       if (updateError) throw updateError;
 
-      // 2. Decrement inventory — the SQL function also auto-sets status = 'Unavailable'
-      //    when quantity reaches 0, so no extra update needed here.
-      const { error: rpcError } = await supabase.rpc(
-        "decrement_product_inventory",
-        {
-          p_product_id: order.product_id,
-          p_quantity: order.quantity_kg,
-        },
-      );
-      if (rpcError) console.error("Inventory decrement error:", rpcError);
+      // 2. Decrement inventory and update status if out of stock
+      const { data: productData, error: productError } = await supabase
+        .from('products')
+        .select('quantity_kg, status')
+        .eq('id', order.product_id)
+        .single();
+      
+      if (!productError && productData) {
+        const currentQty = parseFloat(productData.quantity_kg) || 0;
+        const newQuantity = Math.max(0, currentQty - order.quantity_kg);
+        const newStatus = newQuantity === 0 ? 'Unavailable' : productData.status;
+
+        const { error: invError } = await supabase
+          .from('products')
+          .update({
+             quantity_kg: newQuantity,
+             status: newStatus
+          })
+          .eq('id', order.product_id);
+          
+        if (invError) console.error("Inventory update error:", invError);
+      } else {
+        console.error("Could not fetch product for inventory update");
+      }
 
       // 3. Notify the buyer
-      await supabase.from("notifications").insert({
-        user_id: order.buyer_id,
-        type: "order_approved",
-        title: "🎉 Order Approved!",
-        message: `Your order of ${order.quantity_kg} kg of ${order.product_snapshot?.name} has been approved by the farmer. Total: ₱${order.total_amount}.`,
-        data: {
+      await supabase.rpc("create_notification", {
+        p_user_id: order.buyer_id,
+        p_type: "order_approved",
+        p_title: "🎉 Order Approved!",
+        p_message: `Your order of ${order.quantity_kg} kg of ${order.product_snapshot?.name} has been approved by the farmer. Total: ₱${order.total_amount}.`,
+        p_data: {
           order_id: order.id,
           product_name: order.product_snapshot?.name,
         },
@@ -234,12 +245,12 @@ export default function FarmerOrderRequests() {
         })
         .eq("id", order.id);
 
-      await supabase.from("notifications").insert({
-        user_id: order.buyer_id,
-        type: "order_declined",
-        title: "Order Declined",
-        message: `Your order of ${order.quantity_kg} kg of ${order.product_snapshot?.name} was declined.${reason ? ` Reason: ${reason}` : ""}`,
-        data: {
+      await supabase.rpc("create_notification", {
+        p_user_id: order.buyer_id,
+        p_type: "order_declined",
+        p_title: "Order Declined",
+        p_message: `Your order of ${order.quantity_kg} kg of ${order.product_snapshot?.name} was declined.${reason ? ` Reason: ${reason}` : ""}`,
+        p_data: {
           order_id: order.id,
           product_name: order.product_snapshot?.name,
           reason,

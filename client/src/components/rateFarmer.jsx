@@ -4,7 +4,7 @@ import { useUser } from '../hooks/useUser';
 import { Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function RateFarmer({ farmerId, onRatingSubmitted }) {
+export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = true }) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -144,48 +144,49 @@ export default function RateFarmer({ farmerId, onRatingSubmitted }) {
     }
   };
 
+  const containerClass = standalone
+    ? "bg-white rounded-xl p-6 shadow-lg border border-gray-100"
+    : "w-full flex flex-col items-center justify-center";
+
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-      <h4 className="font-semibold text-gray-800 mb-3 text-lg">
-        {hasRated ? 'Update your rating' : 'Rate this farmer'}
-      </h4>
+    <div className={containerClass}>
+      {standalone && (
+        <h4 className="font-semibold text-gray-800 mb-3 text-lg text-center">
+          {hasRated ? 'Update your rating' : 'Rate this farmer'}
+        </h4>
+      )}
       
       {hasRated && (
-        <p className="text-sm text-gray-600 mb-3">
+        <p className="text-sm text-gray-600 mb-3 text-center">
           You previously rated this farmer {existingRating} star{existingRating > 1 ? 's' : ''}
         </p>
       )}
       
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center justify-center gap-2 mb-6">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             onClick={() => setRating(n)}
             onMouseEnter={() => setHoveredRating(n)}
             onMouseLeave={() => setHoveredRating(0)}
-            className="transition-all duration-200 hover:scale-110"
+            className="transition-all duration-200 hover:scale-110 focus:outline-none"
             disabled={submitting}
           >
             <Star
-              className={`w-8 h-8 ${
+              className={`w-9 h-9 sm:w-10 sm:h-10 ${
                 n <= (hoveredRating || rating)
-                  ? 'text-yellow-400 fill-current'
-                  : 'text-gray-300 hover:text-yellow-200'
+                  ? 'text-yellow-400 fill-current drop-shadow-sm'
+                  : 'text-gray-200 hover:text-yellow-200'
               } transition-colors duration-200`}
             />
           </button>
         ))}
-        {rating > 0 && (
-          <span className="text-sm text-gray-600 ml-2 font-medium">
-            {rating} star{rating > 1 ? 's' : ''}
-          </span>
-        )}
       </div>
       
       <button
         onClick={submit}
         disabled={submitting || rating === 0}
-        className="w-full bg-gradient-to-r from-green-800 to-green-800 text-white py-3 px-4 rounded-lg font-medium hover:from-green-800 hover:to-green-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform"
+        className="w-full bg-green-700 hover:bg-green-800 text-white py-3.5 px-4 rounded-xl font-bold shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform"
       >
         {submitting ? 'Submitting...' : hasRated ? 'Update Rating' : 'Submit Rating'}
       </button>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import supabase from "../lib/supabase";
 import ProductFormModal from "../components/productformModal";
 import compressImage from "../utils/imageCompression";
@@ -66,7 +66,8 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [activeSection, setActiveSection] = useState("products"); // 'products' | 'orders'
+  const location = useLocation();
+  const [activeSection, setActiveSection] = useState(location.state?.activeSection || "products"); // 'products' | 'orders'
   const [formData, setFormData] = useState({
     full_name: "",
     address: "",
@@ -83,7 +84,7 @@ export default function Profile() {
   const fetchAllUserData = useCallback(async (userId) => {
     try {
       setLoading(true);
-      const [profileRes, productsRes, ratingsRes, soldRes] = await Promise.all([
+      const [profileRes, productsRes, ratingsRes, buyerRatingsRes, soldRes] = await Promise.all([
         supabase.from("profiles")
         .select("id, username, full_name, avatar_url, address, contact_number, created_at, updated_at")
         .eq("id", userId)
@@ -94,16 +95,22 @@ export default function Profile() {
           .eq("user_id", userId)
           .order("created_at", { ascending: false }),
         supabase.from("ratings").select("rating").eq("farmer_id", userId),
+        supabase.from("buyer_ratings").select("rating").eq("buyer_id", userId),
         supabase.rpc("get_seller_sold_count", { p_seller_id: userId }),
       ]);
 
       if (!profileRes.error) setProfile(profileRes.data);
       if (!productsRes.error) setProducts(productsRes.data || []);
-      if (!ratingsRes.error && ratingsRes.data?.length > 0) {
-        const avg =
-          ratingsRes.data.reduce((sum, r) => sum + r.rating, 0) /
-          ratingsRes.data.length;
+      
+      const allRatings = [];
+      if (!ratingsRes.error && ratingsRes.data) allRatings.push(...ratingsRes.data);
+      if (!buyerRatingsRes.error && buyerRatingsRes.data) allRatings.push(...buyerRatingsRes.data);
+
+      if (allRatings.length > 0) {
+        const avg = allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length;
         setAvgRating(avg.toFixed(1));
+      } else {
+        setAvgRating(0);
       }
       if (!soldRes.error) setSoldCount(soldRes.data || 0);
     } catch (error) {
@@ -135,7 +142,23 @@ export default function Profile() {
     getUser();
   }, [fetchAllUserData]);
 
-  // Realtime: update sold count when an order changes
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+
+  const fetchOrderStats = useCallback(async () => {
+    if (!user) return;
+    supabase.rpc("get_seller_sold_count", { p_seller_id: user.id }).then(({ data }) => {
+      if (data != null) setSoldCount(data);
+    });
+    supabase.from("orders").select("*", { count: 'exact', head: true }).eq("seller_id", user.id).eq("status", "confirming").then(({ count }) => {
+      setPendingOrdersCount(count || 0);
+    });
+  }, [user]);
+
+  useEffect(() => {
+    fetchOrderStats();
+  }, [fetchOrderStats]);
+
+  // Realtime: update order stats when an order changes
   useEffect(() => {
     if (!user) return;
     const ch = supabase
@@ -143,22 +166,16 @@ export default function Profile() {
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "*",
           schema: "public",
           table: "orders",
           filter: `seller_id=eq.${user.id}`,
         },
-        () => {
-          supabase
-            .rpc("get_seller_sold_count", { p_seller_id: user.id })
-            .then(({ data }) => {
-              if (data != null) setSoldCount(data);
-            });
-        },
+        fetchOrderStats
       )
       .subscribe();
     return () => ch.unsubscribe();
-  }, [user]);
+  }, [user, fetchOrderStats]);
 
   // Realtime: update product inventory live
   useEffect(() => {
@@ -583,7 +600,15 @@ export default function Profile() {
             onClick={() => setActiveSection("orders")}
             className={`flex-1 flex items-center justify-center gap-2 py-3.5 font-semibold text-sm transition-colors border-b-2 ${activeSection === "orders" ? "border-green-700 text-green-700 bg-green-50" : "border-transparent text-gray-500 hover:text-gray-700"}`}
           >
-            <ShoppingBag className="w-4 h-4" /> Order Requests
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4" />
+              <span>Order Requests</span>
+              {pendingOrdersCount > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                  {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
+                </span>
+              )}
+            </div>
           </button>
         </div>
 

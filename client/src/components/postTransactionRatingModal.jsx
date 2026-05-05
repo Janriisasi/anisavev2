@@ -104,11 +104,13 @@ export default function PostTransactionRatingModal({
                 <RateFarmer
                   farmerId={targetId}
                   onRatingSubmitted={onClose}
+                  standalone={false}
                 />
               ) : (
                 <RateBuyer
                   buyerId={targetId}
                   onRatingSubmitted={onClose}
+                  standalone={false}
                 />
               )}
 

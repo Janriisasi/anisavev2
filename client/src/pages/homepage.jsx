@@ -202,22 +202,25 @@ const Home = () => {
 
   const fetchMyRating = async (userId) => {
     try {
-      //fetch rating of farmer
-      const { data: ratingsData, error } = await supabase
-        .from("ratings")
-        .select("rating")
-        .eq("farmer_id", userId);
+      const [ratingsRes, buyerRatingsRes] = await Promise.all([
+        supabase.from("ratings").select("rating").eq("farmer_id", userId),
+        supabase.from("buyer_ratings").select("rating").eq("buyer_id", userId),
+      ]);
 
-      if (error) {
-        console.error("Error fetching ratings:", error);
+      if (ratingsRes.error) {
+        console.error("Error fetching ratings:", ratingsRes.error);
         return;
       }
 
-      if (ratingsData && ratingsData.length > 0) {
-        const total = ratingsData.reduce((sum, r) => sum + r.rating, 0);
-        const average = total / ratingsData.length;
+      const allRatings = [];
+      if (ratingsRes.data) allRatings.push(...ratingsRes.data);
+      if (!buyerRatingsRes.error && buyerRatingsRes.data) allRatings.push(...buyerRatingsRes.data);
+
+      if (allRatings.length > 0) {
+        const total = allRatings.reduce((sum, r) => sum + r.rating, 0);
+        const average = total / allRatings.length;
         setMyRating(parseFloat(average.toFixed(1)));
-        setTotalRatings(ratingsData.length);
+        setTotalRatings(allRatings.length);
       } else {
         setMyRating(0);
         setTotalRatings(0);

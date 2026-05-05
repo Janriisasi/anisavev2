@@ -79,9 +79,9 @@ export default function NotificationButton({ mobileMenu = false, mobileTab = fal
     if (!notif.read) await markAsRead(notif.id);
     // Navigate to relevant page
     if (notif.type === 'order_request') {
-      navigate('/profile'); // farmer sees requests on their profile
+      navigate('/profile', { state: { activeSection: 'orders' } }); // farmer sees requests on their profile
     } else if (notif.type === 'order_approved' || notif.type === 'order_declined') {
-      navigate('/cart'); // buyer sees order history in cart page
+      navigate('/cart', { state: { activeTab: 'history' } }); // buyer sees order history in cart page
     }
     setOpenState(false);
   };

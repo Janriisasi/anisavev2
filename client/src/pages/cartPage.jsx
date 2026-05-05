@@ -5,12 +5,13 @@ import {
   Trash2, MessageCircle, ChevronRight, ArrowLeft,
   ShoppingBag, AlertCircle, Loader2, MessageSquare, Send
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import supabase from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../contexts/cartContext';
-import TransactionConfirmModal from '../components/transactionConfirmModal';
+import OrderConfirmModal from '../components/transactionConfirmModal';
+import PostTransactionRatingModal from '../components/postTransactionRatingModal';
 import toast from 'react-hot-toast';
 
 const STATUS_CONFIG = {
@@ -18,26 +19,11 @@ const STATUS_CONFIG = {
   negotiating: { label: 'Negotiating',      color: 'text-blue-600',   bg: 'bg-blue-100',   icon: <MessageCircle className="w-4 h-4" /> },
   confirming:  { label: 'Sent to Farmer',   color: 'text-amber-600',  bg: 'bg-amber-100',  icon: <Clock className="w-4 h-4" /> },
   approved:    { label: 'Approved',         color: 'text-green-700',  bg: 'bg-green-100',  icon: <CheckCircle className="w-4 h-4" /> },
+  completed:   { label: 'Completed',        color: 'text-emerald-700',bg: 'bg-emerald-100',icon: <CheckCircle className="w-4 h-4" /> },
   declined:    { label: 'Declined',         color: 'text-red-600',    bg: 'bg-red-100',    icon: <XCircle className="w-4 h-4" /> },
   cancelled:   { label: 'Cancelled',        color: 'text-gray-500',   bg: 'bg-gray-100',   icon: <XCircle className="w-4 h-4" /> },
 };
 
-// LocalStorage key for tracking which cart items have had inquiry sent
-const INQUIRY_STORAGE_KEY = 'cart_inquiry_sent';
-
-function getInquirySent() {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(INQUIRY_STORAGE_KEY) || '[]'));
-  } catch {
-    return new Set();
-  }
-}
-
-function saveInquirySent(set) {
-  try {
-    localStorage.setItem(INQUIRY_STORAGE_KEY, JSON.stringify([...set]));
-  } catch {}
-}
 
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
@@ -71,15 +57,60 @@ export default function CartPage() {
   const { cartItems, loading: cartLoading, removeFromCart, fetchCart } = useCart();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState('cart');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'cart');
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [confirmItem, setConfirmItem] = useState(null);
   const [removingId, setRemovingId] = useState(null);
+  const [ratingModal, setRatingModal] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
 
-  // Track which cart item IDs have had an inquiry sent (persisted to localStorage)
-  const [inquirySentIds, setInquirySentIds] = useState(() => getInquirySent());
-  const [sendingInquiryId, setSendingInquiryId] = useState(null);
+  const handleOrderReceived = async (order) => {
+    setActionLoading(order.id);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'completed' })
+        .eq('id', order.id);
+      
+      if (error) throw error;
+
+      // Notify the farmer that the buyer received the order
+      await supabase.rpc('create_notification', {
+        p_user_id: order.seller_id,
+        p_type: 'order_received',
+        p_title: 'Order Received by Buyer',
+        p_message: `${user.user_metadata?.full_name || 'The buyer'} has confirmed receiving ${order.quantity_kg} kg of ${order.product_snapshot?.name}. The order is now complete!`,
+        p_data: {
+          order_id: order.id,
+          product_name: order.product_snapshot?.name,
+          quantity_kg: order.quantity_kg,
+          total_amount: order.total_amount,
+        },
+      });
+
+      toast.success('Order completed successfully!');
+
+      // Prompt buyer to rate the farmer
+      setRatingModal({
+        farmerId: order.seller_id,
+        farmerName: order.seller?.full_name || order.seller?.username,
+        farmerAvatar: order.seller?.avatar_url || null,
+        orderSnapshot: {
+          name: order.product_snapshot?.name,
+          quantity_kg: order.quantity_kg,
+          total_amount: order.total_amount,
+        },
+      });
+      fetchOrders();
+    } catch (err) {
+      console.error('Order received error:', err);
+      toast.error('Failed to update order status');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const fetchOrders = useCallback(async () => {
     if (!user) return;
@@ -122,16 +153,6 @@ export default function CartPage() {
     return () => channel.unsubscribe();
   }, [user, fetchOrders]);
 
-  // Clean up inquiry IDs for items no longer in cart
-  useEffect(() => {
-    if (cartItems.length === 0) return;
-    const cartItemIds = new Set(cartItems.map(i => i.id));
-    const cleaned = new Set([...inquirySentIds].filter(id => cartItemIds.has(id)));
-    if (cleaned.size !== inquirySentIds.size) {
-      setInquirySentIds(cleaned);
-      saveInquirySent(cleaned);
-    }
-  }, [cartItems]);
 
   const handleRemove = async (itemId) => {
     setRemovingId(itemId);
@@ -162,80 +183,9 @@ export default function CartPage() {
     });
   };
 
-  /**
-   * Step 1: "Ask Farmer" — sends a chat message to the farmer asking if the
-   * product is still available. Marks the cart item as inquiry-sent so the
-   * "Send Request" button unlocks.
-   */
-  const handleAskFarmer = async (item) => {
-    const snap = item.product_snapshot || {};
-    const seller = item.seller;
-    if (!seller?.id) { toast.error('Seller info missing'); return; }
-
-    setSendingInquiryId(item.id);
-    try {
-      // Get or create conversation
-      const { data: convId, error: convErr } = await supabase
-        .rpc('get_or_create_conversation', { other_user_id: seller.id });
-      if (convErr) throw convErr;
-
-      // Determine recipient
-      const { data: conv, error: convFetchErr } = await supabase
-        .from('conversations')
-        .select('participant_1, participant_2')
-        .eq('id', convId)
-        .single();
-      if (convFetchErr) throw convFetchErr;
-
-      const recipientId = conv.participant_1 === user.id ? conv.participant_2 : conv.participant_1;
-
-      // Send inquiry message
-      const productName = snap.name || item.products?.name;
-      const message = `Hi! I'm interested in your product "${productName}" (${item.quantity_kg} kg at ₱${item.price_at_add}/kg). Is it still available?`;
-
-      const { error: msgErr } = await supabase.from('messages').insert({
-        conversation_id: convId,
-        sender_id: user.id,
-        recipient_id: recipientId,
-        content: message,
-        read: false,
-      });
-      if (msgErr) throw msgErr;
-
-      // Mark as inquiry sent
-      const updated = new Set([...inquirySentIds, item.id]);
-      setInquirySentIds(updated);
-      saveInquirySent(updated);
-
-      toast.success('Inquiry sent! You can now send your transaction request.');
-
-      // Open the chat window so user can see/continue conversation
-      const { data: fullConv } = await supabase.from('conversations').select(`
-        *,
-        participant_1_profile:profiles!conversations_participant_1_fkey(id, username, full_name, avatar_url),
-        participant_2_profile:profiles!conversations_participant_2_fkey(id, username, full_name, avatar_url)
-      `).eq('id', convId).single();
-
-      if (fullConv) {
-        const otherParticipant = fullConv.participant_1 === user.id
-          ? fullConv.participant_2_profile : fullConv.participant_1_profile;
-        window.dispatchEvent(new CustomEvent('openChat', {
-          detail: {
-            conversationData: { ...fullConv, otherParticipant, lastMessage: null, unreadCount: 0 },
-            productContext: null,
-          }
-        }));
-      }
-    } catch (err) {
-      console.error('Ask farmer error:', err);
-      toast.error('Failed to send inquiry. Please try again.');
-    } finally {
-      setSendingInquiryId(null);
-    }
-  };
 
   const recentOrders = orders.filter(o => ['confirming', 'negotiating', 'pending'].includes(o.status));
-  const historyOrders = orders.filter(o => ['approved', 'declined', 'cancelled'].includes(o.status));
+  const historyOrders = orders.filter(o => ['approved', 'completed', 'declined', 'cancelled'].includes(o.status));
 
   const tabs = [
     { key: 'cart',    label: 'Cart',    icon: <ShoppingCart className="w-4 h-4" />, count: cartItems.length },
@@ -253,42 +203,11 @@ export default function CartPage() {
 
   /**
    * Renders the action area for a single cart item.
-   * Phase 1 (no inquiry yet): "Ask Farmer" button
-   * Phase 2 (inquiry sent):   "Send Request" button + subtle re-ask option
+   * "Send Request" button + secondary chat option.
    */
   const renderItemActions = (item) => {
-    const inquirySent = inquirySentIds.has(item.id);
-    const isSending = sendingInquiryId === item.id;
-
-    if (!inquirySent) {
-      return (
-        <motion.button
-          onClick={() => handleAskFarmer(item)}
-          disabled={isSending}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60 shadow-sm"
-        >
-          {isSending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <MessageSquare className="w-4 h-4" />
-              Ask Farmer if Available
-            </>
-          )}
-        </motion.button>
-      );
-    }
-
     return (
       <div className="space-y-2">
-        {/* Sent inquiry notice */}
-        <div className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700">
-          <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-blue-500" />
-          <span>Inquiry sent! Farmer was asked about availability.</span>
-        </div>
-
         {/* Primary: Send Request */}
         <motion.button
           onClick={() => setConfirmItem(item)}
@@ -297,7 +216,7 @@ export default function CartPage() {
           className="w-full flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
         >
           <Send className="w-4 h-4" />
-          Send Transaction Request
+          Send Order Request
         </motion.button>
 
         {/* Secondary: re-open chat */}
@@ -306,7 +225,7 @@ export default function CartPage() {
           className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-green-700 py-1 transition-colors"
         >
           <MessageCircle className="w-3.5 h-3.5" />
-          Continue chatting with farmer
+          Chat with farmer
         </button>
       </div>
     );
@@ -393,9 +312,9 @@ export default function CartPage() {
                   <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-sm text-blue-800">
                     <p className="font-semibold mb-1">How ordering works:</p>
                     <ol className="list-decimal list-inside space-y-1 text-xs leading-relaxed text-blue-700">
-                      <li><strong>Ask the farmer</strong> if the product is still available via chat.</li>
-                      <li>Once confirmed, <strong>send your transaction request</strong>.</li>
+                      <li>Review your items and <strong>send your order request</strong>.</li>
                       <li>The farmer reviews and approves or declines your request.</li>
+                      <li>Once approved, the order is confirmed and inventory is updated.</li>
                     </ol>
                   </div>
 
@@ -673,9 +592,20 @@ export default function CartPage() {
                               />
                               {seller?.full_name || seller?.username}
                             </div>
-                            <span className="text-xs text-gray-400">
-                              {format(new Date(order.updated_at || order.created_at), 'MMM d, yyyy')}
-                            </span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-gray-400">
+                                {format(new Date(order.updated_at || order.created_at), 'MMM d, yyyy')}
+                              </span>
+                              {order.status === 'approved' && (
+                                <button
+                                  onClick={() => handleOrderReceived(order)}
+                                  disabled={actionLoading === order.id}
+                                  className="text-xs bg-green-700 text-white px-3 py-1.5 rounded-lg hover:bg-green-800 font-medium transition-colors disabled:opacity-60"
+                                >
+                                  {actionLoading === order.id ? 'Loading...' : 'Order Received'}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -689,22 +619,28 @@ export default function CartPage() {
         </AnimatePresence>
       </div>
 
-      {/* Transaction Confirm Modal */}
+      {/* Order Confirm Modal */}
       {confirmItem && (
-        <TransactionConfirmModal
+        <OrderConfirmModal
           cartItem={confirmItem}
           onClose={() => setConfirmItem(null)}
           onSuccess={() => {
-            // Clear inquiry flag since item will be removed from cart
-            const updated = new Set([...inquirySentIds]);
-            updated.delete(confirmItem.id);
-            setInquirySentIds(updated);
-            saveInquirySent(updated);
             fetchCart();
             setActiveTab('orders');
           }}
         />
       )}
+
+      {/* Post-transaction rating modal — buyer rates the farmer */}
+      <PostTransactionRatingModal
+        isOpen={!!ratingModal}
+        onClose={() => setRatingModal(null)}
+        mode="rate_farmer"
+        targetId={ratingModal?.farmerId}
+        targetName={ratingModal?.farmerName}
+        targetAvatar={ratingModal?.farmerAvatar}
+        orderSnapshot={ratingModal?.orderSnapshot}
+      />
     </div>
   );
 }

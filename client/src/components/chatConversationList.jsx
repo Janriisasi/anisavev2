@@ -222,9 +222,9 @@ export default function ChatConversationList({
                             try {
                               const jsonStr = lastMessage.content.split(']\n')[0].replace('[ORDER_CONFIRM:', '');
                               const order = JSON.parse(jsonStr);
-                              return `Transaction Request: ${order.product_name}`;
+                              return `Order Request: ${order.product_name}`;
                             } catch (e) {
-                              return 'Transaction Request';
+                              return 'Order Request';
                             }
                           })()
                       : lastMessage.content.includes('[IMAGE:')
