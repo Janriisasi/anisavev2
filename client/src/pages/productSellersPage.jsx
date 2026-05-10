@@ -255,7 +255,7 @@ export default function ProductSellersPage() {
         */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-6">
           {/* ── LEFT: Product Details Card ── */}
-          <div className="w-full lg:w-[380px] lg:flex-shrink-0 lg:sticky lg:top-6">
+          <div className="w-full lg:w-[380px] lg:flex-shrink-0 lg:sticky lg:top-6" data-tutorial="product-details-card">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Product image */}
               <div className="bg-white flex items-center justify-center p-8 h-56 sm:h-64 lg:h-72">
@@ -313,7 +313,7 @@ export default function ProductSellersPage() {
           </div>
 
           {/* ── RIGHT: Available Sellers ── */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0" data-tutorial="product-sellers-list">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Sellers header */}
               <div className="p-4 sm:p-6 border-b border-gray-100">

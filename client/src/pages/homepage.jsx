@@ -214,7 +214,8 @@ const Home = () => {
 
       const allRatings = [];
       if (ratingsRes.data) allRatings.push(...ratingsRes.data);
-      if (!buyerRatingsRes.error && buyerRatingsRes.data) allRatings.push(...buyerRatingsRes.data);
+      if (!buyerRatingsRes.error && buyerRatingsRes.data)
+        allRatings.push(...buyerRatingsRes.data);
 
       if (allRatings.length > 0) {
         const total = allRatings.reduce((sum, r) => sum + r.rating, 0);
@@ -239,7 +240,8 @@ const Home = () => {
       Object.entries(prices).forEach(([category, items]) => {
         Object.entries(items).forEach(([name, priceData]) => {
           // Check if priceData is an object and has a price property
-          const price = typeof priceData === "object" ? priceData.price : priceData;
+          const price =
+            typeof priceData === "object" ? priceData.price : priceData;
 
           products.push({
             id: productId++,
@@ -308,6 +310,7 @@ const Home = () => {
 
           {/* dashboard cards */}
           <motion.div
+            data-tutorial="dashboard-stats"
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -410,7 +413,9 @@ const Home = () => {
           </motion.div>
 
           {/* AI Farming Advisor */}
-          <AiAdvisor myProducts={myProducts} />
+          <div data-tutorial="ai-advisor">
+            <AiAdvisor myProducts={myProducts} />
+          </div>
 
           {loading ? (
             <div className="text-center py-12">
@@ -475,6 +480,7 @@ const Home = () => {
                   </motion.div>
                 ) : (
                   <motion.div
+                    data-tutorial="product-cards"
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
                     initial="hidden"
                     animate="show"

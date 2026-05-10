@@ -285,7 +285,7 @@ export default function FarmerProfile() {
         </button>
 
         {/* farmer profile */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8" data-tutorial="farmer-profile-card">
           <div className="flex flex-col md:flex-row items-start gap-6">
             <div className="relative w-32 h-32">
               <img
@@ -402,7 +402,7 @@ export default function FarmerProfile() {
         </div>
 
         {/* product section */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8" data-tutorial="farmer-products-section">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
             <Package className="w-6 h-6 text-green-600" />
             Products ({products.length})

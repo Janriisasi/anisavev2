@@ -1,34 +1,81 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ShoppingCart, Package, Clock, CheckCircle, XCircle,
-  Trash2, MessageCircle, ChevronRight, ArrowLeft,
-  ShoppingBag, AlertCircle, Loader2, MessageSquare, Send
-} from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { formatDistanceToNow, format } from 'date-fns';
-import supabase from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
-import { useCart } from '../contexts/cartContext';
-import OrderConfirmModal from '../components/transactionConfirmModal';
-import PostTransactionRatingModal from '../components/postTransactionRatingModal';
-import toast from 'react-hot-toast';
+  ShoppingCart,
+  Package,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  MessageCircle,
+  ChevronRight,
+  ArrowLeft,
+  ShoppingBag,
+  AlertCircle,
+  Loader2,
+  MessageSquare,
+  Send,
+} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { formatDistanceToNow, format } from "date-fns";
+import supabase from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
+import { useCart } from "../contexts/cartContext";
+import OrderConfirmModal from "../components/transactionConfirmModal";
+import PostTransactionRatingModal from "../components/postTransactionRatingModal";
+import toast from "react-hot-toast";
 
 const STATUS_CONFIG = {
-  pending:     { label: 'Pending',          color: 'text-gray-600',   bg: 'bg-gray-100',   icon: <Clock className="w-4 h-4" /> },
-  negotiating: { label: 'Negotiating',      color: 'text-blue-600',   bg: 'bg-blue-100',   icon: <MessageCircle className="w-4 h-4" /> },
-  confirming:  { label: 'Sent to Farmer',   color: 'text-amber-600',  bg: 'bg-amber-100',  icon: <Clock className="w-4 h-4" /> },
-  approved:    { label: 'Approved',         color: 'text-green-700',  bg: 'bg-green-100',  icon: <CheckCircle className="w-4 h-4" /> },
-  completed:   { label: 'Completed',        color: 'text-emerald-700',bg: 'bg-emerald-100',icon: <CheckCircle className="w-4 h-4" /> },
-  declined:    { label: 'Declined',         color: 'text-red-600',    bg: 'bg-red-100',    icon: <XCircle className="w-4 h-4" /> },
-  cancelled:   { label: 'Cancelled',        color: 'text-gray-500',   bg: 'bg-gray-100',   icon: <XCircle className="w-4 h-4" /> },
+  pending: {
+    label: "Pending",
+    color: "text-gray-600",
+    bg: "bg-gray-100",
+    icon: <Clock className="w-4 h-4" />,
+  },
+  negotiating: {
+    label: "Negotiating",
+    color: "text-blue-600",
+    bg: "bg-blue-100",
+    icon: <MessageCircle className="w-4 h-4" />,
+  },
+  confirming: {
+    label: "Sent to Farmer",
+    color: "text-amber-600",
+    bg: "bg-amber-100",
+    icon: <Clock className="w-4 h-4" />,
+  },
+  approved: {
+    label: "Approved",
+    color: "text-green-700",
+    bg: "bg-green-100",
+    icon: <CheckCircle className="w-4 h-4" />,
+  },
+  completed: {
+    label: "Completed",
+    color: "text-emerald-700",
+    bg: "bg-emerald-100",
+    icon: <CheckCircle className="w-4 h-4" />,
+  },
+  declined: {
+    label: "Declined",
+    color: "text-red-600",
+    bg: "bg-red-100",
+    icon: <XCircle className="w-4 h-4" />,
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "text-gray-500",
+    bg: "bg-gray-100",
+    icon: <XCircle className="w-4 h-4" />,
+  },
 };
-
 
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.color} ${cfg.bg}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.color} ${cfg.bg}`}
+    >
       {cfg.icon}
       {cfg.label}
     </span>
@@ -54,11 +101,18 @@ function EmptyState({ icon, title, description, action }) {
 
 export default function CartPage() {
   const { user } = useAuth();
-  const { cartItems, loading: cartLoading, removeFromCart, fetchCart } = useCart();
+  const {
+    cartItems,
+    loading: cartLoading,
+    removeFromCart,
+    fetchCart,
+  } = useCart();
   const navigate = useNavigate();
 
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'cart');
+  const [activeTab, setActiveTab] = useState(
+    location.state?.activeTab || "cart",
+  );
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [confirmItem, setConfirmItem] = useState(null);
@@ -70,18 +124,18 @@ export default function CartPage() {
     setActionLoading(order.id);
     try {
       const { error } = await supabase
-        .from('orders')
-        .update({ status: 'completed' })
-        .eq('id', order.id);
-      
+        .from("orders")
+        .update({ status: "completed" })
+        .eq("id", order.id);
+
       if (error) throw error;
 
       // Notify the farmer that the buyer received the order
-      await supabase.rpc('create_notification', {
+      await supabase.rpc("create_notification", {
         p_user_id: order.seller_id,
-        p_type: 'order_received',
-        p_title: 'Order Received by Buyer',
-        p_message: `${user.user_metadata?.full_name || 'The buyer'} has confirmed receiving ${order.quantity_kg} kg of ${order.product_snapshot?.name}. The order is now complete!`,
+        p_type: "order_received",
+        p_title: "Order Received by Buyer",
+        p_message: `${user.user_metadata?.full_name || "The buyer"} has confirmed receiving ${order.quantity_kg} kg of ${order.product_snapshot?.name}. The order is now complete!`,
         p_data: {
           order_id: order.id,
           product_name: order.product_snapshot?.name,
@@ -90,7 +144,7 @@ export default function CartPage() {
         },
       });
 
-      toast.success('Order completed successfully!');
+      toast.success("Order completed successfully!");
 
       // Prompt buyer to rate the farmer
       setRatingModal({
@@ -105,8 +159,8 @@ export default function CartPage() {
       });
       fetchOrders();
     } catch (err) {
-      console.error('Order received error:', err);
-      toast.error('Failed to update order status');
+      console.error("Order received error:", err);
+      toast.error("Failed to update order status");
     } finally {
       setActionLoading(null);
     }
@@ -117,80 +171,121 @@ export default function CartPage() {
     setOrdersLoading(true);
     try {
       const { data, error } = await supabase
-        .from('orders')
-        .select(`
+        .from("orders")
+        .select(
+          `
           *,
           seller:profiles!orders_seller_id_fkey(id, full_name, username, avatar_url, contact_number),
           product:products(id, name, image_url, category)
-        `)
-        .eq('buyer_id', user.id)
-        .order('created_at', { ascending: false });
+        `,
+        )
+        .eq("buyer_id", user.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       setOrders(data || []);
     } catch (err) {
-      console.error('Orders fetch error:', err);
+      console.error("Orders fetch error:", err);
     } finally {
       setOrdersLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    if (activeTab !== 'cart') fetchOrders();
+    if (activeTab !== "cart") fetchOrders();
   }, [activeTab, fetchOrders]);
 
   // Realtime for orders
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel('buyer-orders-realtime')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'orders',
-        filter: `buyer_id=eq.${user.id}`,
-      }, () => fetchOrders())
+      .channel("buyer-orders-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `buyer_id=eq.${user.id}`,
+        },
+        () => fetchOrders(),
+      )
       .subscribe();
     return () => channel.unsubscribe();
   }, [user, fetchOrders]);
-
 
   const handleRemove = async (itemId) => {
     setRemovingId(itemId);
     const { error } = await removeFromCart(itemId);
     setRemovingId(null);
-    if (error) toast.error('Failed to remove item');
-    else toast.success('Item removed from cart');
+    if (error) toast.error("Failed to remove item");
+    else toast.success("Item removed from cart");
   };
 
   const openChat = (seller, product) => {
-    supabase.rpc('get_or_create_conversation', { other_user_id: seller.id }).then(({ data: convId }) => {
-      if (!convId) return;
-      supabase.from('conversations').select(`
+    supabase
+      .rpc("get_or_create_conversation", { other_user_id: seller.id })
+      .then(({ data: convId }) => {
+        if (!convId) return;
+        supabase
+          .from("conversations")
+          .select(
+            `
         *,
         participant_1_profile:profiles!conversations_participant_1_fkey(id, username, full_name, avatar_url),
         participant_2_profile:profiles!conversations_participant_2_fkey(id, username, full_name, avatar_url)
-      `).eq('id', convId).single().then(({ data: conv }) => {
-        if (!conv) return;
-        const otherParticipant = conv.participant_1 === user.id
-          ? conv.participant_2_profile : conv.participant_1_profile;
-        window.dispatchEvent(new CustomEvent('openChat', {
-          detail: {
-            conversationData: { ...conv, otherParticipant, lastMessage: null, unreadCount: 0 },
-            productContext: null,
-          }
-        }));
+      `,
+          )
+          .eq("id", convId)
+          .single()
+          .then(({ data: conv }) => {
+            if (!conv) return;
+            const otherParticipant =
+              conv.participant_1 === user.id
+                ? conv.participant_2_profile
+                : conv.participant_1_profile;
+            window.dispatchEvent(
+              new CustomEvent("openChat", {
+                detail: {
+                  conversationData: {
+                    ...conv,
+                    otherParticipant,
+                    lastMessage: null,
+                    unreadCount: 0,
+                  },
+                  productContext: null,
+                },
+              }),
+            );
+          });
       });
-    });
   };
 
-
-  const recentOrders = orders.filter(o => ['confirming', 'negotiating', 'pending'].includes(o.status));
-  const historyOrders = orders.filter(o => ['approved', 'completed', 'declined', 'cancelled'].includes(o.status));
+  const recentOrders = orders.filter((o) =>
+    ["confirming", "negotiating", "pending"].includes(o.status),
+  );
+  const historyOrders = orders.filter((o) =>
+    ["approved", "completed", "declined", "cancelled"].includes(o.status),
+  );
 
   const tabs = [
-    { key: 'cart',    label: 'Cart',    icon: <ShoppingCart className="w-4 h-4" />, count: cartItems.length },
-    { key: 'orders',  label: 'Orders',  icon: <Clock className="w-4 h-4" />,        count: recentOrders.length },
-    { key: 'history', label: 'History', icon: <Package className="w-4 h-4" />,      count: null },
+    {
+      key: "cart",
+      label: "Cart",
+      icon: <ShoppingCart className="w-4 h-4" />,
+      count: cartItems.length,
+    },
+    {
+      key: "orders",
+      label: "Orders",
+      icon: <Clock className="w-4 h-4" />,
+      count: recentOrders.length,
+    },
+    {
+      key: "history",
+      label: "History",
+      icon: <Package className="w-4 h-4" />,
+      count: null,
+    },
   ];
 
   // Group cart by seller
@@ -244,29 +339,35 @@ export default function CartPage() {
           </button>
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-green-700" />
-            <h1 className="text-xl font-bold text-gray-800">My Cart & Orders</h1>
+            <h1 className="text-xl font-bold text-gray-800">
+              My Cart & Orders
+            </h1>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex">
-            {tabs.map(tab => (
+            {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={`relative flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${
                   activeTab === tab.key
-                    ? 'border-green-700 text-green-700'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? "border-green-700 text-green-700"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
                 }`}
               >
                 {tab.icon}
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`text-xs font-bold rounded-full px-1.5 py-0.5 ${
-                    activeTab === tab.key ? 'bg-green-700 text-white' : 'bg-gray-200 text-gray-600'
-                  }`}>
+                  <span
+                    className={`text-xs font-bold rounded-full px-1.5 py-0.5 ${
+                      activeTab === tab.key
+                        ? "bg-green-700 text-white"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
                     {tab.count}
                   </span>
                 )}
@@ -276,11 +377,10 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div data-tutorial="cart-main" className="max-w-7xl mx-auto px-4 py-6">
         <AnimatePresence mode="wait">
-
           {/* ── CART TAB ── */}
-          {activeTab === 'cart' && (
+          {activeTab === "cart" && (
             <motion.div
               key="cart"
               initial={{ opacity: 0, x: -20 }}
@@ -299,7 +399,7 @@ export default function CartPage() {
                   description="Browse products and add items to your cart."
                   action={
                     <button
-                      onClick={() => navigate('/categories')}
+                      onClick={() => navigate("/categories")}
                       className="bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-green-800 transition-colors"
                     >
                       Browse Products
@@ -312,14 +412,26 @@ export default function CartPage() {
                   <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-sm text-blue-800">
                     <p className="font-semibold mb-1">How ordering works:</p>
                     <ol className="list-decimal list-inside space-y-1 text-xs leading-relaxed text-blue-700">
-                      <li>Review your items and <strong>send your order request</strong>.</li>
-                      <li>The farmer reviews and approves or declines your request.</li>
-                      <li>Once approved, the order is confirmed and inventory is updated.</li>
+                      <li>
+                        Review your items and{" "}
+                        <strong>send your order request</strong>.
+                      </li>
+                      <li>
+                        The farmer reviews and approves or declines your
+                        request.
+                      </li>
+                      <li>
+                        Once approved, the order is confirmed and inventory is
+                        updated.
+                      </li>
                     </ol>
                   </div>
 
                   {Object.values(cartBySeller).map(({ seller, items }) => {
-                    const groupTotal = items.reduce((s, i) => s + i.quantity_kg * i.price_at_add, 0);
+                    const groupTotal = items.reduce(
+                      (s, i) => s + i.quantity_kg * i.price_at_add,
+                      0,
+                    );
                     return (
                       <motion.div
                         key={seller?.id}
@@ -330,7 +442,10 @@ export default function CartPage() {
                         {/* Seller header */}
                         <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b border-gray-100">
                           <img
-                            src={seller?.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`}
+                            src={
+                              seller?.avatar_url ||
+                              `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`
+                            }
                             alt=""
                             className="w-9 h-9 rounded-full object-cover border-2 border-green-100"
                           />
@@ -338,7 +453,9 @@ export default function CartPage() {
                             <p className="font-semibold text-gray-800 text-sm truncate">
                               {seller?.full_name || seller?.username}
                             </p>
-                            <p className="text-xs text-gray-500">@{seller?.username}</p>
+                            <p className="text-xs text-gray-500">
+                              @{seller?.username}
+                            </p>
                           </div>
                           <button
                             onClick={() => openChat(seller, items[0])}
@@ -351,40 +468,57 @@ export default function CartPage() {
 
                         {/* Items */}
                         <div className="divide-y divide-gray-50">
-                          {items.map(item => {
+                          {items.map((item) => {
                             const snap = item.product_snapshot || {};
-                            const itemTotal = (item.quantity_kg * item.price_at_add).toFixed(2);
+                            const itemTotal = (
+                              item.quantity_kg * item.price_at_add
+                            ).toFixed(2);
                             return (
                               <div key={item.id} className="px-4 py-4">
                                 {/* Product row */}
                                 <div className="flex items-center gap-3 mb-3">
                                   <img
-                                    src={snap.image_url || item.products?.image_url || '/placeholder.jpg'}
+                                    src={
+                                      snap.image_url ||
+                                      item.products?.image_url ||
+                                      "/placeholder.jpg"
+                                    }
                                     alt={snap.name || item.products?.name}
                                     className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
-                                    onError={e => { e.target.src = '/placeholder.jpg'; }}
+                                    onError={(e) => {
+                                      e.target.src = "/placeholder.jpg";
+                                    }}
                                   />
                                   <div className="flex-1 min-w-0">
                                     <p className="font-semibold text-gray-800 truncate">
                                       {snap.name || item.products?.name}
                                     </p>
-                                    <p className="text-xs text-gray-500">{snap.category}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {snap.category}
+                                    </p>
                                     <div className="flex items-center gap-3 mt-1.5">
-                                      <span className="text-sm text-green-700 font-bold">₱{item.price_at_add}/kg</span>
-                                      <span className="text-sm text-gray-500">× {item.quantity_kg} kg</span>
+                                      <span className="text-sm text-green-700 font-bold">
+                                        ₱{item.price_at_add}/kg
+                                      </span>
+                                      <span className="text-sm text-gray-500">
+                                        × {item.quantity_kg} kg
+                                      </span>
                                     </div>
                                   </div>
                                   <div className="flex flex-col items-end gap-2">
-                                    <p className="font-bold text-gray-800">₱{itemTotal}</p>
+                                    <p className="font-bold text-gray-800">
+                                      ₱{itemTotal}
+                                    </p>
                                     <button
                                       onClick={() => handleRemove(item.id)}
                                       disabled={removingId === item.id}
                                       className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                     >
-                                      {removingId === item.id
-                                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                                        : <Trash2 className="w-4 h-4" />
-                                      }
+                                      {removingId === item.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                      )}
                                     </button>
                                   </div>
                                 </div>
@@ -399,8 +533,12 @@ export default function CartPage() {
                         {/* Group subtotal footer */}
                         <div className="flex items-center justify-between px-4 py-3 bg-green-50 border-t border-green-100">
                           <div>
-                            <p className="text-xs text-gray-500">Estimated subtotal</p>
-                            <p className="font-bold text-green-800 text-lg">₱{groupTotal.toFixed(2)}</p>
+                            <p className="text-xs text-gray-500">
+                              Estimated subtotal
+                            </p>
+                            <p className="font-bold text-green-800 text-lg">
+                              ₱{groupTotal.toFixed(2)}
+                            </p>
                           </div>
                         </div>
                       </motion.div>
@@ -408,7 +546,8 @@ export default function CartPage() {
                   })}
 
                   <p className="text-xs text-center text-gray-400 pb-4">
-                    Prices are estimates. Final amount is agreed upon with the farmer.
+                    Prices are estimates. Final amount is agreed upon with the
+                    farmer.
                   </p>
                 </div>
               )}
@@ -416,7 +555,7 @@ export default function CartPage() {
           )}
 
           {/* ── ORDERS TAB ── */}
-          {activeTab === 'orders' && (
+          {activeTab === "orders" && (
             <motion.div
               key="orders"
               initial={{ opacity: 0, x: -20 }}
@@ -435,7 +574,7 @@ export default function CartPage() {
                   description="Checkout items from your cart to start an order."
                   action={
                     <button
-                      onClick={() => setActiveTab('cart')}
+                      onClick={() => setActiveTab("cart")}
                       className="text-green-700 font-semibold text-sm hover:underline"
                     >
                       Go to Cart
@@ -458,23 +597,33 @@ export default function CartPage() {
                         <div className="p-4">
                           <div className="flex items-start gap-3">
                             <img
-                              src={snap.image_url || '/placeholder.jpg'}
+                              src={snap.image_url || "/placeholder.jpg"}
                               alt={snap.name}
                               className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
-                              onError={e => { e.target.src = '/placeholder.jpg'; }}
+                              onError={(e) => {
+                                e.target.src = "/placeholder.jpg";
+                              }}
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <p className="font-bold text-gray-800">{snap.name}</p>
-                                  <p className="text-xs text-gray-500">{snap.category}</p>
+                                  <p className="font-bold text-gray-800">
+                                    {snap.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {snap.category}
+                                  </p>
                                 </div>
                                 <StatusBadge status={order.status} />
                               </div>
                               <div className="flex flex-wrap gap-3 mt-2 text-sm">
-                                <span className="text-gray-600">{order.quantity_kg} kg</span>
+                                <span className="text-gray-600">
+                                  {order.quantity_kg} kg
+                                </span>
                                 <span className="text-gray-400">·</span>
-                                <span className="text-green-700 font-semibold">₱{order.total_amount}</span>
+                                <span className="text-green-700 font-semibold">
+                                  ₱{order.total_amount}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -483,14 +632,21 @@ export default function CartPage() {
                           <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
                             <div className="flex items-center gap-2 text-xs text-gray-500">
                               <img
-                                src={seller?.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`}
-                                alt="" className="w-5 h-5 rounded-full"
+                                src={
+                                  seller?.avatar_url ||
+                                  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`
+                                }
+                                alt=""
+                                className="w-5 h-5 rounded-full"
                               />
                               {seller?.full_name || seller?.username}
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-gray-400">
-                                {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                                {formatDistanceToNow(
+                                  new Date(order.created_at),
+                                  { addSuffix: true },
+                                )}
                               </span>
                               <button
                                 onClick={() => openChat(seller, order)}
@@ -503,7 +659,7 @@ export default function CartPage() {
                           </div>
                         </div>
 
-                        {order.status === 'confirming' && (
+                        {order.status === "confirming" && (
                           <div className="px-4 pb-3">
                             <div className="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg text-xs text-amber-700">
                               <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
@@ -520,7 +676,7 @@ export default function CartPage() {
           )}
 
           {/* ── HISTORY TAB ── */}
-          {activeTab === 'history' && (
+          {activeTab === "history" && (
             <motion.div
               key="history"
               initial={{ opacity: 0, x: -20 }}
@@ -550,29 +706,41 @@ export default function CartPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
                         className={`bg-white rounded-2xl shadow-sm border overflow-hidden ${
-                          order.status === 'approved' ? 'border-green-100' : 'border-gray-100'
+                          order.status === "approved"
+                            ? "border-green-100"
+                            : "border-gray-100"
                         }`}
                       >
                         <div className="p-4">
                           <div className="flex items-start gap-3">
                             <img
-                              src={snap.image_url || '/placeholder.jpg'}
+                              src={snap.image_url || "/placeholder.jpg"}
                               alt={snap.name}
                               className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
-                              onError={e => { e.target.src = '/placeholder.jpg'; }}
+                              onError={(e) => {
+                                e.target.src = "/placeholder.jpg";
+                              }}
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <p className="font-bold text-gray-800">{snap.name}</p>
-                                  <p className="text-xs text-gray-500">{snap.category}</p>
+                                  <p className="font-bold text-gray-800">
+                                    {snap.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {snap.category}
+                                  </p>
                                 </div>
                                 <StatusBadge status={order.status} />
                               </div>
                               <div className="flex flex-wrap gap-3 mt-2 text-sm">
-                                <span className="text-gray-600">{order.quantity_kg} kg</span>
+                                <span className="text-gray-600">
+                                  {order.quantity_kg} kg
+                                </span>
                                 <span className="text-gray-400">·</span>
-                                <span className={`font-semibold ${order.status === 'approved' ? 'text-green-700' : 'text-gray-600'}`}>
+                                <span
+                                  className={`font-semibold ${order.status === "approved" ? "text-green-700" : "text-gray-600"}`}
+                                >
                                   ₱{order.total_amount}
                                 </span>
                               </div>
@@ -587,22 +755,33 @@ export default function CartPage() {
                           <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
                             <div className="flex items-center gap-2 text-xs text-gray-500">
                               <img
-                                src={seller?.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`}
-                                alt="" className="w-5 h-5 rounded-full"
+                                src={
+                                  seller?.avatar_url ||
+                                  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`
+                                }
+                                alt=""
+                                className="w-5 h-5 rounded-full"
                               />
                               {seller?.full_name || seller?.username}
                             </div>
                             <div className="flex items-center gap-3">
                               <span className="text-xs text-gray-400">
-                                {format(new Date(order.updated_at || order.created_at), 'MMM d, yyyy')}
+                                {format(
+                                  new Date(
+                                    order.updated_at || order.created_at,
+                                  ),
+                                  "MMM d, yyyy",
+                                )}
                               </span>
-                              {order.status === 'approved' && (
+                              {order.status === "approved" && (
                                 <button
                                   onClick={() => handleOrderReceived(order)}
                                   disabled={actionLoading === order.id}
                                   className="text-xs bg-green-700 text-white px-3 py-1.5 rounded-lg hover:bg-green-800 font-medium transition-colors disabled:opacity-60"
                                 >
-                                  {actionLoading === order.id ? 'Loading...' : 'Order Received'}
+                                  {actionLoading === order.id
+                                    ? "Loading..."
+                                    : "Order Received"}
                                 </button>
                               )}
                             </div>
@@ -615,7 +794,6 @@ export default function CartPage() {
               )}
             </motion.div>
           )}
-
         </AnimatePresence>
       </div>
 
@@ -626,7 +804,7 @@ export default function CartPage() {
           onClose={() => setConfirmItem(null)}
           onSuccess={() => {
             fetchCart();
-            setActiveTab('orders');
+            setActiveTab("orders");
           }}
         />
       )}

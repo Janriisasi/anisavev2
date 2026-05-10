@@ -91,18 +91,18 @@ export default function SavedContacts() {
     if (!user) return;
 
     const channel = supabase
-      .channel('saved-contacts-realtime')
+      .channel("saved-contacts-realtime")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'saved_contacts',
+          event: "*",
+          schema: "public",
+          table: "saved_contacts",
           filter: `buyer_id=eq.${user.id}`,
         },
         () => {
           fetchContacts();
-        }
+        },
       )
       .subscribe();
 
@@ -116,13 +116,13 @@ export default function SavedContacts() {
       fetchContacts();
     };
 
-    window.addEventListener('contactRemoved', handleContactRemoved);
-    window.addEventListener('contactAdded', handleContactAdded);
+    window.addEventListener("contactRemoved", handleContactRemoved);
+    window.addEventListener("contactAdded", handleContactAdded);
 
     return () => {
       channel.unsubscribe();
-      window.removeEventListener('contactRemoved', handleContactRemoved);
-      window.removeEventListener('contactAdded', handleContactAdded);
+      window.removeEventListener("contactRemoved", handleContactRemoved);
+      window.removeEventListener("contactAdded", handleContactAdded);
     };
   }, [user, fetchContacts]);
 
@@ -302,7 +302,10 @@ export default function SavedContacts() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div
+              data-tutorial="contacts-list"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+            >
               {contacts.map((contact) => (
                 <div
                   key={contact.id}

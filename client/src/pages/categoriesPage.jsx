@@ -292,14 +292,25 @@ export default function CategoriesPage() {
               <p className="text-gray-600 mb-2">
                 Category: {selectedProduct.category}
               </p>
-              <p className="text-green-600 font-bold text-lg mb-2">
-                Market Price: ₱{selectedProduct.price}/kg
-              </p>
+              <div
+                data-tutorial="market-info"
+                className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4"
+              >
+                <h4 className="text-sm font-semibold text-green-700 mb-2">
+                  Market Information
+                </h4>
+                <p className="text-green-600 font-bold text-lg">
+                  Market Price: ₱{selectedProduct.price}/kg
+                </p>
+              </div>
               <p className="text-gray-700">{selectedProduct.description}</p>
             </div>
 
             {/* sellers list */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+            <div
+              data-tutorial="categories-sellers"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20"
+            >
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
                 Available Sellers ({sellers.length})
               </h2>
@@ -462,7 +473,10 @@ export default function CategoriesPage() {
         )}
 
         {!name && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-10">
+          <div
+            data-tutorial="categories-grid"
+            className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-10"
+          >
             {categories.map((category) => {
               const displayName =
                 category === "HerbsAndSpices" ? "Herbs & Spices" : category;
