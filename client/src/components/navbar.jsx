@@ -259,6 +259,7 @@ export default function Navbar() {
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.8, opacity: 0 }}
                     onClick={() => setIsMobileSearchOpen(true)}
+                    data-tutorial="mobile-search-btn"
                     className="flex items-center justify-center w-9 h-9 rounded-full bg-green-700 hover:bg-green-600 transition-colors flex-shrink-0"
                     title="Search"
                   >
@@ -283,12 +284,14 @@ export default function Navbar() {
 
       {/* ── BOTTOM TAB BAR (Mobile Only) ── */}
       <div
+        data-tutorial="mobile-bottom-bar"
         className="md:hidden fixed bottom-0 left-0 w-full bg-green-800 text-white z-[60] flex justify-around items-center shadow-[0_-4px_10px_rgba(0,0,0,0.1)] px-1"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Home */}
         <motion.button
           onClick={() => { setActiveOverlayTab(null); handleNavigation('/homepage'); }}
+          data-tutorial="mobile-tab-home"
           className={`relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${
             isTabActive('/homepage') && !activeOverlayTab ? 'text-white' : 'text-green-100/70 hover:text-white'
           }`}

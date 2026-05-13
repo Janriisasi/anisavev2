@@ -544,11 +544,11 @@ const T = {
 
 // ─── DOM SELECTOR MAP ─────────────────────────────────────────────────────────
 const SELECTORS = {
-  navbar:              'nav[class*="bg-green-800"], nav[class*="green"]',
-  'navbar-search':     'nav input[type="text"]',
-  'navbar-notifications': 'nav button[title="Notifications"]',
-  'navbar-cart':       'nav button[title="My Cart"], nav button[title="Cart"], nav a[href="/cart"]',
-  'navbar-chat':       'nav button[title="Messages"]',
+  navbar:              '[data-tutorial="mobile-bottom-bar"], nav[class*="bg-green-800"], nav[class*="green"]',
+  'navbar-search':     '[data-tutorial="mobile-search-btn"], nav input[type="text"]',
+  'navbar-notifications': '[data-tutorial="mobile-tab-alerts"], nav button[title="Notifications"]',
+  'navbar-cart':       '[data-tutorial="mobile-tab-cart"], nav button[title="My Cart"], nav button[title="Cart"], nav a[href="/cart"]',
+  'navbar-chat':       '[data-tutorial="mobile-tab-chat"], nav button[title="Messages"]',
   'dashboard-stats':   '[data-tutorial="dashboard-stats"]',
   'product-cards':     '[data-tutorial="product-cards"]',
   'ai-advisor':        '[data-tutorial="ai-advisor"]',
@@ -676,14 +676,13 @@ function cardPos(rect) {
   const PAD = 14;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  // Bigger on desktop (480px), mobile fills width
-  const W = vw >= 768 ? 480 : Math.min(360, vw - 24);
+  // Bigger on desktop (480px), mobile fills width up to 310px
+  const W = vw >= 768 ? 480 : Math.min(310, vw - 32);
   const H = vw >= 768 ? 300 : 280;
 
   if (!rect) return {
     top: '50%',
     left: '50%',
-    transform: 'translate(-50%, -50%)',
     _w: W,
   };
 
@@ -692,7 +691,7 @@ function cardPos(rect) {
   const right = vw - rect.right - PAD;
   const left  = rect.left - PAD;
 
-  let top, leftVal, transform = 'none';
+  let top, leftVal;
 
   if (below >= H) {
     top = rect.bottom + PAD;
@@ -710,7 +709,93 @@ function cardPos(rect) {
     top = vh / 2 - H / 2;
     leftVal = vw / 2 - W / 2;
   }
-  return { top, left: leftVal, transform, _w: W };
+  return { top, left: leftVal, _w: W };
+}
+
+// ─── ELEVENLABS TTS ──────────────────────────────────────────────────────────
+// Free plan: 10,000 credits/month — more than enough for a tutorial overlay.
+// Add this to your .env file:
+//   VITE_ELEVENLABS_API_KEY=your_api_key_here
+//
+// eleven_multilingual_v2 handles English, Tagalog, and Hiligaynon naturally.
+// Voice: Rachel (21m00Tcm4TlvDq8ikWAM) — clear, neutral, multilingual.
+
+const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
+const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID ?? 'agHbWXl8DJ2fQZVqV1w4';
+const ELEVENLABS_MODEL    = 'eleven_multilingual_v2';
+
+function useTTS() {
+  const [speaking, setSpeaking] = useState(false);
+  const audioRef  = useRef(null);
+  const objectURL = useRef(null);
+
+  // Stop any currently playing audio and free memory
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (objectURL.current) {
+      URL.revokeObjectURL(objectURL.current);
+      objectURL.current = null;
+    }
+    setSpeaking(false);
+  }, []);
+
+  const speak = useCallback(async (text) => {
+    stop();
+
+    // Fallback to browser TTS if API key is missing
+    if (!ELEVENLABS_API_KEY) {
+      console.warn('VITE_ELEVENLABS_API_KEY not set — falling back to browser TTS');
+      const utt = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis?.speak(utt);
+      return;
+    }
+
+    setSpeaking(true);
+    try {
+      const res = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key': ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text,
+            model_id: ELEVENLABS_MODEL,
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        console.error('ElevenLabs TTS error:', res.status, await res.text());
+        setSpeaking(false);
+        return;
+      }
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      objectURL.current = url;
+
+      const audio = new Audio(url);
+      audioRef.current  = audio;
+      audio.onended  = () => setSpeaking(false);
+      audio.onerror  = () => setSpeaking(false);
+      audio.play();
+    } catch (err) {
+      console.error('ElevenLabs TTS error:', err);
+      setSpeaking(false);
+    }
+  }, [stop]);
+
+  // Clean up when Card unmounts (step change / overlay close)
+  useEffect(() => () => stop(), [stop]);
+
+  return { speaking, speak, stop };
 }
 
 // ─── TOOLTIP CARD ─────────────────────────────────────────────────────────────
@@ -719,20 +804,25 @@ function Card({ step, idx, total, lang, onLang, onSkip, onBack, onNext, rect, na
   const isFirst = idx === 0;
   const isLast  = idx === total - 1;
   const progress = ((idx + 1) / total) * 100;
-  const isCentered = !step.target;
+  const { speaking, speak, stop } = useTTS();
+
+
+  const isCentered = !step.target || !rect;
+  const vw = window.innerWidth;
+  const W = vw >= 768 ? 480 : Math.min(310, vw - 32);
   const pos = isCentered
-    ? { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+    ? { top: '50%', left: '50%', _w: W }
     : cardPos(rect);
 
   return (
     <motion.div
       key={`${idx}-${lang}`}
-      initial={{ opacity: 0, scale: 0.9, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+      initial={{ opacity: 0, scale: 0.9, x: isCentered ? "-50%" : 0, y: isCentered ? "-45%" : 10 }}
+      animate={{ opacity: 1, scale: 1, x: isCentered ? "-50%" : 0, y: isCentered ? "-50%" : 0 }}
+      exit={{ opacity: 0, scale: 0.9, x: isCentered ? "-50%" : 0, y: isCentered ? "-45%" : 10 }}
       transition={{ type: 'spring', stiffness: 340, damping: 28 }}
       className="fixed z-[9999] bg-white rounded-2xl shadow-2xl overflow-hidden"
-      style={{ width: pos._w ?? 340, maxWidth: 'calc(100vw - 16px)', ...pos }}
+      style={{ width: pos._w ?? 310, maxWidth: 'calc(100vw - 32px)', top: pos.top, left: pos.left }}
     >
       {/* Progress */}
       <div className="h-1 bg-gray-100">
@@ -744,36 +834,57 @@ function Card({ step, idx, total, lang, onLang, onSkip, onBack, onNext, rect, na
         />
       </div>
 
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {/* Top row */}
         <div className="flex items-center justify-between mb-3">
           <LangPicker lang={lang} onChange={onLang} />
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400 font-medium">{t.stepOf(idx + 1, total)}</span>
-            <button onClick={onSkip} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+            {/* TTS speaker button — uses free built-in Web Speech API */}
+            {window.speechSynthesis && (
+              <button
+                onClick={() => speaking ? stop() : speak(`${step.title}. ${step.description.replace(/^"|"$/g, '')}`)}
+                title={speaking ? 'Stop' : 'Read aloud'}
+                className={`p-1.5 rounded-full transition-colors ${speaking ? 'bg-green-100 text-green-700' : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'}`}
+              >
+                {speaking ? (
+                  /* animated speaker wave */
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                    <path d="M18.5 12a6.5 6.5 0 0 0-3.5-5.8v2.2a4.5 4.5 0 0 1 0 7.2v2.2a6.5 6.5 0 0 0 3.5-5.8z" opacity=".5"/>
+                  </svg>
+                ) : (
+                  /* muted speaker */
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                  </svg>
+                )}
+              </button>
+            )}
+            <span className="text-xs sm:text-sm text-gray-400 font-medium">{t.stepOf(idx + 1, total)}</span>
+            <button onClick={() => { stop(); onSkip(); }} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
               <X className="w-4 h-4 text-gray-400" />
             </button>
           </div>
         </div>
 
         {/* Step dots */}
-        <div className="flex gap-1 mb-4 flex-wrap">
+        <div className="flex gap-1 mb-3 sm:mb-4 flex-wrap">
           {Array.from({ length: total }).map((_, i) => (
             <div
               key={i}
               className={`h-1 rounded-full transition-all duration-300 ${
-                i === idx ? 'w-5 bg-green-700' : i < idx ? 'w-1.5 bg-green-700' : 'w-1.5 bg-gray-200'
+                i === idx ? 'w-4 sm:w-5 bg-green-700' : i < idx ? 'w-1.5 bg-green-700' : 'w-1.5 bg-gray-200'
               }`}
             />
           ))}
         </div>
 
         {/* Content */}
-        <h3 className="text-base font-bold text-gray-900 mb-2 leading-snug">{step.title}</h3>
-        <p className="text-sm text-gray-600 leading-relaxed">{step.description}</p>
+        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1.5 sm:mb-2 leading-snug">{step.title}</h3>
+        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{step.description}</p>
 
         {navigating && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-green-700 font-medium bg-green-50 rounded-lg px-3 py-2">
+          <div className="mt-3 flex items-center gap-2 text-xs sm:text-sm text-green-700 font-medium bg-green-50 rounded-lg px-3 py-2">
             <div className="w-3 h-3 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
             {t.navigating}
           </div>
@@ -781,11 +892,11 @@ function Card({ step, idx, total, lang, onLang, onSkip, onBack, onNext, rect, na
       </div>
 
       {/* Buttons */}
-      <div className="px-5 pb-5 flex items-center justify-between gap-2">
+      <div className="px-4 pb-4 sm:px-5 sm:pb-5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <button
-            onClick={onSkip}
-            className="px-3 py-2 text-sm text-green-800 border border-green-200 rounded-xl hover:bg-green-50 transition-colors"
+            onClick={() => { stop(); onSkip(); }}
+            className="px-3 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-sm text-green-800 border border-green-200 rounded-xl hover:bg-green-50 transition-colors"
           >
             {t.skip}
           </button>
@@ -793,10 +904,10 @@ function Card({ step, idx, total, lang, onLang, onSkip, onBack, onNext, rect, na
         <button
           onClick={onNext}
           disabled={navigating}
-          className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold bg-green-800 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl shadow-sm transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold bg-green-800 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl shadow-sm transition-colors"
         >
           {isLast ? t.finish : t.next}
-          {!isLast && <ChevronRight className="w-4 h-4" />}
+          {!isLast && <ChevronRight className="w-4 h-4 sm:w-4 sm:h-4" />}
         </button>
       </div>
     </motion.div>
