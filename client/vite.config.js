@@ -3,6 +3,13 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  clearScreen: false,
+  server: {
+    port: 5173,
+    strictPort: true,
+    host: '0.0.0.0',
+  },
+  envPrefix: ['VITE_'],
   build: {
     rollupOptions: {
       output: {
@@ -13,8 +20,9 @@ export default defineConfig({
         }
       }
     },
-    cssCodeSplit: false, // Inline critical CSS
-    minify: 'terser',
+    cssCodeSplit: false,
+    target: ['es2021', 'chrome100', 'safari13'],
+    minify: !process.env.TAURI_DEBUG ? 'terser' : false,
     terserOptions: {
       compress: {
         drop_console: true,
@@ -22,7 +30,7 @@ export default defineConfig({
         passes: 2
       }
     },
-    sourcemap: false,
+    sourcemap: !!process.env.TAURI_DEBUG,
     chunkSizeWarningLimit: 1000
-  }
+  },
 });

@@ -721,7 +721,7 @@ function cardPos(rect) {
 // Voice: Rachel (21m00Tcm4TlvDq8ikWAM) — clear, neutral, multilingual.
 
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
-const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID ?? 'agHbWXl8DJ2fQZVqV1w4';
+const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID;
 const ELEVENLABS_MODEL    = 'eleven_multilingual_v2';
 
 function useTTS() {
