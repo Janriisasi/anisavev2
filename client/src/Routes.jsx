@@ -16,19 +16,40 @@ const Farmer         = lazy(() => import('./pages/farmersProfile'));
 const AdminDashboard = lazy(() => import('./pages/adminDashboard'));
 const PrivacyPolicy  = lazy(() => import('./pages/privacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/terms'));
-const CartPage       = lazy(() => import('./pages/cartPage')); // ← NEW
+const CartPage       = lazy(() => import('./pages/cartPage'));
 
 export default function Routes() {
   const { user } = useAuth();
 
+  // Check inside the component so it runs after the window is fully ready
+  const isTauri = typeof window !== 'undefined' && (
+    Boolean(window.__TAURI__) ||
+    Boolean(window.__TAURI_INTERNALS__) ||
+    navigator.userAgent.includes('Tauri')
+  );
+
   return (
     <Suspense fallback={<Loader />}>
       <RouterRoutes>
-        {/* default route */}
-        <Route path="/" element={<Navigate to={user ? "/homepage" : "/landing"} replace />} />
+        {/* default route — skip landing page on Tauri app */}
+        <Route
+          path="/"
+          element={
+            <Navigate to={user ? "/homepage" : isTauri ? "/login" : "/landing"} replace />
+          }
+        />
 
         {/* public routes */}
-        <Route path="/landing" element={user ? <Navigate to="/homepage" replace /> : <LandingPage />} />
+        <Route
+          path="/landing"
+          element={
+            isTauri
+              ? <Navigate to="/login" replace />
+              : user
+                ? <Navigate to="/homepage" replace />
+                : <LandingPage />
+          }
+        />
         <Route path="/login"   element={user ? <Navigate to="/homepage" replace /> : <Login />} />
         <Route path="/signup"  element={user ? <Navigate to="/homepage" replace /> : <SignUp />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -44,7 +65,7 @@ export default function Routes() {
         <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
         <Route path="/farmer/:id" element={<ProtectedRoute><Farmer /></ProtectedRoute>} />
 
-        {/* Cart page — NEW */}
+        {/* Cart page */}
         <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
 
         {/* 404 */}

@@ -125,6 +125,14 @@ const fetchUserProfile = async () => {
 };
 
 // ─── Context Helpers ──────────────────────────────────────────────────────────
+
+// Tauri/Android has stricter request body limits than the browser.
+// Trim the system context to avoid Edge Function 500 errors on mobile.
+const trimContext = (context, maxChars = 3000) => {
+  if (context.length <= maxChars) return context;
+  return context.slice(0, maxChars) + "\n\n[Context trimmed for performance]";
+};
+
 const getMonthContext = () => {
   const now = new Date();
   const month = now.toLocaleString("default", { month: "long" });
@@ -836,13 +844,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
     }, 50);
 
     try {
-      const systemContext = buildContext(
-        myProducts,
-        prices,
-        trendData,
-        topBuyers,
-        userName,
-        userId,
+      const systemContext = trimContext(
+        buildContext(myProducts, prices, trendData, topBuyers, userName, userId),
       );
       const userText = getQuickPromptText(key, { month, season });
 
@@ -891,13 +894,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
     setError(null);
 
     try {
-      const systemContext = buildContext(
-        myProducts,
-        prices,
-        trendData,
-        topBuyers,
-        userName,
-        userId,
+      const systemContext = trimContext(
+        buildContext(myProducts, prices, trendData, topBuyers, userName, userId),
       );
 
       // Build messages array for the API (only role + content)
