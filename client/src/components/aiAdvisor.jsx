@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { memo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles,
   RefreshCw,
   ChevronDown,
   ChevronUp,
@@ -15,375 +14,24 @@ import {
   User,
   ShoppingBag,
   Star,
-  Sprout,
-  ChartLine,
-  HandCoins,
-  Lightbulb,
 } from "lucide-react";
-import supabase from "../lib/supabase";
 import { useMarketPrices } from "../contexts/marketPricesContext";
-
-// ─── Trend Data Fetcher ───────────────────────────────────────────────────────
-const fetchTrendData = async () => {
-  try {
-    const { data, error } = await supabase
-      .from("products")
-      .select("name, category, price, quantity_kg, user_id")
-      .eq("status", "Available");
-
-    if (error) throw error;
-
-    const map = {};
-    (data || []).forEach(({ name, category, price, quantity_kg, user_id }) => {
-      if (!map[name]) {
-        map[name] = {
-          name,
-          category,
-          sellerIds: new Set(),
-          totalQty: 0,
-          prices: [],
-        };
-      }
-      map[name].sellerIds.add(user_id);
-      map[name].totalQty += parseFloat(quantity_kg) || 0;
-      map[name].prices.push(parseFloat(price) || 0);
-    });
-
-    return Object.values(map)
-      .map((item) => ({
-        name: item.name,
-        category: item.category,
-        sellerCount: item.sellerIds.size,
-        totalQty: parseFloat(item.totalQty.toFixed(1)),
-        avgPrice:
-          item.prices.length > 0
-            ? parseFloat(
-                (
-                  item.prices.reduce((a, b) => a + b, 0) / item.prices.length
-                ).toFixed(2),
-              )
-            : 0,
-      }))
-      .sort((a, b) => b.sellerCount - a.sellerCount);
-  } catch (err) {
-    console.error("Trend fetch error:", err);
-    return [];
-  }
-};
-
-// ─── Fetch top buyers (by approved orders count) ─────────────────────────────
-const fetchTopBuyers = async () => {
-  try {
-    const { data, error } = await supabase
-      .from("orders")
-      .select("buyer_id, profiles!orders_buyer_id_fkey(full_name, username)")
-      .eq("status", "approved");
-
-    if (error) throw error;
-
-    const map = {};
-    (data || []).forEach(({ buyer_id, profiles: prof }) => {
-      if (!map[buyer_id]) {
-        map[buyer_id] = {
-          id: buyer_id,
-          name: prof?.full_name || prof?.username || "Unknown Buyer",
-          orderCount: 0,
-        };
-      }
-      map[buyer_id].orderCount++;
-    });
-
-    return Object.values(map)
-      .sort((a, b) => b.orderCount - a.orderCount)
-      .slice(0, 3);
-  } catch (err) {
-    console.error("Buyer fetch error:", err);
-    return [];
-  }
-};
-
-// ─── Fetch current user profile ───────────────────────────────────────────────
-const fetchUserProfile = async () => {
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("full_name, username")
-      .eq("id", user.id)
-      .single();
-
-    if (error) throw error;
-    return { ...data, id: user.id };
-  } catch (err) {
-    console.error("Profile fetch error:", err);
-    return null;
-  }
-};
-
-// ─── Context Helpers ──────────────────────────────────────────────────────────
-
-// Tauri/Android has stricter request body limits than the browser.
-// Trim the system context to avoid Edge Function 500 errors on mobile.
-const trimContext = (context, maxChars = 3000) => {
-  if (context.length <= maxChars) return context;
-  return context.slice(0, maxChars) + "\n\n[Context trimmed for performance]";
-};
-
-const getMonthContext = () => {
-  const now = new Date();
-  const month = now.toLocaleString("default", { month: "long" });
-  const year = now.getFullYear();
-  const wetSeason = [6, 7, 8, 9, 10, 11];
-  const currentMonth = now.getMonth() + 1;
-  const season = wetSeason.includes(currentMonth)
-    ? "Tag-ulan (Habagat)"
-    : "Tag-araw (Amihan)";
-  return { month, year, season, currentMonth };
-};
-
-const buildContext = (
-  myProducts,
-  prices,
-  trendData,
-  topBuyers,
-  userName,
-  userId,
-) => {
-  const { month, year, season } = getMonthContext();
-
-  const allCrops = [];
-  Object.entries(prices || {}).forEach(([cat, items]) => {
-    Object.entries(items).forEach(([name, price]) => {
-      allCrops.push({ name, category: cat, price });
-    });
-  });
-
-  const myProductNames =
-    myProducts.map((p) => p.name).join(", ") || "wala pang nakalista";
-
-  const top15 = trendData.slice(0, 15);
-  const trendBlock =
-    top15.length > 0
-      ? `
-LIVE MARKET TREND DATA (aktwal na listings ng mga magsasaka sa AniSave ngayon):
-${top15
-  .map(
-    (t, i) =>
-      `  ${i + 1}. ${t.name} (${t.category}) — ${t.sellerCount} seller${t.sellerCount !== 1 ? "s" : ""}, ${t.totalQty} kg available, avg farm price ₱${t.avgPrice}/kg`,
-  )
-  .join("\n")}
-
-PALIWANAG:
-- "sellers" = bilang ng mga magsasaka na nag-list ng produkto sa platform
-- Mas maraming sellers = mas mataas ang supply at demand sa produkto
-- Gamitin ang data na ito bilang pangunahing batayan sa mga tanong tungkol sa trends`
-      : "\n(Walang live trend data na available ngayon.)";
-
-  // ── Buyer rank awareness ──────────────────────────────────────────────────
-  const userBuyerRank = userId
-    ? topBuyers.findIndex((b) => b.id === userId)
-    : -1; // 0 = top 1, 1 = top 2, etc.
-  const isTopBuyer = userBuyerRank === 0;
-  const isInTopBuyers = userBuyerRank >= 0;
-
-  const buyerBlock =
-    topBuyers.length > 0
-      ? `
-TOP BUYERS SA PLATFORM (base sa bilang ng approved orders):
-${topBuyers
-  .map((b, i) => {
-    const isCurrentUser = userId && b.id === userId;
-    const label = isCurrentUser
-      ? `${b.name} (ITO ANG KASALUKUYANG USER — tukuyin bilang "ikaw" sa sagot)`
-      : b.name;
-    return `  ${i + 1}. ${label} — ${b.orderCount} approved order${b.orderCount !== 1 ? "s" : ""}`;
-  })
-  .join("\n")}`
-      : "\n(Walang buyer data na available.)";
-
-  // ── User achievement status ───────────────────────────────────────────────
-  const achievementBlock = isTopBuyer
-    ? `
-USER ACHIEVEMENT:
-- Ang kasalukuyang user ay ang PINAKA-AKTIBONG BUYER (#1) sa buong platform ngayon!
-- I-acknowledge ito nang may pagpupuri at higit sa lahat, i-motivate sila na patuloy na suportahan ang mga lokal na magsasaka.
-- Maaari rin silang hikayatin na subukan ang mga bagong produkto mula sa mga trending na magsasaka.`
-    : isInTopBuyers
-      ? `
-USER ACHIEVEMENT:
-- Ang kasalukuyang user ay nasa Top ${userBuyerRank + 1} buyers ng platform!
-- Banggitin ito nang may papuri at himukin silang umabot sa #1 spot.`
-      : "";
-
-  const hasProducts = myProducts.length > 0;
-  const sellingStatus = hasProducts
-    ? `Ang kasalukuyang user ay may ${myProducts.length} produkto na nakalista sa platform: ${myProductNames}. Sila ay isang SELLER/MAGSASAKA na aktibo sa AniSave.`
-    : "Ang kasalukuyang user ay WALA pang nakalista na produkto sa platform. Himukin silang maglista ng kanilang mga produkto.";
-
-  const userInfo = userName
-    ? `Ang pangalan ng kasalukuyang user (ang taong kausap mo) ay "${userName}". Tukuyin siya bilang "ikaw" o gamitin ang kanyang first name sa mga personal na sagot — HUWAG gamitin ang buong pangalan niya sa sagot.`
-    : "Hindi pa alam ang pangalan ng kasalukuyang user.";
-
-  return `
-Ikaw ay isang AI Farming Advisor ng AniSave para sa mga magsasaka sa Pilipinas.
-
-KASALUKUYANG USER:
-${userInfo}
-${sellingStatus}
-${achievementBlock}
-
-Kasalukuyang Buwan: ${month} ${year}
-Kasalukuyang Season: ${season}
-
-OPISYAL NA PRESYO NG MGA PRODUKTO (₱/kg mula sa DA):
-${allCrops.map((c) => `  • ${c.name} (${c.category}): ₱${c.price}`).join("\n")}
-${trendBlock}
-${buyerBlock}
-
-MAHALAGANG PATAKARAN:
-- Sumagot LAGING sa wikang Tagalog.
-- HUWAG KAILANMAN gamitin ang buong pangalan ng user sa loob ng sagot — gamitin ang "ikaw", "kayo", o first name lang.
-- Gamitin PALAGI ang Live Market Trend Data kapag nagtanong tungkol sa pinakamabenta o pinaka-popular.
-- Maging MAIKLI at TUWID sa punto — walang mahabang paliwanag.
-- Gumamit ng bullet points at emojis para madaling basahin.
-- Maximum 180 salita lang ang sagot (hindi kasama ang chart data).
-- TANGGIHAN ang mga tanong na HINDI tungkol sa pagsasaka, agrikultura, pagbebenta ng produktong pang-bukid, o ekonomiya ng magsasaka. Kung ang tanong ay hindi agrikultural (hal. programming, showbiz, sports, general trivia), sumagot ng: "Paumanhin! Ako ay isang AI Farming Advisor lamang. Narito ako para sagutin ang mga tanong tungkol sa pagsasaka, presyo ng produkto, at agrikultura. Para sa ibang paksa, mangyaring gumamit ng ibang AI assistant. 🌾"
-- Kung ang user ay WALA pang nakalista na produkto, himukin silang maglista na.
-- Kung ang user ay TOP BUYER, purihin sila at i-motivate na patuloy na suportahan ang mga lokal na magsasaka.
-- Kung may top buyers, banggitin sila (pero ang current user, "ikaw" lang ang tawag) kapag may tanong tungkol sa pagbebenta.
-
-CHART INSTRUCTIONS:
-Kapag ang sagot ay may ranking o comparison (hal. pinakamabenta, pinaka-profitable, pinakamabuting itanim), DAPAT mag-include ng chart sa DULO ng sagot.
-
-Format ng chart (JSON lang, wala nang ibang text pagkatapos):
-<<<CHART>>>
-{"type":"hbar","title":"Pamagat ng Chart","labels":["Item1","Item2","Item3"],"values":[10,8,5],"unit":"sellers","color":"green"}
-<<<END_CHART>>>
-
-Pwedeng gamitin na color: "green", "blue", "amber", "purple"
-Pwedeng gamitin na unit: "sellers", "kg", "piso"
-`.trim();
-};
-
-// ─── Chart JSON parser ────────────────────────────────────────────────────────
-const parseAIResponse = (raw) => {
-  const chartMatch = raw.match(/<<<CHART>>>([\s\S]*?)<<<END_CHART>>>/);
-  const text = raw.replace(/<<<CHART>>>[\s\S]*?<<<END_CHART>>>/, "").trim();
-  let chartData = null;
-  if (chartMatch) {
-    try {
-      chartData = JSON.parse(chartMatch[1].trim());
-    } catch {
-      chartData = null;
-    }
-  }
-  return { text, chartData };
-};
-
-// ─── Quick Prompts ────────────────────────────────────────────────────────────
-const QUICK_PROMPTS = [
-  { key: "plant", icon: Sprout, label: "Pinakamabuting Itanim Ngayon" },
-  { key: "price", icon: ChartLine, label: "Presyo sa Susunod na Linggo" },
-  { key: "sell", icon: HandCoins, label: "Pinakamabentang Produkto" },
-  { key: "tips", icon: Lightbulb, label: "Mga Tips sa Pagsasaka" },
-];
-
-const getQuickPromptText = (key, { month, season }) =>
-  ({
-    plant: `Buwan ng ${month}, ${season}. Base sa live trend data at presyo, aling 5 pananim ang pinaka-magandang itanim NGAYON? Ibigay ang: pangalan, araw bago anihin, at presyo. Gumawa ng chart gamit ang quantity available bilang value. Sagot sa Tagalog, maikli lang.`,
-    price: `Base sa seasonal trends ng Pilipinas ngayong ${month} at sa live data, aling 5 produkto ang malamang na TATAAS ang presyo sa susunod na 1-2 linggo? Ibigay ang dahilan at gumawa ng chart. Sagot sa Tagalog, maikli lang.`,
-    sell: `Base sa LIVE MARKET TREND DATA, aling 5 produkto ang PINAKAMABENTA at PINAKA-IN-DEMAND sa AniSave NGAYON? Gamitin ang seller count bilang pangunahing batayan. I-rank at gumawa ng chart ng seller count. Sagot sa Tagalog, maikli lang.`,
-    tips: `Bigyan mo ako ng 5 praktikal na tips sa pagsasaka ngayong ${month} sa Pilipinas. Kasama na ang panahon, mga peste, lupa, at tamang oras ng pagbebenta. Sagot sa Tagalog, maikli lang.`,
-  })[key];
-
-// ─── Loading Messages ─────────────────────────────────────────────────────────
-const LOADING_MESSAGES = {
-  plant: [
-    "🌾 Tinitignan ang kasalukuyang season...",
-    "📊 Sinusuri ang live market data...",
-    "🗓️ Hinahanap ang pinakamabuting pananim...",
-    "✅ Halos tapos na ang pagsusuri...",
-  ],
-  price: [
-    "📡 Kinukuha ang pinakabagong datos ng presyo...",
-    "📈 Sinusuri ang market trends...",
-    "🔍 Hinahanap ang mga pagbabago sa presyo...",
-    "✅ Halos handa na ang ulat...",
-  ],
-  sell: [
-    "💹 Kinukuha ang live seller data...",
-    "🛒 Binibilang ang sellers per produkto...",
-    "🏆 Inire-rank ang pinaka-in-demand...",
-    "📊 Ginagawa ang chart...",
-  ],
-  tips: [
-    "🌤️ Tinitingnan ang kondisyon ng panahon...",
-    "🐛 Sinusuri ang mga posibleng peste...",
-    "🌱 Hinahanap ang pinakamahusay na paraan...",
-    "✅ Inihahanda ang mga rekomendasyon...",
-  ],
-  chat: [
-    "🤔 Pinag-aaralan ang iyong tanong...",
-    "📦 Kinukuha ang impormasyon...",
-    "🌿 Hinahanap ang pinakamahusay na sagot...",
-    "✅ Halos tapos na...",
-  ],
-};
-const DEFAULT_LOADING = [
-  "⚙️ Sinisimulan ang pagsusuri...",
-  "📦 Kinukuha ang impormasyon...",
-  "🤔 Pinag-aaralan ang iyong tanong...",
-  "✅ Halos tapos na...",
-];
-
-// ─── Greeting Helpers ─────────────────────────────────────────────────────────
-const getGreeting = (userName, myProducts) => {
-  const firstName = userName ? userName.split(" ")[0] : null;
-  const hour = new Date().getHours();
-  const timeGreet =
-    hour < 12
-      ? "Magandang umaga"
-      : hour < 18
-        ? "Magandang hapon"
-        : "Magandang gabi";
-
-  const greetings = firstName
-    ? [
-        `${timeGreet}, ${firstName}! 🌾 Kumusta ang inyong taniman ngayon?`,
-        `Hoy ${firstName}! 🌱 Mayroon bang bago sa bukid?`,
-        `${firstName}, ${timeGreet}! 💰 Handa ka na bang kumita ngayon?`,
-        `${timeGreet}, ${firstName}! 🌿 Anong balita sa inyong produkto?`,
-      ]
-    : [
-        `${timeGreet}, Magsasaka! 🌾 Kumusta ang taniman?`,
-        `Handa ka na bang kumita ngayon? 💰`,
-      ];
-
-  const tips =
-    myProducts.length === 0
-      ? [
-          `💡 Tip: Wala ka pang nakalista na produkto! Subukang mag-list ng iyong mga ani para makita ng mga buyer.`,
-          `🛒 Mayroon bang pananim na handa nang ibenta? I-list na ngayon sa AniSave!`,
-        ]
-      : [
-          `📊 Tingnan ang live market trends para malaman kung kailan pinakamainam na magbenta.`,
-          `💡 Ang ${myProducts[0]?.name || "iyong produkto"} ay maaaring mas magandang ibenta ngayon!`,
-        ];
-
-  const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-  const tip = tips[Math.floor(Math.random() * tips.length)];
-
-  return { greeting, tip };
-};
+import { useAIAdvisor } from "../hooks/useAIAdvisor";
+import {
+  PRODUCT_IMAGES,
+  QUICK_PROMPTS,
+  LOADING_MESSAGES,
+  DEFAULT_LOADING,
+  CHART_COLORS,
+  MEDALS,
+  getGreeting,
+} from "../utils/aiConstants";
 
 // ─── Slideshow Loader ─────────────────────────────────────────────────────────
-const SlideshowLoader = ({ promptKey }) => {
+const SlideshowLoader = memo(({ promptKey }) => {
   const messages = LOADING_MESSAGES[promptKey] || DEFAULT_LOADING;
   const [index, setIndex] = useState(0);
+
   useEffect(() => {
     const t = setInterval(
       () => setIndex((p) => (p + 1) % messages.length),
@@ -413,42 +61,11 @@ const SlideshowLoader = ({ promptKey }) => {
       </div>
     </div>
   );
-};
+});
+SlideshowLoader.displayName = "SlideshowLoader";
 
 // ─── Animated Horizontal Bar Chart ───────────────────────────────────────────
-const CHART_COLORS = {
-  green: {
-    bar: "#16a34a",
-    bg: "#f0fdf4",
-    header: "#dcfce7",
-    text: "#15803d",
-    track: "#bbf7d0",
-  },
-  blue: {
-    bar: "#2563eb",
-    bg: "#eff6ff",
-    header: "#dbeafe",
-    text: "#1d4ed8",
-    track: "#bfdbfe",
-  },
-  amber: {
-    bar: "#d97706",
-    bg: "#fffbeb",
-    header: "#fef3c7",
-    text: "#b45309",
-    track: "#fde68a",
-  },
-  purple: {
-    bar: "#7c3aed",
-    bg: "#faf5ff",
-    header: "#ede9fe",
-    text: "#6d28d9",
-    track: "#e9d5ff",
-  },
-};
-const MEDALS = ["🥇", "🥈", "🥉"];
-
-const TrendChart = ({ chartData }) => {
+const TrendChart = memo(({ chartData }) => {
   if (!chartData) return null;
   const { title, labels, values, unit, color = "green" } = chartData;
   const c = CHART_COLORS[color] || CHART_COLORS.green;
@@ -516,165 +133,163 @@ const TrendChart = ({ chartData }) => {
       </div>
     </motion.div>
   );
-};
+});
+TrendChart.displayName = "TrendChart";
 
-// ─── Enhanced Trending Ticker ─────────────────────────────────────────────────
-const TrendingSection = ({
-  trendData,
-  topBuyers,
-  myProducts,
-  userName,
-  userId,
-}) => {
-  const firstName = userName ? userName.split(" ")[0] : null;
-  const top3 = trendData.slice(0, 3);
-  const hasProducts = myProducts.length > 0;
+// ─── Trending Section ─────────────────────────────────────────────────────────
+const TrendingSection = memo(
+  ({ trendData, topBuyers, myProducts, userName, userId }) => {
+    const firstName = userName ? userName.split(" ")[0] : null;
+    const top3 = trendData.slice(0, 3);
+    const hasProducts = myProducts.length > 0;
 
-  const userBuyerRank = userId
-    ? topBuyers.findIndex((b) => b.id === userId)
-    : -1;
-  const isTopBuyer = userBuyerRank === 0;
-  const isInTopBuyers = userBuyerRank >= 0;
+    const userBuyerRank = userId
+      ? topBuyers.findIndex((b) => b.id === userId)
+      : -1;
+    const isTopBuyer = userBuyerRank === 0;
+    const isInTopBuyers = userBuyerRank >= 0;
 
-  return (
-    <div className="mx-4 mb-1 space-y-2">
-      {/* Hot products ticker — only shown when trendData is passed (not from idle, which passes []) */}
-      {top3.length > 0 && (
-        <motion.div
-          className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="w-8 h-8 rounded-xl bg-amber-200/60 flex items-center justify-center flex-shrink-0">
-            <Flame size={14} className="text-amber-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">
-              Trending sa Platform Ngayon
-            </p>
-            <p className="text-xs text-amber-800">
-              {top3.map((t, i) => (
-                <span key={t.name}>
-                  {MEDALS[i]} <strong>{t.name}</strong> ({t.sellerCount}{" "}
-                  sellers)
-                  {i < top3.length - 1 ? "  ·  " : ""}
-                </span>
-              ))}
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Achievement banner — top buyer motivation */}
-      {isTopBuyer && (
-        <motion.div
-          className="bg-yellow-50 border border-yellow-300 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-        >
-          <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
-            🏆
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
-              Ikaw ang Top Buyer ngayon!
-            </p>
-            <p className="text-xs text-yellow-800">
-              {firstName ? `${firstName}, patuloy` : "Patuloy"} kang sumusuporta
-              sa mga lokal na magsasaka — salamat! 🌾
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      {!isTopBuyer && isInTopBuyers && (
-        <motion.div
-          className="bg-yellow-50 border border-yellow-300 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-        >
-          <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
-            ⭐
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
-              Top #{userBuyerRank + 1} Buyer ka!
-            </p>
-            <p className="text-xs text-yellow-800">
-              Malapit ka na sa #1! Tuloy-tuloy lang sa pagsuporta sa ating mga
-              magsasaka. 💪
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Sell nudge if no products */}
-      {!hasProducts && (
-        <motion.div
-          className="bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
-            <ShoppingBag size={14} className="text-green-700" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-green-700 uppercase tracking-wide mb-0.5">
-              Simulan na ang Pagbebenta!
-            </p>
-            <p className="text-xs text-green-800">
-              {firstName ? `${firstName}, mag` : "Mag"}-list na ng iyong
-              produkto at kumita ngayon! 🌾{" "}
-              {top3.length > 0 && (
-                <span>
-                  Mataas ang demand sa <strong>{top3[0].name}</strong> ngayon.
-                </span>
-              )}
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Top buyers */}
-      {topBuyers.length > 0 && (
-        <motion.div
-          className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <div className="w-8 h-8 rounded-xl bg-blue-200/60 flex items-center justify-center flex-shrink-0">
-            <Star size={14} className="text-blue-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">
-              Pinaka-Active na Buyers
-            </p>
-            <p className="text-xs text-blue-800">
-              {topBuyers.map((b, i) => {
-                const isMe = userId && b.id === userId;
-                return (
-                  <span key={b.id}>
-                    {MEDALS[i] ?? `#${i + 1}`}{" "}
-                    <strong>{isMe ? "Ikaw" : b.name}</strong> ({b.orderCount}{" "}
-                    orders)
-                    {i < topBuyers.length - 1 ? "  ·  " : ""}
+    return (
+      <div className="mx-4 mb-1 space-y-2">
+        {/* Hot products ticker — only shown when trendData is passed (not from idle, which passes []) */}
+        {top3.length > 0 && (
+          <motion.div
+            className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="w-8 h-8 rounded-xl bg-amber-200/60 flex items-center justify-center flex-shrink-0">
+              <Flame size={14} className="text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">
+                Trending sa Platform Ngayon
+              </p>
+              <p className="text-xs text-amber-800">
+                {top3.map((t, i) => (
+                  <span key={t.name}>
+                    {MEDALS[i]} <strong>{t.name}</strong> ({t.sellerCount}{" "}
+                    sellers)
+                    {i < top3.length - 1 ? "  ·  " : ""}
                   </span>
-                );
-              })}
-            </p>
-          </div>
-        </motion.div>
-      )}
-    </div>
-  );
-};
+                ))}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Achievement banner — top buyer motivation */}
+        {isTopBuyer && (
+          <motion.div
+            className="bg-yellow-50 border border-yellow-300 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+          >
+            <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
+              🏆
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
+                Ikaw ang Top Buyer ngayon!
+              </p>
+              <p className="text-xs text-yellow-800">
+                {firstName ? `${firstName}, patuloy` : "Patuloy"} kang sumusuporta
+                sa mga lokal na magsasaka — salamat! 🌾
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {!isTopBuyer && isInTopBuyers && (
+          <motion.div
+            className="bg-yellow-50 border border-yellow-300 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+          >
+            <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
+              ⭐
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
+                Top #{userBuyerRank + 1} Buyer ka!
+              </p>
+              <p className="text-xs text-yellow-800">
+                Malapit ka na sa #1! Tuloy-tuloy lang sa pagsuporta sa ating mga
+                magsasaka. 💪
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Sell nudge if no products */}
+        {!hasProducts && (
+          <motion.div
+            className="bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
+              <ShoppingBag size={14} className="text-green-700" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-green-700 uppercase tracking-wide mb-0.5">
+                Simulan na ang Pagbebenta!
+              </p>
+              <p className="text-xs text-green-800">
+                {firstName ? `${firstName}, mag` : "Mag"}-list na ng iyong
+                produkto at kumita ngayon! 🌾{" "}
+                {top3.length > 0 && (
+                  <span>
+                    Mataas ang demand sa <strong>{top3[0].name}</strong> ngayon.
+                  </span>
+                )}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Top buyers */}
+        {topBuyers.length > 0 && (
+          <motion.div
+            className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <div className="w-8 h-8 rounded-xl bg-blue-200/60 flex items-center justify-center flex-shrink-0">
+              <Star size={14} className="text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">
+                Pinaka-Active na Buyers
+              </p>
+              <p className="text-xs text-blue-800">
+                {topBuyers.map((b, i) => {
+                  const isMe = userId && b.id === userId;
+                  return (
+                    <span key={b.id}>
+                      {MEDALS[i] ?? `#${i + 1}`}{" "}
+                      <strong>{isMe ? "Ikaw" : b.name}</strong> ({b.orderCount}{" "}
+                      orders)
+                      {i < topBuyers.length - 1 ? "  ·  " : ""}
+                    </span>
+                  );
+                })}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    );
+  },
+);
+TrendingSection.displayName = "TrendingSection";
 
 // ─── Greeting Banner ──────────────────────────────────────────────────────────
-const GreetingBanner = ({ userName, myProducts }) => {
+const GreetingBanner = memo(({ userName, myProducts }) => {
   const [greetData] = useState(() => getGreeting(userName, myProducts));
 
   return (
@@ -699,10 +314,11 @@ const GreetingBanner = ({ userName, myProducts }) => {
       </div>
     </motion.div>
   );
-};
+});
+GreetingBanner.displayName = "GreetingBanner";
 
 // ─── Markdown Renderer ────────────────────────────────────────────────────────
-const MarkdownText = ({ text }) => {
+const MarkdownText = memo(({ text }) => {
   const renderInline = (str) =>
     str.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, j) => {
       if (part.startsWith("**") && part.endsWith("**"))
@@ -738,10 +354,11 @@ const MarkdownText = ({ text }) => {
       })}
     </div>
   );
-};
+});
+MarkdownText.displayName = "MarkdownText";
 
 // ─── Chat Bubble ──────────────────────────────────────────────────────────────
-const ChatBubble = ({ msg }) => {
+const ChatBubble = memo(({ msg }) => {
   const isUser = msg.role === "user";
   return (
     <motion.div
@@ -778,180 +395,41 @@ const ChatBubble = ({ msg }) => {
       )}
     </motion.div>
   );
-};
+});
+ChatBubble.displayName = "ChatBubble";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AiAdvisor = ({ myProducts = [] }) => {
-  const [response, setResponse] = useState(null);
-  const [chartData, setChartData] = useState(null);
-  const [activeKey, setActiveKey] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [trendData, setTrendData] = useState([]);
-  const [trendReady, setTrendReady] = useState(false);
-  const [topBuyers, setTopBuyers] = useState([]);
-  const [userName, setUserName] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [chatHistory, setChatHistory] = useState([]); // { role, content, chartData? }
-  const [chatInput, setChatInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
-  const [showChat, setShowChat] = useState(false);
-
-  const advisorRef = useRef(null);
-  const chatEndRef = useRef(null);
-  const inputRef = useRef(null);
-  const { month, season } = getMonthContext();
   const { prices } = useMarketPrices();
 
-  // Load data on mount
-  useEffect(() => {
-    fetchTrendData().then((data) => {
-      setTrendData(data);
-      setTrendReady(true);
-    });
-    fetchTopBuyers().then(setTopBuyers);
-    fetchUserProfile().then((profile) => {
-      if (profile) {
-        setUserName(profile.full_name || profile.username || null);
-        setUserId(profile.id || null);
-      }
-    });
-  }, []);
-
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    if (showChat) {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chatHistory, chatLoading, showChat]);
-
-  // ── Quick prompt call ──────────────────────────────────────────────────────
-  const callAI = async (key) => {
-    if (loading) return;
-    setLoading(true);
-    setError(null);
-    setResponse(null);
-    setChartData(null);
-    setActiveKey(key);
-    setShowChat(false);
-
-    setTimeout(() => {
-      advisorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 50);
-
-    try {
-      const systemContext = trimContext(
-        buildContext(myProducts, prices, trendData, topBuyers, userName, userId),
-      );
-      const userText = getQuickPromptText(key, { month, season });
-
-      const { data, error: funcError } = await supabase.functions.invoke(
-        "chat-advisor",
-        {
-          body: { systemContext, userText },
-        },
-      );
-
-      if (funcError) throw funcError;
-
-      const raw =
-        data?.choices?.[0]?.message?.content?.trim() ||
-        "Pasensya na, hindi makasagot ngayon. Subukang muli.";
-
-      const { text, chartData: parsed } = parseAIResponse(raw);
-      setResponse(text);
-      setChartData(parsed);
-    } catch (err) {
-      console.error("AI error:", err);
-      setError(`May error: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ── Free chat send ─────────────────────────────────────────────────────────
-  const handleChatSend = async () => {
-    const text = chatInput.trim();
-    if (!text || chatLoading) return;
-
-    // Keep last 4 exchanges (8 messages) + new one = max 5 pairs
-    const MAX_HISTORY = 8;
-    const trimmedHistory = chatHistory.slice(-MAX_HISTORY);
-
-    const newHistory = [...trimmedHistory, { role: "user", content: text }];
-
-    setChatHistory(newHistory);
-    setChatInput("");
-    setChatLoading(true);
-    setShowChat(true);
-    setResponse(null);
-    setChartData(null);
-    setActiveKey(null);
-    setError(null);
-
-    try {
-      const systemContext = trimContext(
-        buildContext(myProducts, prices, trendData, topBuyers, userName, userId),
-      );
-
-      // Build messages array for the API (only role + content)
-      const messages = newHistory.map(({ role, content }) => ({
-        role,
-        content,
-      }));
-
-      const { data, error: funcError } = await supabase.functions.invoke(
-        "chat-advisor",
-        {
-          body: { systemContext, messages },
-        },
-      );
-
-      if (funcError) throw funcError;
-
-      const raw =
-        data?.choices?.[0]?.message?.content?.trim() ||
-        "Pasensya na, hindi makasagot ngayon. Subukang muli.";
-
-      const { text: aiText, chartData: parsed } = parseAIResponse(raw);
-
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "assistant", content: aiText, chartData: parsed || null },
-      ]);
-    } catch (err) {
-      console.error("Chat error:", err);
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "assistant", content: `⚠️ May error: ${err.message}` },
-      ]);
-    } finally {
-      setChatLoading(false);
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleChatSend();
-    }
-  };
-
-  const handleRefresh = () => {
-    if (loading || chatLoading) return;
-    setResponse(null);
-    setChartData(null);
-    setActiveKey(null);
-    setError(null);
-    setChatHistory([]);
-    setShowChat(false);
-    setChatInput("");
-  };
+  const {
+    response,
+    chartData,
+    activeKey,
+    loading,
+    error,
+    isExpanded,
+    trendData,
+    trendReady,
+    topBuyers,
+    userName,
+    userId,
+    chatHistory,
+    chatInput,
+    chatLoading,
+    showChat,
+    month,
+    season,
+    callAI,
+    handleChatSend,
+    handleKeyDown,
+    handleRefresh,
+    setChatInput,
+    setIsExpanded,
+    advisorRef,
+    chatEndRef,
+    inputRef,
+  } = useAIAdvisor({ myProducts, prices });
 
   const activePrompt = QUICK_PROMPTS.find((p) => p.key === activeKey);
 
@@ -1008,7 +486,6 @@ const AiAdvisor = ({ myProducts = [] }) => {
         {/* Market Trends pill strip — inside the green header */}
         {trendReady && trendData.length > 0 && (
           <div className="mb-0">
-            {/* White card with label + horizontal scroll */}
             <div className="bg-white rounded-2xl px-3 pt-2.5 pb-3">
               <div className="flex items-center gap-1.5 mb-2">
                 <TrendingUp size={11} className="text-red-500" />
@@ -1021,66 +498,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {trendData.slice(0, 8).map((t, i) => {
-                  const productImages = {
-                    Eggplant: "/images/eggplant.webp",
-                    Tomato: "/images/tomato.webp",
-                    Cabbage: "/images/cabbage.webp",
-                    Carrot: "/images/carrots.webp",
-                    Potato: "/images/potato.webp",
-                    Squash: "/images/squash.webp",
-                    "String Beans": "/images/54EDF324AD7242CA.png!c750x0.webp",
-                    Ampalaya: "/images/107992536.webp",
-                    Okra: "/images/okra.webp",
-                    Pechay: "/images/pechay.webp",
-                    "Bell Pepper": "/images/bellpepper.webp",
-                    Broccoli: "/images/broccoli.webp",
-                    "Lettuce (Green Ice)": "/images/lettuce_green.webp",
-                    "Lettuce (Iceberg)": "/images/lettuce_iceberg.webp",
-                    "Lettuce (Romaine)": "/images/lettuce_romaine.webp",
-                    Sitao: "/images/sitao.webp",
-                    Mango: "/images/mango.webp",
-                    "Banana (Lakatan)": "/images/lakatan.webp",
-                    "Banana (Latundan)": "/images/latundan.webp",
-                    "Banana (Saba)": "/images/saba.webp",
-                    Calamansi: "/images/calamansi.webp",
-                    Papaya: "/images/papaya.webp",
-                    Pineapple: "/images/pineapple.webp",
-                    Watermelon: "/images/watermelon.webp",
-                    Lanzones: "/images/lanzones.webp",
-                    Rambutan: "/images/rambutan.webp",
-                    Durian: "/images/durian.webp",
-                    Guyabano: "/images/guyabano.webp",
-                    Avocado: "/images/avocado.webp",
-                    Melon: "/images/melon.webp",
-                    Pomelo: "/images/pomelo.webp",
-                    "Rice (Local Fancy White)": "/images/rice_fancywhite.webp",
-                    "Rice (Local Premium 5% broken)":
-                      "/images/rice_premium.webp",
-                    "Rice (Local Well Milled)": "/images/will_milled_rice.webp",
-                    "Rice (Local Regular Milled)":
-                      "/images/rice_wellmilled.webp",
-                    "Corn (White Cob, Glutinous)":
-                      "/images/white_cob_corn.webp",
-                    "Corn (Yellow Cob, Sweet)":
-                      "/images/yellowcob_cornsweet.webp",
-                    "Corn Grits (White, Food Grade)":
-                      "/images/whitecorn_grits_foodgrade.webp",
-                    "Corn Grits (Yellow, Food Grade)":
-                      "/images/yellowcorn_grits_foodgrade.webp",
-                    "Corn Cracked (Yellow, Feed Grade)":
-                      "/images/yellowcob_corn_feedgrade.webp",
-                    "Corn Grits (Feed Grade)": "/images/corngrits.webp",
-                    Sorghum: "/images/sorghum.webp",
-                    Millet: "/images/millet.webp",
-                    Ginger: "/images/ginger.webp",
-                    Garlic: "/images/garlic.webp",
-                    "Red Onion": "/images/onion.webp",
-                    Chili: "/images/chili.webp",
-                    Lemongrass: "/images/lemongrass.webp",
-                    Basil: "/images/basil.webp",
-                    Turmeric: "/images/turmeric.webp",
-                  };
-                  const imgSrc = productImages[t.name];
+                  const imgSrc = PRODUCT_IMAGES[t.name];
                   return (
                     <motion.div
                       key={t.name}
@@ -1190,7 +608,6 @@ const AiAdvisor = ({ myProducts = [] }) => {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    {/* Messages */}
                     <div className="px-3 py-3 space-y-3 max-h-72 overflow-y-auto">
                       {chatHistory.map((msg, i) => (
                         <ChatBubble key={i} msg={msg} />
@@ -1216,7 +633,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       myProducts={myProducts}
                     />
 
-                    {/* Achievement / nudge banners only (trends are in header) */}
+                    {/* Achievement / nudge banners (trends passed as [] so hot ticker hidden here) */}
                     {trendReady && (
                       <TrendingSection
                         trendData={[]}
@@ -1255,18 +672,18 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.06 }}
                       className={`
-                    relative overflow-hidden
-                    bg-white border rounded-2xl p-4
-                    flex flex-col items-center gap-2 shadow-sm
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    transition-all duration-200
-                    hover:shadow-md hover:border-green-300 hover:-translate-y-0.5
-                    ${
-                      activeKey === qp.key && !loading
-                        ? "border-green-600 ring-2 ring-green-200 shadow-md"
-                        : "border-gray-200"
-                    }
-                  `}
+                        relative overflow-hidden
+                        bg-white border rounded-2xl p-4
+                        flex flex-col items-center gap-2 shadow-sm
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        transition-all duration-200
+                        hover:shadow-md hover:border-green-300 hover:-translate-y-0.5
+                        ${
+                          activeKey === qp.key && !loading
+                            ? "border-green-600 ring-2 ring-green-200 shadow-md"
+                            : "border-gray-200"
+                        }
+                      `}
                       whileTap={{ scale: loading || chatLoading ? 1 : 0.97 }}
                     >
                       {activeKey === qp.key && !loading && (

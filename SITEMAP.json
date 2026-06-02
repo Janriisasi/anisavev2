@@ -1,0 +1,361 @@
+{
+  "application": {
+    "name": "AniSave 2.0",
+    "description": "Multi-role e-commerce platform connecting buyers with farmers",
+    "versions": {
+      "web": "React + Vite + Vercel",
+      "mobile": "Tauri"
+    }
+  },
+  "routes": {
+    "public": [
+      {
+        "path": "/",
+        "name": "Root",
+        "description": "Redirects to appropriate page based on auth state",
+        "requiresAuth": false
+      },
+      {
+        "path": "/landing",
+        "name": "Landing Page",
+        "description": "Public entry point with hero section and features",
+        "requiresAuth": false,
+        "component": "landingPage"
+      },
+      {
+        "path": "/login",
+        "name": "Login",
+        "description": "User authentication page",
+        "requiresAuth": false,
+        "component": "loginPage"
+      },
+      {
+        "path": "/signup",
+        "name": "Sign Up",
+        "description": "User registration page",
+        "requiresAuth": false,
+        "component": "signupPage"
+      },
+      {
+        "path": "/privacy",
+        "name": "Privacy Policy",
+        "description": "Privacy policy document",
+        "requiresAuth": false,
+        "component": "privacyPolicy"
+      },
+      {
+        "path": "/terms",
+        "name": "Terms of Service",
+        "description": "Terms and conditions",
+        "requiresAuth": false,
+        "component": "terms"
+      }
+    ],
+    "protected": [
+      {
+        "path": "/homepage",
+        "name": "Home/Dashboard",
+        "description": "Main authenticated dashboard - role-specific content",
+        "requiresAuth": true,
+        "component": "homepage",
+        "roles": ["buyer", "farmer", "admin"]
+      },
+      {
+        "path": "/profile",
+        "name": "User Profile",
+        "description": "User profile and account settings",
+        "requiresAuth": true,
+        "component": "profile",
+        "roles": ["buyer", "farmer", "admin"]
+      },
+      {
+        "path": "/admin",
+        "name": "Admin Dashboard",
+        "description": "System administration and monitoring",
+        "requiresAuth": true,
+        "component": "adminDashboard",
+        "roles": ["admin"]
+      },
+      {
+        "path": "/categories",
+        "name": "Product Categories",
+        "description": "Browse all product categories",
+        "requiresAuth": true,
+        "component": "categoriesPage",
+        "roles": ["buyer", "farmer"]
+      },
+      {
+        "path": "/categories/:name",
+        "name": "Category Details",
+        "description": "Products within a specific category",
+        "requiresAuth": true,
+        "component": "categoriesPage",
+        "roles": ["buyer", "farmer"],
+        "params": ["name"]
+      },
+      {
+        "path": "/product/:productName/sellers",
+        "name": "Product Sellers",
+        "description": "List of sellers offering a specific product",
+        "requiresAuth": true,
+        "component": "productSellersPage",
+        "roles": ["buyer"],
+        "params": ["productName"]
+      },
+      {
+        "path": "/farmer/:id",
+        "name": "Farmer Profile",
+        "description": "Farmer/seller profile with products and ratings",
+        "requiresAuth": true,
+        "component": "farmersProfile",
+        "roles": ["buyer", "admin"],
+        "params": ["id"]
+      },
+      {
+        "path": "/cart",
+        "name": "Shopping Cart",
+        "description": "View and manage shopping cart",
+        "requiresAuth": true,
+        "component": "cartPage",
+        "roles": ["buyer"]
+      },
+      {
+        "path": "/order-status",
+        "name": "Order Status View",
+        "description": "Track active orders and delivery status",
+        "requiresAuth": true,
+        "component": null,
+        "roles": ["buyer"],
+        "note": "Modal or page component for order tracking"
+      },
+      {
+        "path": "/saved-products",
+        "name": "Saved Products",
+        "description": "Wishlist - bookmarked favorite products",
+        "requiresAuth": true,
+        "component": null,
+        "roles": ["buyer"],
+        "note": "Feature for saving products for later purchase"
+      },
+      {
+        "path": "/contacts",
+        "name": "Contact/Support",
+        "description": "Customer support and contact information",
+        "requiresAuth": true,
+        "component": "contactPage",
+        "roles": ["buyer", "farmer"]
+      }
+    ]
+  },
+  "components": {
+    "pages": [
+      "landingPage",
+      "loginPage",
+      "signupPage",
+      "homepage",
+      "profile",
+      "adminDashboard",
+      "categoriesPage",
+      "productSellersPage",
+      "farmersProfile",
+      "cartPage",
+      "contactPage",
+      "privacyPolicy",
+      "terms"
+    ],
+    "features": {
+      "buyer": [
+        "orderStatusView",
+        "savedProducts",
+        "checkoutFlow",
+        "deliveryDetails",
+        "confirmation"
+      ],
+      "farmer": [
+        "orderActionView",
+        "orderApprovalReject",
+        "salesAnalytics",
+        "requestCenter",
+        "inventoryManager"
+      ]
+    },
+    "modals": [
+      "aboutModal",
+      "addToCartModal",
+      "announcementModal",
+      "deleteConfirmation",
+      "postTransactionRatingModal",
+      "productformModal",
+      "transactionConfirmModal",
+      "rateBuyer",
+      "rateFarmer",
+      "reviewFeedbackModal"
+    ],
+    "shared": [
+      "navbar",
+      "searchBar",
+      "cartButton",
+      "notificationButton",
+      "chatButton",
+      "loader",
+      "aiAdvisor",
+      "tutorialOverlay"
+    ]
+  },
+  "userRoles": {
+    "unauthenticated": {
+      "description": "Public users not logged in",
+      "accessibleRoutes": [
+        "/landing",
+        "/login",
+        "/signup",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    "buyer": {
+      "description": "Customer purchasing animal products",
+      "accessibleRoutes": [
+        "/homepage",
+        "/profile",
+        "/categories",
+        "/categories/:name",
+        "/product/:productName/sellers",
+        "/farmer/:id",
+        "/cart",
+        "/order-status",
+        "/saved-products",
+        "/contacts"
+      ],
+      "features": [
+        "Browse products",
+        "Filter by category",
+        "View seller information",
+        "Add to cart",
+        "Checkout",
+        "Track order status",
+        "Save products/wishlist",
+        "Rate farmers",
+        "Leave reviews and feedback",
+        "Message farmers",
+        "View notifications"
+      ]
+    },
+    "farmer": {
+      "description": "Agricultural producer/seller",
+      "accessibleRoutes": ["/homepage", "/profile", "/categories", "/contacts"],
+      "dashboardFeatures": [
+        "View dashboard",
+        "Manage inventory",
+        "Add/edit products",
+        "View sales analytics",
+        "View order requests",
+        "Approve/reject orders",
+        "Rate buyers",
+        "Leave reviews and feedback",
+        "Message buyers",
+        "View notifications"
+      ]
+    },
+    "admin": {
+      "description": "System administrator with global tracking",
+      "accessibleRoutes": [
+        "/admin",
+        "/homepage",
+        "/profile",
+        "/categories",
+        "/farmer/:id",
+        "/contacts"
+      ],
+      "capabilities": [
+        "System monitoring",
+        "Price management",
+        "User management",
+        "Global tracking - activity monitoring",
+        "Global tracking - transaction monitoring",
+        "Global tracking - real-time statistics",
+        "Analytics dashboard",
+        "System settings",
+        "Platform performance metrics"
+      ]
+    }
+  },
+  "globalFeatures": {
+    "navigation": [
+      "navbar",
+      "search",
+      "cart access",
+      "notification center",
+      "messaging"
+    ],
+    "realtime": [
+      "user presence",
+      "notifications",
+      "chat messaging",
+      "order updates"
+    ],
+    "overlays": [
+      "tutorial overlay",
+      "about modal",
+      "announcement modal",
+      "confirmation dialogs"
+    ]
+  },
+  "contexts": {
+    "authContext": "User authentication and authorization",
+    "cartContext": "Shopping cart state management",
+    "notificationContext": "System notifications",
+    "marketPricesContext": "Product pricing information",
+    "tutorialContext": "Tutorial and onboarding state",
+    "supabaseContext": "Database and backend connectivity"
+  },
+  "deployment": {
+    "web": {
+      "platform": "Vercel",
+      "framework": "React + Vite",
+      "configuration": "vercel.json"
+    },
+    "mobile": {
+      "platform": "Tauri",
+      "targets": ["iOS", "Android"],
+      "buildConfig": "src-tauri/"
+    },
+    "backend": {
+      "platform": "Supabase",
+      "features": ["Database", "Authentication", "Serverless Functions"],
+      "functions": ["chat-advisor"]
+    }
+  },
+  "errorHandling": {
+    "404": {
+      "path": "*",
+      "description": "Page not found error page"
+    }
+  },
+  "implementationStatus": {
+    "completed": [
+      "Authentication Hub",
+      "Product Directory",
+      "Shopping Cart",
+      "Messaging Center",
+      "Farmer Dashboard",
+      "Inventory Manager",
+      "Admin Dashboard",
+      "Rating System"
+    ],
+    "inProgress": ["Global Tracking enhancements", "Order Status View"],
+    "notYetImplemented": [
+      "Saved Products/Wishlist",
+      "Reviews & Feedback (separate from ratings)",
+      "Order Action View (Approve/Reject)",
+      "Delivery Details tracking"
+    ],
+    "todo": [
+      "Implement saved products feature",
+      "Create reviews and feedback system",
+      "Build order approval interface for farmers",
+      "Add order tracking dashboard",
+      "Enhance global tracking analytics"
+    ]
+  }
+}

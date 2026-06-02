@@ -14,67 +14,100 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({}));
     const { systemContext, userText, messages } = body;
-    const hfToken = Deno.env.get('HF_TOKEN');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
-    if (!hfToken) {
-      throw new Error('HF_TOKEN is not set in environment variables')
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY is not set in environment variables');
     }
 
-    // Build the messages array for the HuggingFace API.
-    // Supports two modes:
-    //   1. Legacy quick-prompt mode: { systemContext, userText }
-    //      → single user message
-    //   2. Multi-turn chat mode: { systemContext, messages }
-    //      → full conversation history [{ role, content }, ...]
-    let chatMessages: { role: string; content: string }[] = [];
+    if (!systemContext || typeof systemContext !== "string") {
+      throw new Error("Invalid systemContext");
+    }
+
+    // Support two modes:
+    // 1. Legacy quick-prompt mode: { systemContext, userText }
+    // 2. Multi-turn chat mode: { systemContext, messages }
+    let rawMessages: { role: string; content: string }[] = [];
 
     if (messages && Array.isArray(messages) && messages.length > 0) {
-      // Multi-turn chat — pass history as-is (already role/content pairs)
-      chatMessages = messages;
+      rawMessages = messages;
     } else if (userText) {
-      // Legacy single-question mode
-      chatMessages = [{ role: 'user', content: userText }];
+      rawMessages = [{ role: 'user', content: userText }];
     } else {
-      throw new Error('Either "userText" or "messages" must be provided in the request body.')
+      throw new Error('Either "userText" or "messages" must be provided in the request body.');
     }
 
+    // Convert to Gemini format
+    const contents = rawMessages.map((msg) => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+
+    const geminiPayload = {
+      systemInstruction: {
+        parts: [{ text: systemContext || "" }]
+      },
+      contents,
+      generationConfig: {
+        temperature: 0.5,
+        maxOutputTokens: 400,
+        topP: 0.9,
+        topK: 40,
+      }
+    };
+
+    console.time("gemini");
     const response = await fetch(
-      "https://router.huggingface.co/v1/chat/completions",
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${hfToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: "google/gemma-4-31B-it:together",
-          messages: [
-            { role: "system", content: systemContext },
-            ...chatMessages,
-          ],
-          max_tokens: 1000,
-          temperature: 0.7,
-          stream: false,
-        }),
+        body: JSON.stringify(geminiPayload),
       }
-    )
-
+    );
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HuggingFace API error ${response.status}: ${errorText}`)
+      throw new Error(`Gemini API error ${response.status}: ${errorText}`);
     }
 
-    const data = await response.json()
+    const data = await response.json();
+    console.timeEnd("gemini");
 
-    return new Response(JSON.stringify(data), {
+    // Validate Gemini response structure
+    if (!data.candidates || data.candidates.length === 0) {
+      throw new Error('Gemini API returned an empty response candidates array.');
+    }
+
+    const generatedText = data.candidates[0]?.content?.parts
+      ?.map((part: any) => part.text || "")
+      .join("");
+
+    if (typeof generatedText !== 'string' || !generatedText) {
+      throw new Error('Failed to extract text from Gemini response.');
+    }
+
+    // Convert back to format expected by frontend (OpenAI-style)
+    const formattedResponse = {
+      choices: [
+        {
+          message: {
+            content: generatedText
+          }
+        }
+      ]
+    };
+
+    return new Response(JSON.stringify(formattedResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-    })
+    });
   } catch (error) {
-    console.error(error)
+    console.error(error);
     return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
-    })
+    });
   }
-})
+});
