@@ -66,6 +66,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [zeroStockWarning, setZeroStockWarning] = useState(null);
   const location = useLocation();
   const [activeSection, setActiveSection] = useState(
     location.state?.activeSection || "products",
@@ -361,6 +362,14 @@ export default function Profile() {
   };
 
   const toggleProductStatus = async (productId, currentStatus) => {
+    const product = products.find((p) => p.id === productId);
+
+    // Check if trying to set as Available with 0kg stock
+    if (currentStatus !== "Available" && product?.quantity_kg === 0) {
+      setZeroStockWarning(product);
+      return;
+    }
+
     try {
       const newStatus =
         currentStatus === "Available" ? "Unavailable" : "Available";
@@ -857,6 +866,42 @@ export default function Profile() {
         isDeleting={isDeleting}
         type="product"
       />
+
+      {/* Zero Stock Warning Modal */}
+      {zeroStockWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-yellow-100 rounded-full">
+              <Package className="w-6 h-6 text-yellow-600" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-800 text-center mb-2">
+              No Stock Available
+            </h3>
+            <p className="text-gray-600 text-center mb-6">
+              You cannot mark <strong>{zeroStockWarning.name}</strong> as
+              available because there is no stock (0 kg). Please edit the
+              product and add stock first.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setZeroStockWarning(null)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setEditingProduct(zeroStockWarning);
+                  setZeroStockWarning(null);
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+              >
+                Edit Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

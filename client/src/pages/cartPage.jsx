@@ -106,6 +106,7 @@ export default function CartPage() {
     loading: cartLoading,
     removeFromCart,
     fetchCart,
+    ensureCartLoaded,
   } = useCart();
   const navigate = useNavigate();
 
@@ -119,6 +120,11 @@ export default function CartPage() {
   const [removingId, setRemovingId] = useState(null);
   const [ratingModal, setRatingModal] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+
+  // Load cart data when page mounts
+  useEffect(() => {
+    ensureCartLoaded?.();
+  }, [ensureCartLoaded]);
 
   const handleOrderReceived = async (order) => {
     setActionLoading(order.id);

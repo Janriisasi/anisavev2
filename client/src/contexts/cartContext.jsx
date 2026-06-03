@@ -1,6 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import supabase from '../lib/supabase';
-import { useAuth } from './authContext';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import supabase from "../lib/supabase";
+import { useAuth } from "./authContext";
 
 const CartContext = createContext(null);
 
@@ -9,66 +15,84 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const fetchCart = useCallback(async () => {
-    if (!user) { setCartItems([]); setCartCount(0); return; }
+    if (!user) {
+      setCartItems([]);
+      setCartCount(0);
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('cart_items')
-        .select(`
+        .from("cart_items")
+        .select(
+          `
           *,
           products(id, name, category, image_url, price, quantity_kg, status, user_id),
           seller:profiles!cart_items_seller_id_fkey(id, full_name, username, avatar_url, address, contact_number)
-        `)
-        .eq('buyer_id', user.id)
-        .order('created_at', { ascending: false });
+        `,
+        )
+        .eq("buyer_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setCartItems(data || []);
       setCartCount((data || []).length);
     } catch (err) {
-      console.error('Cart fetch error:', err);
+      console.error("Cart fetch error:", err);
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+  // Lazy load cart on first access, not on app startup
+  const ensureCartLoaded = useCallback(async () => {
+    if (!initialized && user) {
+      setInitialized(true);
+      await fetchCart();
+    }
+  }, [initialized, user, fetchCart]);
 
   // Realtime subscription
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel('cart-realtime')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'cart_items',
-        filter: `buyer_id=eq.${user.id}`
-      }, () => fetchCart())
+      .channel("cart-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "cart_items",
+          filter: `buyer_id=eq.${user.id}`,
+        },
+        () => fetchCart(),
+      )
       .subscribe();
     return () => channel.unsubscribe();
   }, [user, fetchCart]);
 
   const addToCart = async ({ product, seller, quantityKg }) => {
-    if (!user) return { error: 'Not logged in' };
+    if (!user) return { error: "Not logged in" };
     try {
       const snapshot = {
         name: product.name,
         image_url: product.image_url,
         category: product.category,
       };
-      const { error } = await supabase.from('cart_items').upsert({
-        buyer_id: user.id,
-        product_id: product.id,
-        seller_id: seller.id,
-        quantity_kg: quantityKg,
-        price_at_add: product.price,
-        product_snapshot: snapshot,
-      }, { onConflict: 'buyer_id,product_id' });
+      const { error } = await supabase.from("cart_items").upsert(
+        {
+          buyer_id: user.id,
+          product_id: product.id,
+          seller_id: seller.id,
+          quantity_kg: quantityKg,
+          price_at_add: product.price,
+          product_snapshot: snapshot,
+        },
+        { onConflict: "buyer_id,product_id" },
+      );
 
       if (error) throw error;
       await fetchCart();
@@ -81,10 +105,10 @@ export function CartProvider({ children }) {
   const removeFromCart = async (cartItemId) => {
     try {
       const { error } = await supabase
-        .from('cart_items')
+        .from("cart_items")
         .delete()
-        .eq('id', cartItemId)
-        .eq('buyer_id', user.id);
+        .eq("id", cartItemId)
+        .eq("buyer_id", user.id);
       if (error) throw error;
       await fetchCart();
       return { error: null };
@@ -96,10 +120,10 @@ export function CartProvider({ children }) {
   const updateQuantity = async (cartItemId, newQty) => {
     try {
       const { error } = await supabase
-        .from('cart_items')
+        .from("cart_items")
         .update({ quantity_kg: newQty })
-        .eq('id', cartItemId)
-        .eq('buyer_id', user.id);
+        .eq("id", cartItemId)
+        .eq("buyer_id", user.id);
       if (error) throw error;
       await fetchCart();
       return { error: null };
@@ -108,19 +132,23 @@ export function CartProvider({ children }) {
     }
   };
 
-  const isInCart = (productId) => cartItems.some(item => item.product_id === productId);
+  const isInCart = (productId) =>
+    cartItems.some((item) => item.product_id === productId);
 
   return (
-    <CartContext.Provider value={{
-      cartItems,
-      cartCount,
-      loading,
-      fetchCart,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      isInCart,
-    }}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        cartCount,
+        loading,
+        fetchCart,
+        ensureCartLoaded,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        isInCart,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
@@ -128,6 +156,6 @@ export function CartProvider({ children }) {
 
 export function useCart() {
   const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within CartProvider');
+  if (!ctx) throw new Error("useCart must be used within CartProvider");
   return ctx;
 }

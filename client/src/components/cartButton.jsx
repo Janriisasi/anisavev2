@@ -1,24 +1,37 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useCart } from '../contexts/cartContext';
-import { useAuth } from '../contexts/authContext';
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../contexts/cartContext";
+import { useAuth } from "../contexts/authContext";
 
-export default function CartButton({ mobileMenu = false, mobileTab = false, isActive = false, showIndicator = false, indicatorLayoutId = 'tab-indicator' }) {
+export default function CartButton({
+  mobileMenu = false,
+  mobileTab = false,
+  isActive = false,
+  showIndicator = false,
+  indicatorLayoutId = "tab-indicator",
+}) {
   const { user } = useAuth();
-  const { cartCount } = useCart();
+  const { cartCount, ensureCartLoaded } = useCart();
   const navigate = useNavigate();
+
+  const handleNavigate = async () => {
+    await ensureCartLoaded?.();
+    navigate("/cart");
+  };
 
   if (!user) return null;
 
   if (mobileTab) {
     return (
       <button
-        onClick={() => navigate('/cart')}
+        onClick={handleNavigate}
         data-tutorial="mobile-tab-cart"
-        className={`relative flex flex-col items-center justify-center py-2 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${isActive ? 'text-white' : 'text-green-100/70 hover:text-white'}`}
+        className={`relative flex flex-col items-center justify-center py-2 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${isActive ? "text-white" : "text-green-100/70 hover:text-white"}`}
       >
-        <div className={`relative ${isActive ? 'scale-110' : ''} transition-transform`}>
+        <div
+          className={`relative ${isActive ? "scale-110" : ""} transition-transform`}
+        >
           <ShoppingCart className="w-6 h-6" />
           <AnimatePresence>
             {cartCount > 0 && (
@@ -28,7 +41,7 @@ export default function CartButton({ mobileMenu = false, mobileTab = false, isAc
                 exit={{ scale: 0 }}
                 className="absolute -top-1.5 -right-2 bg-yellow-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1 shadow-sm"
               >
-                {cartCount > 99 ? '99+' : cartCount}
+                {cartCount > 99 ? "99+" : cartCount}
               </motion.div>
             )}
           </AnimatePresence>
@@ -44,7 +57,7 @@ export default function CartButton({ mobileMenu = false, mobileTab = false, isAc
   if (mobileMenu) {
     return (
       <motion.button
-        onClick={() => navigate('/cart')}
+        onClick={handleNavigate}
         whileTap={{ scale: 0.98 }}
         className="w-full flex items-center justify-between text-white hover:text-gray-300 py-3 font-medium text-lg transition-all duration-200 hover:translate-x-1 hover:drop-shadow-lg"
       >
@@ -54,7 +67,7 @@ export default function CartButton({ mobileMenu = false, mobileTab = false, isAc
         </div>
         {cartCount > 0 && (
           <span className="bg-yellow-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">
-            {cartCount > 99 ? '99+' : cartCount}
+            {cartCount > 99 ? "99+" : cartCount}
           </span>
         )}
       </motion.button>
@@ -63,7 +76,7 @@ export default function CartButton({ mobileMenu = false, mobileTab = false, isAc
 
   return (
     <motion.button
-      onClick={() => navigate('/cart')}
+      onClick={handleNavigate}
       className="relative p-2 bg-green-800 hover:bg-green-700 rounded-full transition-all duration-200"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
@@ -78,7 +91,7 @@ export default function CartButton({ mobileMenu = false, mobileTab = false, isAc
             exit={{ scale: 0 }}
             className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
           >
-            {cartCount > 99 ? '99+' : cartCount}
+            {cartCount > 99 ? "99+" : cartCount}
           </motion.div>
         )}
       </AnimatePresence>
