@@ -100,12 +100,18 @@ export function useAIAdvisor({ myProducts, prices }) {
     topBuyersRef.current = topBuyers;
   }, [topBuyers]);
 
-  // ── Auto-scroll chat ────────────────────────────────────────────────────────
+  // ── Auto-scroll chat only when user sends a message ──────────────────────────
   useEffect(() => {
-    if (showChat) {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (showChat && chatHistory.length > 0) {
+      // Only scroll if the last message is from the user (not AI response)
+      const lastMsg = chatHistory[chatHistory.length - 1];
+      if (lastMsg && lastMsg.role === "user") {
+        setTimeout(() => {
+          chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 50);
+      }
     }
-  }, [chatHistory, chatLoading, showChat]);
+  }, [showChat]);
 
   // ── Lazy data helpers ───────────────────────────────────────────────────────
   const ensureTrendData = useCallback(async () => {
@@ -134,12 +140,7 @@ export function useAIAdvisor({ myProducts, prices }) {
       setActiveKey(key);
       setShowChat(false);
 
-      setTimeout(() => {
-        advisorRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 50);
+      // Removed auto-scroll on quick prompt to prevent unwanted page scrolling
 
       try {
         // 1. Serve from cache if available (6-hour TTL)
@@ -181,6 +182,10 @@ export function useAIAdvisor({ myProducts, prices }) {
         // 5. Cache the result for 6 hours
         setCachedResponse(key, { text, chartData: parsed });
 
+        console.log("🔍 HOOK - useAIAdvisor callAI:");
+        console.log("Text to be stored in state - length:", text.length);
+        console.log("Text (first 500 chars):", text.substring(0, 500));
+
         setResponse(text);
         setChartData(parsed);
       } catch (err) {
@@ -191,7 +196,17 @@ export function useAIAdvisor({ myProducts, prices }) {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loading, myProducts, prices, userName, userId, month, season, ensureTrendData, ensureBuyerData],
+    [
+      loading,
+      myProducts,
+      prices,
+      userName,
+      userId,
+      month,
+      season,
+      ensureTrendData,
+      ensureBuyerData,
+    ],
   );
 
   // ── Free Chat Send ────────────────────────────────────────────────────────────
@@ -248,6 +263,10 @@ export function useAIAdvisor({ myProducts, prices }) {
         systemContext,
         messages,
       );
+
+      console.log("🔍 HOOK - handleChatSend:");
+      console.log("AI text length:", aiText.length);
+      console.log("AI text (first 500 chars):", aiText.substring(0, 500));
 
       setChatHistory((prev) => [
         ...prev,

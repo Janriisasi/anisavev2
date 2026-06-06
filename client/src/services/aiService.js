@@ -24,9 +24,7 @@ export function trimContext(context, maxChars = 3000) {
  */
 export function parseAIResponse(raw) {
   const chartMatch = raw.match(/<<<CHART>>>([\s\S]*?)<<<END_CHART>>>/);
-  const text = raw
-    .replace(/<<<CHART>>>[\s\S]*?<<<END_CHART>>>/, "")
-    .trim();
+  const text = raw.replace(/<<<CHART>>>[\s\S]*?<<<END_CHART>>>/, "").trim();
 
   let chartData = null;
   if (chartMatch) {
@@ -56,11 +54,29 @@ export async function callQuickPromptAI(systemContext, userText) {
   });
   if (error) throw error;
 
-  const raw =
-    data?.choices?.[0]?.message?.content?.trim() ||
-    "Pasensya na, hindi makasagot ngayon. Subukang muli.";
+  console.log("🔍 AI SERVICE - callQuickPromptAI:");
+  console.log("Full data object:", JSON.stringify(data));
+  console.log("Accessing nested value:");
+  const nested = data?.choices?.[0]?.message?.content;
+  console.log("  Type:", typeof nested);
+  console.log("  Value:", nested);
+  console.log("  Length before trim:", nested?.length);
 
-  return parseAIResponse(raw);
+  const raw =
+    nested?.trim() || "Pasensya na, hindi makasagot ngayon. Subukang muli.";
+
+  console.log("After trim:");
+  console.log("  Raw length:", raw.length);
+  console.log("  Raw (first 500 chars):", raw.substring(0, 500));
+
+  const parsed = parseAIResponse(raw);
+
+  console.log("After parseAIResponse:");
+  console.log("  Text length:", parsed.text.length);
+  console.log("  Text (first 500 chars):", parsed.text.substring(0, 500));
+  console.log("  Chart data:", parsed.chartData);
+
+  return parsed;
 }
 
 // ─── Chat (multi-turn) ────────────────────────────────────────────────────────
@@ -79,9 +95,27 @@ export async function callChatAI(systemContext, messages) {
   });
   if (error) throw error;
 
-  const raw =
-    data?.choices?.[0]?.message?.content?.trim() ||
-    "Pasensya na, hindi makasagot ngayon. Subukang muli.";
+  console.log("🔍 AI SERVICE - callChatAI:");
+  console.log("Full data object:", JSON.stringify(data));
+  console.log("Accessing nested value:");
+  const nested = data?.choices?.[0]?.message?.content;
+  console.log("  Type:", typeof nested);
+  console.log("  Value:", nested);
+  console.log("  Length before trim:", nested?.length);
 
-  return parseAIResponse(raw);
+  const raw =
+    nested?.trim() || "Pasensya na, hindi makasagot ngayon. Subukang muli.";
+
+  console.log("After trim:");
+  console.log("  Raw length:", raw.length);
+  console.log("  Raw (first 500 chars):", raw.substring(0, 500));
+
+  const parsed = parseAIResponse(raw);
+
+  console.log("After parseAIResponse:");
+  console.log("  Text length:", parsed.text.length);
+  console.log("  Text (first 500 chars):", parsed.text.substring(0, 500));
+  console.log("  Chart data:", parsed.chartData);
+
+  return parsed;
 }
