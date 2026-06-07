@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import supabase from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/productCard";
@@ -22,6 +22,7 @@ const Home = () => {
   const [myProducts, setMyProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [farmerProducts, setFarmerProducts] = useState([]); // Products posted by other farmers
+  const [completedOrders, setCompletedOrders] = useState([]);
   const [search, setSearch] = useState("");
   const [myRating, setMyRating] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
@@ -123,6 +124,7 @@ const Home = () => {
           await fetchMyProducts(user.id);
           await fetchMyRating(user.id);
           await fetchFarmerProducts(user.id); // Fetch products posted by other farmers
+          await fetchCompletedOrders(user.id);
         }
       } catch (error) {
         console.error("Error:", error);
@@ -173,6 +175,30 @@ const Home = () => {
     };
   }, [user]);
 
+  // Real-time listener for order updates to refresh completed orders
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel("home-orders-watch")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `seller_id=eq.${user.id}`,
+        },
+        () => {
+          fetchCompletedOrders(user.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [user]);
+
   const fetchMyProducts = async (userId) => {
     const { data, error } = await supabase
       .from("products")
@@ -181,6 +207,17 @@ const Home = () => {
 
     if (!error) setMyProducts(data);
     else console.error("Error fetching your products:", error.message);
+  };
+
+  const fetchCompletedOrders = async (userId) => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("total_amount")
+      .eq("seller_id", userId)
+      .eq("status", "completed");
+
+    if (!error) setCompletedOrders(data || []);
+    else console.error("Error fetching completed orders:", error.message);
   };
 
   // Fetch products posted by other farmers (with their profile info)
@@ -286,10 +323,9 @@ const Home = () => {
     p.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const totalSales = myProducts.reduce(
-    (acc, product) => acc + product.price * 10,
-    0,
-  );
+  const totalSales = useMemo(() => {
+    return completedOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+  }, [completedOrders]);
 
   return (
     <motion.div
@@ -347,7 +383,7 @@ const Home = () => {
                     Sales Summary
                   </p>
                   <h2 className="text-lg sm:text-xl font-bold text-gray-800 mt-1">
-                    ₱{totalSales.toLocaleString()}
+                    {loading ? "Calculating..." : `₱${totalSales.toLocaleString()}`}
                   </h2>
                 </div>
                 <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />

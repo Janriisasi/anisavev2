@@ -245,7 +245,7 @@ export default function FarmerProfile() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="h-10 bg-gray-200 rounded animate-pulse w-20 mb-4"></div>
 
           <ProfileSkeleton />
@@ -275,7 +275,7 @@ export default function FarmerProfile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <button
           onClick={handleBackNavigation}
           className="flex items-center text-green-800 font-medium mb-4 transition-colors"

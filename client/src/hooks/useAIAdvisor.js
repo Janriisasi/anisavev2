@@ -52,7 +52,7 @@ export function useAIAdvisor({ myProducts, prices }) {
   const [activeKey, setActiveKey] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // ── Lazy-loaded market data ─────────────────────────────────────────────────
   // NOT fetched on mount — only when an intent or quick-prompt requires them.
@@ -89,6 +89,19 @@ export function useAIAdvisor({ myProducts, prices }) {
         setUserId(profile.id || null);
       }
     });
+  }, []);
+
+  // ── Mount: fetch market trends and top buyers by default ───────────────────
+  useEffect(() => {
+    const loadDefaultData = async () => {
+      const trendData = await fetchTrendData();
+      setTrendData(trendData);
+      setTrendReady(true);
+
+      const buyerData = await fetchTopBuyers();
+      setTopBuyers(buyerData);
+    };
+    loadDefaultData();
   }, []);
 
   // ── Sync state → refs so callbacks always see the latest values ─────────────

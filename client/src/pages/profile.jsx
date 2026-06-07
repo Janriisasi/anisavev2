@@ -62,6 +62,7 @@ export default function Profile() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [avgRating, setAvgRating] = useState(0);
   const [soldCount, setSoldCount] = useState(0);
+  const [completedOrders, setCompletedOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -87,7 +88,7 @@ export default function Profile() {
   const fetchAllUserData = useCallback(async (userId) => {
     try {
       setLoading(true);
-      const [profileRes, productsRes, ratingsRes, buyerRatingsRes, soldRes] =
+      const [profileRes, productsRes, ratingsRes, buyerRatingsRes, soldRes, completedOrdersRes] =
         await Promise.all([
           supabase
             .from("profiles")
@@ -107,6 +108,11 @@ export default function Profile() {
             .select("rating")
             .eq("buyer_id", userId),
           supabase.rpc("get_seller_sold_count", { p_seller_id: userId }),
+          supabase
+            .from("orders")
+            .select("total_amount")
+            .eq("seller_id", userId)
+            .eq("status", "completed"),
         ]);
 
       if (!profileRes.error) setProfile(profileRes.data);
@@ -126,6 +132,7 @@ export default function Profile() {
         setAvgRating(0);
       }
       if (!soldRes.error) setSoldCount(soldRes.data || 0);
+      if (!completedOrdersRes.error) setCompletedOrders(completedOrdersRes.data || []);
     } catch (error) {
       console.error("Error fetching user data:", error);
       // Fallback: If profile fetch fails, we still want to show metadata
@@ -179,6 +186,14 @@ export default function Profile() {
       .eq("status", "confirming")
       .then(({ count }) => {
         setPendingOrdersCount(count || 0);
+      });
+    supabase
+      .from("orders")
+      .select("total_amount")
+      .eq("seller_id", user.id)
+      .eq("status", "completed")
+      .then(({ data, error }) => {
+        if (!error && data) setCompletedOrders(data);
       });
   }, [user]);
 
@@ -240,6 +255,10 @@ export default function Profile() {
     if (profile?.avatar_url) return profile.avatar_url;
     return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${profile?.full_name || "User"}&size=160`;
   }, [profile?.tempAvatarUrl, profile?.avatar_url, profile?.full_name]);
+
+  const totalSales = useMemo(() => {
+    return completedOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+  }, [completedOrders]);
 
   const handleAddProductClick = useCallback(() => {
     setShowProductForm(true);
@@ -673,6 +692,22 @@ export default function Profile() {
                           {soldCount > 0 ? `${soldCount} sold` : "No sales yet"}
                         </span>
                       </div>
+                      <div
+                        className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 ${totalSales > 0 ? "bg-blue-100" : "bg-gray-100"}`}
+                      >
+                        <ShoppingBag
+                          className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${totalSales > 0 ? "text-blue-600" : "text-gray-400"}`}
+                        />
+                        <span
+                          className={
+                            totalSales > 0
+                              ? "text-blue-700 font-semibold"
+                              : "text-gray-500"
+                          }
+                        >
+                          {totalSales > 0 ? `₱${totalSales.toLocaleString()}` : "₱0 sales"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </>
@@ -819,7 +854,7 @@ export default function Profile() {
                         onClick={() =>
                           toggleProductStatus(product.id, product.status)
                         }
-                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-300 text-sm ${product.status === "Available" ? "bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800" : "bg-red-100 text-red-700 hover:bg-red-200 hover:bg-red-800"}`}
+                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-300 text-sm ${product.status === "Available" ? "bg-green-100 text-green-700 hover:bg-green-700 hover:text-white" : "bg-red-100 text-red-700 hover:bg-red-700 hover:text-white"}`}
                       >
                         {product.status || "Available"}
                       </button>

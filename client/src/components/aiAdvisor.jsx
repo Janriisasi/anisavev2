@@ -194,8 +194,8 @@ const TrendingSection = memo(
                 Ikaw ang Top Buyer ngayon!
               </p>
               <p className="text-xs text-yellow-800">
-                {firstName ? `${firstName}, patuloy` : "Patuloy"} kang sumusuporta
-                sa mga lokal na magsasaka — salamat! 🌾
+                {firstName ? `${firstName}, patuloy` : "Patuloy"} kang
+                sumusuporta sa mga lokal na magsasaka — salamat! 🌾
               </p>
             </div>
           </motion.div>
@@ -633,10 +633,10 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       myProducts={myProducts}
                     />
 
-                    {/* Achievement / nudge banners (trends passed as [] so hot ticker hidden here) */}
+                    {/* Achievement / nudge banners and market trends */}
                     {trendReady && (
                       <TrendingSection
-                        trendData={[]}
+                        trendData={trendData}
                         topBuyers={topBuyers}
                         myProducts={myProducts}
                         userName={userName}

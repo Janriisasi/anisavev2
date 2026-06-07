@@ -159,7 +159,7 @@ export default function NotificationButton({
                   <span
                     className={`bg-green-100 text-green-700 font-bold rounded-full ${mobileMenu ? "text-xs px-2 py-0.5" : "text-[10px] px-1.5 py-0.5"}`}
                   >
-                    {unreadCount} new
+                    {unreadCount}
                   </span>
                 )}
               </div>
