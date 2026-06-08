@@ -17,6 +17,7 @@ export default function Navbar() {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -117,7 +118,7 @@ export default function Navbar() {
         className="bg-green-800 text-white shadow-lg backdrop-blur-sm sticky top-0 z-[70] block"
       >
         <div className="px-4 py-3 mobile-nav-safe-top">
-          <div className="max-w-7xl mx-auto flex justify-between items-center gap-3">
+          <div className="max-w-7xl mx-auto flex justify-between items-center gap-3 relative">
 
             {/* Logo */}
             <button
@@ -128,8 +129,8 @@ export default function Navbar() {
               <img src="/images/anisave_logo.webp" alt="Logo" className="h-10 w-auto" />
             </button>
 
-            {/* Desktop nav links */}
-            <div className="hidden md:flex gap-7 items-center">
+            {/* Desktop nav links — absolutely centered so they sit in the true middle */}
+            <div className="hidden md:flex gap-7 items-center absolute left-1/2 -translate-x-1/2">
               {links.map(({ label, to }) => (
                 <button
                   key={to}
@@ -145,40 +146,67 @@ export default function Navbar() {
 
             {/* Desktop right side — search + action buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <div className="relative">
-                <div className="relative">
-                  <Search className="absolute left-1 top-1/2 transform -translate-y-1/2 text-white w-8 h-8 p-1 border rounded-full bg-green-800" />
-                  <input
-                    type="text"
-                    placeholder="Search users..."
-                    className="w-68 pl-10 pr-4 py-2 bg-white rounded-full text-black placeholder-black focus:outline-none focus:border-transparent"
-                    value={searchQuery}
-                    onChange={(e) => { setSearchQuery(e.target.value); handleSearch(e.target.value); }}
-                    onBlur={() => setTimeout(() => setShowSearchResults(false), 300)}
-                    onFocus={() => searchQuery && setShowSearchResults(true)}
-                  />
-                </div>
-                {showSearchResults && searchResults.users?.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[9999] max-h-80 overflow-y-auto">
-                    <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0">Users</div>
-                    {searchResults.users.map((u) => (
-                      <div
-                        key={u.id}
-                        className="px-4 py-4 hover:bg-gray-50 cursor-pointer text-gray-800"
-                        onMouseDown={(e) => { e.preventDefault(); handleUserClick(u.id); }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={u.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`}
-                            alt=""
-                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                          />
-                          <div className="font-medium truncate">{u.full_name || u.username}</div>
+              <div className="relative flex items-center">
+                <AnimatePresence mode="wait">
+                  {isDesktopSearchOpen ? (
+                    <motion.div
+                      key="desktop-search-expanded"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 240, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 50 }}
+                      className="relative flex items-center"
+                    >
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                      <input
+                        autoFocus
+                        type="text"
+                        placeholder="Search users..."
+                        className="w-full pl-9 pr-4 py-2 bg-white rounded-full text-black text-sm placeholder-gray-400 focus:outline-none ring-2 ring-white/30 focus:ring-white/60"
+                        value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); handleSearch(e.target.value); }}
+                        onBlur={() => {
+                          if (!searchQuery) setTimeout(() => setIsDesktopSearchOpen(false), 200);
+                          setTimeout(() => setShowSearchResults(false), 300);
+                        }}
+                        onFocus={() => searchQuery && setShowSearchResults(true)}
+                      />
+                      {showSearchResults && searchResults.users?.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[9999] max-h-80 overflow-y-auto">
+                          <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-sm sticky top-0">Users</div>
+                          {searchResults.users.map((u) => (
+                            <div
+                              key={u.id}
+                              className="px-4 py-4 hover:bg-gray-50 cursor-pointer text-gray-800"
+                              onMouseDown={(e) => { e.preventDefault(); handleUserClick(u.id); }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={u.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`}
+                                  alt=""
+                                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                />
+                                <div className="font-medium truncate">{u.full_name || u.username}</div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      )}
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      key="desktop-search-icon"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      onClick={() => setIsDesktopSearchOpen(true)}
+                      className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-green-700 transition-colors"
+                      title="Search"
+                    >
+                      <Search className="w-5 h-5 text-white" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
               </div>
 
               <NotificationButton />

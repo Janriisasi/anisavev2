@@ -671,7 +671,7 @@ export default function Profile() {
                         </div>
                       )}
                       <div className="bg-yellow-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
-                        <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
+                        <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />
                         <span>
                           {avgRating > 0 ? avgRating : "No ratings yet"}
                         </span>
@@ -679,7 +679,7 @@ export default function Profile() {
                       <div
                         className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 ${soldCount > 0 ? "bg-green-100" : "bg-gray-100"}`}
                       >
-                        <Award
+                        <ShoppingBag
                           className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${soldCount > 0 ? "text-green-600" : "text-gray-400"}`}
                         />
                         <span
@@ -692,7 +692,7 @@ export default function Profile() {
                           {soldCount > 0 ? `${soldCount} sold` : "No sales yet"}
                         </span>
                       </div>
-                      <div
+                      {/* <div
                         className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 ${totalSales > 0 ? "bg-blue-100" : "bg-gray-100"}`}
                       >
                         <ShoppingBag
@@ -707,7 +707,7 @@ export default function Profile() {
                         >
                           {totalSales > 0 ? `₱${totalSales.toLocaleString()}` : "₱0 sales"}
                         </span>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </>
