@@ -7,7 +7,6 @@ import {
   Clock,
   MessageCircle,
   Package,
-  DollarSign,
   Loader2,
   ChevronDown,
   AlertTriangle,
@@ -418,7 +417,6 @@ export default function FarmerOrderRequests() {
                           <span>{order.quantity_kg} kg</span>
                         </div>
                         <div className="flex items-center gap-1 text-gray-600">
-                          <DollarSign className="w-3.5 h-3.5" />
                           <span>₱{order.price_per_kg}/kg</span>
                         </div>
                         <span className="font-bold text-green-700">

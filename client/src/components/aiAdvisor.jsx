@@ -41,7 +41,7 @@ const SlideshowLoader = memo(({ promptKey }) => {
   }, [messages.length]);
 
   return (
-    <div className="flex items-start gap-3 pb-2">
+    <div className="flex items-start gap-3 pb-2 px-3">
       <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center bg-green-700 text-white shadow-sm mt-0.5">
         <Bot size={15} />
       </div>
@@ -151,33 +151,6 @@ const TrendingSection = memo(
 
     return (
       <div className="mx-4 mb-1 space-y-2">
-        {/* Hot products ticker — only shown when trendData is passed (not from idle, which passes []) */}
-        {top3.length > 0 && (
-          <motion.div
-            className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-center gap-2.5"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="w-8 h-8 rounded-xl bg-amber-200/60 flex items-center justify-center flex-shrink-0">
-              <Flame size={14} className="text-amber-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">
-                Trending sa Platform Ngayon
-              </p>
-              <p className="text-xs text-amber-800">
-                {top3.map((t, i) => (
-                  <span key={t.name}>
-                    {MEDALS[i]} <strong>{t.name}</strong> ({t.sellerCount}{" "}
-                    sellers)
-                    {i < top3.length - 1 ? "  ·  " : ""}
-                  </span>
-                ))}
-              </p>
-            </div>
-          </motion.div>
-        )}
-
         {/* Achievement banner — top buyer motivation */}
         {isTopBuyer && (
           <motion.div
@@ -288,34 +261,264 @@ const TrendingSection = memo(
 );
 TrendingSection.displayName = "TrendingSection";
 
-// ─── Greeting Banner ──────────────────────────────────────────────────────────
-const GreetingBanner = memo(({ userName, myProducts }) => {
-  const [greetData] = useState(() => getGreeting(userName, myProducts));
+// ─── Idle Slideshow ───────────────────────────────────────────────────────────
+// Cycles through: Greeting → Market Trends → Trending → Top Buyer → Active Buyers
+const IdleSlideshow = memo(
+  ({ userName, myProducts, trendData, topBuyers, userId, compact = false }) => {
+    const [greetData] = useState(() => getGreeting(userName, myProducts));
+    const firstName = userName ? userName.split(" ")[0] : null;
+    const top3 = trendData.slice(0, 3);
 
-  return (
-    <motion.div
-      className="mx-4 mb-5 bg-green-50 border border-green-300 rounded-xl px-4 py-3"
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.1 }}
-    >
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
-          <User size={14} className="text-green-700" />
+    const userBuyerRank = userId
+      ? topBuyers.findIndex((b) => b.id === userId)
+      : -1;
+    const isTopBuyer = userBuyerRank === 0;
+    const isInTopBuyers = userBuyerRank >= 0 && !isTopBuyer;
+    const hasProducts = myProducts.length > 0;
+
+    // Build slides dynamically based on what data is available
+    const slides = [
+      // Slide 0 — Greeting
+      {
+        key: "greeting",
+        content: (
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
+              <User size={14} className="text-green-700" />
+            </div>
+            <div>
+              <p className="text-green-700 text-xs font-semibold leading-snug">
+                {greetData.greeting}
+              </p>
+              <p className="text-green-600 text-[11px] mt-1 leading-snug">
+                {greetData.tip}
+              </p>
+            </div>
+          </div>
+        ),
+        bg: "bg-green-50 border-green-300",
+      },
+
+      // Slide 1 — Market Trends (icon left + product image row)
+      ...(trendData.length > 0
+        ? [
+            {
+              key: "market",
+              content: (
+                <div className="flex items-center gap-2.5 h-full">
+                  <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp size={14} className="text-red-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide mb-1">
+                      Market Trends
+                    </p>
+                    <div
+                      className="flex items-center gap-1.5 overflow-x-auto"
+                      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                    >
+                      {trendData.slice(0, 5).map((t, i) => {
+                        const imgSrc = PRODUCT_IMAGES[t.name];
+                        return (
+                          <div key={t.name} className="flex items-center gap-1 flex-shrink-0">
+                            <div className="w-6 h-6 rounded-md overflow-hidden flex-shrink-0 bg-white border border-gray-100">
+                              {imgSrc ? (
+                                <img src={imgSrc} alt={t.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-[10px]">🌾</div>
+                              )}
+                            </div>
+                            <p className="text-[10px] font-semibold text-gray-700 leading-tight whitespace-nowrap">
+                              {t.name}
+                            </p>
+                            {i < Math.min(trendData.length, 5) - 1 && (
+                              <span className="text-gray-300 text-xs ml-0.5">·</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ),
+              bg: "bg-red-50 border-red-200",
+            },
+          ]
+        : []),
+
+      // Slide 2 — Top Buyer / rank nudge
+      ...(isTopBuyer
+        ? [
+            {
+              key: "topbuyer",
+              content: (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
+                    🏆
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
+                      Ikaw ang Top Buyer ngayon!
+                    </p>
+                    <p className="text-xs text-yellow-800">
+                      {firstName ? `${firstName}, patuloy` : "Patuloy"} kang
+                      sumusuporta sa mga lokal na magsasaka — salamat! 🌾
+                    </p>
+                  </div>
+                </div>
+              ),
+              bg: "bg-yellow-50 border-yellow-300",
+            },
+          ]
+        : isInTopBuyers
+          ? [
+              {
+                key: "topbuyer",
+                content: (
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
+                      ⭐
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
+                        Top #{userBuyerRank + 1} Buyer ka!
+                      </p>
+                      <p className="text-xs text-yellow-800">
+                        Malapit ka na sa #1! Tuloy-tuloy lang sa pagsuporta. 💪
+                      </p>
+                    </div>
+                  </div>
+                ),
+                bg: "bg-yellow-50 border-yellow-300",
+              },
+            ]
+          : []),
+
+      // Slide 4 — Sell nudge (no products)
+      ...(!hasProducts
+        ? [
+            {
+              key: "sellnudge",
+              content: (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
+                    <ShoppingBag size={14} className="text-green-700" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-green-700 uppercase tracking-wide mb-0.5">
+                      Simulan na ang Pagbebenta!
+                    </p>
+                    <p className="text-xs text-green-800">
+                      {firstName ? `${firstName}, mag` : "Mag"}-list na ng iyong
+                      produkto at kumita ngayon! 🌾{" "}
+                      {top3.length > 0 && (
+                        <span>
+                          Mataas ang demand sa <strong>{top3[0].name}</strong>{" "}
+                          ngayon.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ),
+              bg: "bg-green-50 border-green-200",
+            },
+          ]
+        : []),
+
+      // Slide 5 — Pinaka-Active na Buyers
+      ...(topBuyers.length > 0
+        ? [
+            {
+              key: "activebuyers",
+              content: (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-200/60 flex items-center justify-center flex-shrink-0">
+                    <Star size={14} className="text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">
+                      Pinaka-Active na Buyers
+                    </p>
+                    <p className="text-xs text-blue-800">
+                      {topBuyers.map((b, i) => {
+                        const isMe = userId && b.id === userId;
+                        return (
+                          <span key={b.id}>
+                            {MEDALS[i] ?? `#${i + 1}`}{" "}
+                            <strong>{isMe ? "Ikaw" : b.name}</strong> (
+                            {b.orderCount} orders)
+                            {i < topBuyers.length - 1 ? "  ·  " : ""}
+                          </span>
+                        );
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ),
+              bg: "bg-blue-50 border-blue-200",
+            },
+          ]
+        : []),
+    ];
+
+    const [current, setCurrent] = useState(0);
+    const total = slides.length;
+
+    // Auto-advance every 3.5s
+    useEffect(() => {
+      if (total <= 1) return;
+      const t = setInterval(() => setCurrent((p) => (p + 1) % total), 3500);
+      return () => clearInterval(t);
+    }, [total]);
+
+    if (total === 0) return null;
+
+    const slide = slides[current];
+
+    const inner = (
+      <>
+        <div
+          className={`relative border rounded-xl px-4 py-3 overflow-hidden ${slide.bg}`}
+          style={{ height: 64 }}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={slide.key}
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+            >
+              {slide.content}
+            </motion.div>
+          </AnimatePresence>
         </div>
-        <div>
-          <p className="text-green-700 text-xs font-semibold leading-snug">
-            {greetData.greeting}
-          </p>
-          <p className="text-green-600 text-[11px] mt-1 leading-snug">
-            {greetData.tip}
-          </p>
-        </div>
-      </div>
-    </motion.div>
-  );
-});
-GreetingBanner.displayName = "GreetingBanner";
+
+        {/* Dot indicators */}
+        {total > 1 && (
+          <div className="flex justify-center gap-1.5 mt-2 mb-1">
+            {slides.map((s, i) => (
+              <button
+                key={s.key}
+                onClick={() => setCurrent(i)}
+                className={`rounded-full transition-all duration-300 ${
+                  i === current
+                    ? "w-4 h-1.5 bg-green-600"
+                    : "w-1.5 h-1.5 bg-gray-400"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    );
+
+    if (compact) return <div className="mb-2">{inner}</div>;
+    return <div className="mx-4 mb-5">{inner}</div>;
+  },
+);
+IdleSlideshow.displayName = "IdleSlideshow";
 
 // ─── Markdown Renderer ────────────────────────────────────────────────────────
 const MarkdownText = memo(({ text }) => {
@@ -436,13 +639,13 @@ const AiAdvisor = ({ myProducts = [] }) => {
   return (
     <motion.div
       ref={advisorRef}
-      className="mb-10 rounded-3xl overflow-hidden shadow-lg border border-gray-200 bg-white"
+      className="mb-10 rounded-3xl overflow-hidden border border-gray-200 bg-white"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.35, duration: 0.5 }}
     >
       {/* ── Header ── */}
-      <div className="bg-green-700 px-5 pt-4 pb-4 rounded-t-3xl">
+      <div className="bg-white px-4 pt-3 pb-3 rounded-t-3xl">
         {/* Top row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -450,10 +653,10 @@ const AiAdvisor = ({ myProducts = [] }) => {
               <Leaf className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-base leading-tight">
+              <h3 className="text-green-700 font-bold text-base leading-tight">
                 AI Farming Advisor
               </h3>
-              <p className="text-green-200 text-xs mt-0.5 flex items-center gap-1.5">
+              <p className="text-green-700 text-xs mt-0.5 flex items-center gap-1.5">
                 {month} · {season}
               </p>
             </div>
@@ -462,7 +665,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             <motion.button
               onClick={handleRefresh}
               disabled={loading || chatLoading}
-              className="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-8 h-8 rounded-xl bg-green-700 hover:bg-green-800 text-white flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               whileHover={{ scale: loading || chatLoading ? 1 : 1.05 }}
               whileTap={{ scale: loading || chatLoading ? 1 : 0.95 }}
               title="I-reset"
@@ -474,7 +677,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             </motion.button>
             <motion.button
               onClick={() => setIsExpanded((p) => !p)}
-              className="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200"
+              className="w-8 h-8 rounded-xl bg-green-700 hover:bg-green-800 text-white flex items-center justify-center transition-all duration-200"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -483,57 +686,17 @@ const AiAdvisor = ({ myProducts = [] }) => {
           </div>
         </div>
 
-        {/* Market Trends pill strip — inside the green header */}
-        {trendReady && trendData.length > 0 && (
-          <div className="mb-0">
-            <div className="bg-white rounded-2xl px-3 pt-2.5 pb-3">
-              <div className="flex items-center gap-1.5 mb-2">
-                <TrendingUp size={11} className="text-red-500" />
-                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                  Market Trends
-                </span>
-              </div>
-              <div
-                className="flex gap-2 overflow-x-auto pb-0.5"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                {trendData.slice(0, 8).map((t, i) => {
-                  const imgSrc = PRODUCT_IMAGES[t.name];
-                  return (
-                    <motion.div
-                      key={t.name}
-                      className="flex-shrink-0 flex items-center gap-2 bg-gray-100 rounded-xl px-2.5 py-1.5"
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                    >
-                      {/* Square product image */}
-                      <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 bg-white">
-                        {imgSrc ? (
-                          <img
-                            src={imgSrc}
-                            alt={t.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-base">
-                            🌾
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold text-gray-800 leading-tight">
-                          {t.name}
-                        </p>
-                        <p className="text-[9px] text-gray-500 leading-tight">
-                          {t.sellerCount} sellers
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
+        {/* ── Unified Slideshow Box (Greeting · Market Trends · Trending · etc.) ── */}
+        {trendReady && (
+          <div className="bg-white rounded-2xl px-3 pt-2.5 pb-3">
+            <IdleSlideshow
+              userName={userName}
+              myProducts={myProducts}
+              trendData={trendData}
+              topBuyers={topBuyers}
+              userId={userId}
+              compact
+            />
           </div>
         )}
       </div>
@@ -548,7 +711,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             transition={{ duration: 0.3 }}
             className="bg-white"
           >
-            <div className="pt-4">
+            <div className="pt-3">
               <AnimatePresence mode="wait">
                 {/* Loading (quick prompt) */}
                 {loading && (
@@ -566,7 +729,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                 {!loading && !showChat && (response || error) && (
                   <motion.div
                     key="response"
-                    className="mx-4 mb-4 rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-white"
+                    className="mx-3 mb-3 rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-white"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
@@ -603,7 +766,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                 {showChat && (
                   <motion.div
                     key="chat"
-                    className="mx-4 mb-4 mt-4"
+                    className="mx-3 mb-3 mt-3"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -618,33 +781,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                   </motion.div>
                 )}
 
-                {/* Idle */}
-                {!loading && !response && !error && !showChat && (
-                  <motion.div
-                    key="idle"
-                    className="pb-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    {/* Greeting banner */}
-                    <GreetingBanner
-                      userName={userName}
-                      myProducts={myProducts}
-                    />
-
-                    {/* Achievement / nudge banners and market trends */}
-                    {trendReady && (
-                      <TrendingSection
-                        trendData={trendData}
-                        topBuyers={topBuyers}
-                        myProducts={myProducts}
-                        userName={userName}
-                        userId={userId}
-                      />
-                    )}
-                  </motion.div>
-                )}
+                {/* Idle — slideshow is now in the header trends box */}
               </AnimatePresence>
             </div>
 
@@ -653,7 +790,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
               {!showChat && (
                 <motion.div
                   key="quick-prompts"
-                  className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-4 pt-4 pb-3"
+                  className="grid grid-cols-2 gap-2 px-3 pt-3 pb-2"
                   initial={{ opacity: 1, height: "auto" }}
                   exit={{
                     opacity: 0,
@@ -673,8 +810,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       transition={{ delay: i * 0.06 }}
                       className={`
                         relative overflow-hidden
-                        bg-white border rounded-2xl p-4
-                        flex flex-col items-center gap-2 shadow-sm
+                        bg-white border rounded-2xl p-2.5
+                        flex flex-col items-center gap-1.5 shadow-sm
                         disabled:opacity-50 disabled:cursor-not-allowed
                         transition-all duration-200
                         hover:shadow-md hover:border-green-300 hover:-translate-y-0.5
@@ -689,8 +826,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       {activeKey === qp.key && !loading && (
                         <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-600" />
                       )}
-                      <qp.icon size={24} className="text-green-700" />
-                      <span className="text-xs font-semibold text-center leading-tight text-gray-700">
+                      <qp.icon size={20} className="text-green-700" />
+                      <span className="text-[11px] font-semibold text-center leading-tight text-gray-700">
                         {qp.label}
                       </span>
                     </motion.button>
@@ -700,7 +837,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             </AnimatePresence>
 
             {/* ── Free Chat Input ── */}
-            <div className="px-4 pb-4">
+            <div className="px-3 pb-3">
               <div className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-3 py-2 shadow-sm focus-within:border-green-400 focus-within:ring-2 focus-within:ring-green-100 transition-all">
                 <textarea
                   ref={inputRef}
