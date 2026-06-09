@@ -711,7 +711,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             transition={{ duration: 0.3 }}
             className="bg-white"
           >
-            <div className="pt-3">
+            <div>
               <AnimatePresence mode="wait">
                 {/* Loading (quick prompt) */}
                 {loading && (
@@ -790,7 +790,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
               {!showChat && (
                 <motion.div
                   key="quick-prompts"
-                  className="grid grid-cols-2 gap-2 px-3 pt-3 pb-2"
+                  className="grid grid-cols-2 gap-2 px-3 pt-2 pb-2"
                   initial={{ opacity: 1, height: "auto" }}
                   exit={{
                     opacity: 0,

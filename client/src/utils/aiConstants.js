@@ -66,42 +66,42 @@ export const QUICK_PROMPTS = [
 // ─── Loading Messages ─────────────────────────────────────────────────────────
 export const LOADING_MESSAGES = {
   plant: [
-    "🌾 Tinitignan ang kasalukuyang season...",
-    "📊 Sinusuri ang live market data...",
-    "🗓️ Hinahanap ang pinakamabuting pananim...",
-    "✅ Halos tapos na ang pagsusuri...",
+    "Tinitignan ang kasalukuyang season...",
+    "Sinusuri ang live market data...",
+    "Hinahanap ang pinakamabuting pananim...",
+    "Halos tapos na ang pagsusuri...",
   ],
   price: [
-    "📡 Kinukuha ang pinakabagong datos ng presyo...",
-    "📈 Sinusuri ang market trends...",
-    "🔍 Hinahanap ang mga pagbabago sa presyo...",
-    "✅ Halos handa na ang ulat...",
+    "Kinukuha ang pinakabagong datos ng presyo...",
+    "Sinusuri ang market trends...",
+    "Hinahanap ang mga pagbabago sa presyo...",
+    "Halos handa na ang ulat...",
   ],
   sell: [
-    "💹 Kinukuha ang live seller data...",
-    "🛒 Binibilang ang sellers per produkto...",
-    "🏆 Inire-rank ang pinaka-in-demand...",
-    "📊 Ginagawa ang chart...",
+    "Kinukuha ang live seller data...",
+    "Binibilang ang sellers per produkto...",
+    "Inire-rank ang pinaka-in-demand...",
+    "Ginagawa ang chart...",
   ],
   tips: [
-    "🌤️ Tinitingnan ang kondisyon ng panahon...",
-    "🐛 Sinusuri ang mga posibleng peste...",
-    "🌱 Hinahanap ang pinakamahusay na paraan...",
-    "✅ Inihahanda ang mga rekomendasyon...",
+    "Tinitingnan ang kondisyon ng panahon...",
+    "Sinusuri ang mga posibleng peste...",
+    "Hinahanap ang pinakamahusay na paraan...",
+    "Inihahanda ang mga rekomendasyon...",
   ],
   chat: [
-    "🤔 Pinag-aaralan ang iyong tanong...",
-    "📦 Kinukuha ang impormasyon...",
-    "🌿 Hinahanap ang pinakamahusay na sagot...",
-    "✅ Halos tapos na...",
+    "Pinag-aaralan ang iyong tanong...",
+    "Kinukuha ang impormasyon...",
+    "Hinahanap ang pinakamahusay na sagot...",
+    "Halos tapos na...",
   ],
 };
 
 export const DEFAULT_LOADING = [
-  "⚙️ Sinisimulan ang pagsusuri...",
-  "📦 Kinukuha ang impormasyon...",
-  "🤔 Pinag-aaralan ang iyong tanong...",
-  "✅ Halos tapos na...",
+  "Sinisimulan ang pagsusuri...",
+  "Kinukuha ang impormasyon...",
+  "Pinag-aaralan ang iyong tanong...",
+  "Halos tapos na...",
 ];
 
 // ─── Chart Colors ─────────────────────────────────────────────────────────────
@@ -160,25 +160,25 @@ export const getGreeting = (userName, myProducts) => {
 
   const greetings = firstName
     ? [
-        `${timeGreet}, ${firstName}! 🌾 Kumusta ang inyong taniman ngayon?`,
-        `Hoy ${firstName}! 🌱 Mayroon bang bago sa bukid?`,
-        `${firstName}, ${timeGreet}! 💰 Handa ka na bang kumita ngayon?`,
-        `${timeGreet}, ${firstName}! 🌿 Anong balita sa inyong produkto?`,
+        `${timeGreet}, ${firstName}! Kumusta ang inyong taniman ngayon?`,
+        `Hoy ${firstName}! Mayroon bang bago sa bukid?`,
+        `${firstName}, ${timeGreet}! Handa ka na bang kumita ngayon?`,
+        `${timeGreet}, ${firstName}! Anong balita sa inyong produkto?`,
       ]
     : [
-        `${timeGreet}, Magsasaka! 🌾 Kumusta ang taniman?`,
-        `Handa ka na bang kumita ngayon? 💰`,
+        `${timeGreet}, Magsasaka! Kumusta ang taniman?`,
+        `Handa ka na bang kumita ngayon?`,
       ];
 
   const tips =
     myProducts.length === 0
       ? [
-          `💡 Tip: Wala ka pang nakalista na produkto! Subukang mag-list ng iyong mga ani para makita ng mga buyer.`,
-          `🛒 Mayroon bang pananim na handa nang ibenta? I-list na ngayon sa AniSave!`,
+          `Tip: Wala ka pang nakalista na produkto! Subukang mag-list ng iyong mga ani para makita ng mga buyer.`,
+          `Mayroon bang pananim na handa nang ibenta? I-list na ngayon sa AniSave!`,
         ]
       : [
-          `📊 Tingnan ang live market trends para malaman kung kailan pinakamainam na magbenta.`,
-          `💡 Ang ${myProducts[0]?.name || "iyong produkto"} ay maaaring mas magandang ibenta ngayon!`,
+          `Tingnan ang live market trends para malaman kung kailan pinakamainam na magbenta.`,
+          `Ang ${myProducts[0]?.name || "iyong produkto"} ay maaaring mas magandang ibenta ngayon!`,
         ];
 
   const greeting = greetings[Math.floor(Math.random() * greetings.length)];

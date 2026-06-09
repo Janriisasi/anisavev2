@@ -1,9 +1,20 @@
 // ─── Intent Keyword Sets ──────────────────────────────────────────────────────
 const MARKET_KEYWORDS = [
-  "demand", "trend", "trending", "mabenta", "popular", "suply", "supply",
-  "pinaka-popular", "pinakamabenta", "in-demand", "market", "palengke",
-  "pinaka-mabenta", "pinaka-in-demand", "best seller", "bestseller",
-  "hot", "sikat", "maraming nagbibili",
+  // English
+  "demand", "trend", "trending", "popular", "supply", "suply",
+  "in-demand", "market", "best seller", "bestseller", "hot",
+  "most sold", "most selling", "most sellers", "seller count",
+  "most listed", "most available", "top selling", "top product",
+  "pinaka-popular", "pinakamabenta", "pinaka-mabenta", "pinaka-in-demand",
+  // Tagalog — "who/what has the most sellers / is selling a lot"
+  "mabenta", "sikat", "palengke",
+  "maraming nagbibili", "maraming nagbebenta", "maraming seller",
+  "nagbebenta", "pinaka nagbebenta", "pinaka-nagbebenta",
+  "pinakamaraming nagbebenta", "pinakamaraming seller",
+  "pinakamaraming nagbibili", "pinakamaraming nagtitinda",
+  "maraming nagtitinda", "nagtitinda", "pinaka nagtitinda",
+  "madaming nagbebenta", "madaming bumibili", "madaming seller",
+  "anong produkto", "aling produkto",
 ];
 
 const BUYER_KEYWORDS = [

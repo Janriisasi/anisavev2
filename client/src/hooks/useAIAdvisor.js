@@ -8,6 +8,36 @@ import { callQuickPromptAI, callChatAI } from "../services/aiService";
 import { getQuickPromptText } from "../utils/aiConstants";
 
 const MAX_HISTORY = 8;
+const SESSION_KEY = "ai_advisor_session";
+
+// ─── SessionStorage Helpers ───────────────────────────────────────────────────
+/**
+ * Reads the persisted AI Advisor session from sessionStorage.
+ * Returns null on miss, parse failure, or SSR environments.
+ * sessionStorage (not localStorage) is intentional: data is scoped to the
+ * current browser tab and auto-cleared when the tab closes, which prevents
+ * stale conversations from re-appearing in future visits.
+ */
+function loadSession() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persists the AI Advisor session snapshot to sessionStorage.
+ * Fails silently (private browsing, quota exceeded, SSR).
+ */
+function saveSession(snapshot) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(snapshot));
+  } catch {
+    // ignore
+  }
+}
 
 // ─── User Profile Fetcher ─────────────────────────────────────────────────────
 // Kept here (not in trendService) because it's lightweight and always needed
@@ -46,10 +76,13 @@ async function fetchUserProfile() {
  * @param {{ myProducts: Array, prices: object }} params
  */
 export function useAIAdvisor({ myProducts, prices }) {
+  // ── Rehydrate from sessionStorage on first render ───────────────────────────
+  const savedSession = loadSession();
+
   // ── Quick-prompt state ──────────────────────────────────────────────────────
-  const [response, setResponse] = useState(null);
-  const [chartData, setChartData] = useState(null);
-  const [activeKey, setActiveKey] = useState(null);
+  const [response, setResponse] = useState(savedSession?.response ?? null);
+  const [chartData, setChartData] = useState(savedSession?.chartData ?? null);
+  const [activeKey, setActiveKey] = useState(savedSession?.activeKey ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -65,10 +98,10 @@ export function useAIAdvisor({ myProducts, prices }) {
   const [userId, setUserId] = useState(null);
 
   // ── Chat state ──────────────────────────────────────────────────────────────
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useState(savedSession?.chatHistory ?? []);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  const [showChat, setShowChat] = useState(savedSession?.showChat ?? false);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   const advisorRef = useRef(null);
@@ -80,6 +113,13 @@ export function useAIAdvisor({ myProducts, prices }) {
   const topBuyersRef = useRef([]);
 
   const { month, season } = getMonthContext();
+
+  // ── Persist session → sessionStorage whenever relevant state changes ────────
+  // Runs after every state update that should survive page navigation.
+  // Excluded: loading flags, errors, isExpanded (transient UI state).
+  useEffect(() => {
+    saveSession({ response, chartData, activeKey, chatHistory, showChat });
+  }, [response, chartData, activeKey, chatHistory, showChat]);
 
   // ── Mount: fetch user profile only ─────────────────────────────────────────
   useEffect(() => {
@@ -328,6 +368,8 @@ export function useAIAdvisor({ myProducts, prices }) {
     setChatHistory([]);
     setShowChat(false);
     setChatInput("");
+    // Wipe persisted session so the cleared state is what survives navigation
+    try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
   }, [loading, chatLoading]);
 
   return {
