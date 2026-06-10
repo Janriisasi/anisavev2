@@ -573,7 +573,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-sm md:text-base text-gray-600">
@@ -586,7 +586,7 @@ export default function AdminDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md">
           <div className="text-center mb-6 md:mb-8">
             <div className="w-12 h-12 md:w-16 md:h-16 bg-green-700 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">

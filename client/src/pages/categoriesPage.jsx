@@ -265,7 +265,7 @@ export default function CategoriesPage() {
 
   if (showSellers && selectedProduct) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
+      <div className="min-h-screen bg-[#f9fafb] p-6">
         <div className="max-w-7xl mx-auto">
           <button
             onClick={() => setShowSellers(false)}
@@ -432,7 +432,7 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
+    <div className="min-h-screen bg-[#f9fafb] p-6">
       <div className="max-w-7xl mx-auto">
         {name ? (
           <div className="mb-6">

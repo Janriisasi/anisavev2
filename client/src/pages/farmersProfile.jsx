@@ -265,7 +265,7 @@ export default function FarmerProfile() {
 
   if (!farmer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
+      <div className="min-h-screen bg-[#f9fafb] p-6">
         <div className="text-center py-12">
           <p className="text-gray-600">Farmer not found</p>
         </div>
@@ -274,7 +274,7 @@ export default function FarmerProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
+    <div className="min-h-screen bg-[#f9fafb] p-6">
       <div className="max-w-7xl mx-auto">
         <button
           onClick={handleBackNavigation}

@@ -334,7 +334,7 @@ const Home = () => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="min-h-screen bg-gradient-to-br from-green-50/50 via-blue-50/30 to-indigo-50/50 p-6">
+      <div className="min-h-screen bg-[#f9fafb] p-6">
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Title */}
           <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">

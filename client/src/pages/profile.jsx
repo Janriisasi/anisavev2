@@ -432,7 +432,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
+    <div className="min-h-screen bg-[#f9fafb]">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-center items-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">

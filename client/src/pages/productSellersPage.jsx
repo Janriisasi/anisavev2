@@ -207,7 +207,7 @@ export default function ProductSellersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f0f7f0] flex items-center justify-center">
+      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-12 h-12 border-4 border-green-200 border-t-[#1a5c2a] rounded-full animate-spin"></div>
           <p className="text-gray-500 text-sm">Loading sellers...</p>
@@ -218,7 +218,7 @@ export default function ProductSellersPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-[#f0f7f0] flex items-center justify-center">
+      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 text-lg">Product not found</p>
           <button
@@ -236,7 +236,7 @@ export default function ProductSellersPage() {
     product.category === "HerbsAndSpices" ? "Herbs & Spices" : product.category;
 
   return (
-    <div className="min-h-screen bg-[#f0f7f0]">
+    <div className="min-h-screen bg-[#f9fafb]">
       <div className="px-4">
       <div className="max-w-7xl mx-auto py-6">
         {/* Back button */}
