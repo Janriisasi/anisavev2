@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import supabase from "../lib/supabase";
 import { useAuth } from "../contexts/authContext";
 
@@ -14,20 +14,16 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
-  //redirect if already logged in
+  // FIX 2: Only redirect if already logged in — do NOT redirect during OTP send
   useEffect(() => {
     if (user) {
-      //redirect to the page they tried to visit or homepage
       const from = location.state?.from?.pathname || "/homepage";
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -35,57 +31,60 @@ function Login() {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    // FIX 2: Show a persistent loading toast while sending — user stays on login page
+    const sendingToast = toast.loading("Checking credentials...");
+
     try {
-      //attempt to sign in
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Step 1: Verify email + password credentials
+      const { error } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       });
 
       if (error) {
-        toast.error(error.message);
+        toast.dismiss(sendingToast);
+        toast.error("Incorrect email or password.");
         return;
       }
 
-      //check if profile exists
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, username, full_name, avatar_url")
-        .eq("id", data.user.id)
-        .single();
+      // Step 2: Sign them out immediately — complete login only after OTP
+      await supabase.auth.signOut();
 
-      // if no profile exists, create one
-      if (profileError) {
-        const { error: createError } = await supabase.from("profiles").insert([
-          {
-            id: data.user.id,
-            username: data.user.email.split("@")[0],
-            full_name: "",
-            avatar_url: "",
-            address: "",
-            contact_number: "",
-            updated_at: new Date().toISOString(),
-          },
-        ]);
+      // Update toast to show sending state
+      toast.loading("Sending verification code...", { id: sendingToast });
 
-        if (createError) {
-          console.error("Error creating profile:", createError);
-          toast.error("Error creating profile. Please contact support.");
-          return;
-        }
+      // Step 3: Send Email OTP
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: form.email,
+        options: { shouldCreateUser: false },
+      });
+
+      if (otpError) {
+        toast.dismiss(sendingToast);
+        toast.error("Could not send verification code. Please try again.");
+        return;
       }
 
-      toast.success("Login successful!");
-      navigate("/homepage");
+      // Step 4: Dismiss loader, show success, THEN navigate
+      toast.dismiss(sendingToast);
+      toast.success("Code sent! Check your email.");
+
+      // Small delay so user sees the success toast before navigating
+      setTimeout(() => {
+        navigate("/verify-otp", {
+          state: { email: form.email },
+          replace: false,
+        });
+      }, 800);
+
     } catch (error) {
+      toast.dismiss(sendingToast);
       toast.error("An unexpected error occurred");
       console.error("Login error:", error);
     } finally {
@@ -102,18 +101,19 @@ function Login() {
           : `url(/images/bg_login.png)`,
       }}
     >
-      <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-11 rounded-2xl shadow-xl w-full max-w-md h-full border border-white/20 relative">
+      <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-11 rounded-2xl shadow-xl w-full max-w-md border border-white/20 relative">
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-black">
             Welcome Back
           </h2>
           <p className="text-gray-600 mt-2 text-sm sm:text-base">
-            Log in your account now!
+            Log in to your account
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
-          <div className="space-y-1 sm:space-y-1">
+          {/* Email */}
+          <div className="space-y-1">
             <label
               htmlFor="email"
               className="block text-xs sm:text-sm font-medium text-gray-700"
@@ -131,7 +131,8 @@ function Login() {
             />
           </div>
 
-          <div className="space-y-1 sm:space-y-1">
+          {/* Password — FIX 1: label only, no forgot link here */}
+          <div className="space-y-1">
             <label
               htmlFor="password"
               className="block text-xs sm:text-sm font-medium text-gray-700"
@@ -161,14 +162,32 @@ function Login() {
                 )}
               </button>
             </div>
+
+            {/* FIX 1: Forgot password link BELOW the password input */}
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-xs sm:text-sm text-green-800 hover:text-green-900 font-medium transition-colors"
+              >
+                Forgot password?
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 sm:py-2 px-4 text-sm sm:text-base bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200"
+            className="w-full py-2 sm:py-2.5 px-4 text-sm sm:text-base bg-green-800 hover:bg-green-900 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? "Logging In..." : "Log in"}
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Please wait...
+              </>
+            ) : (
+              "Log in"
+            )}
           </button>
         </form>
 

@@ -19,6 +19,7 @@ import {
   Package,
   UserPlus,
   Activity,
+  RotateCw,
   TrendingUp,
   Star,
   MapPin,
@@ -82,6 +83,7 @@ export default function AdminDashboard() {
     "lawrencefrankmantiquilla15@gmail.com",
     "catajoannahmarie@gmail.com",
     "paolojohnlatorilla711@gmail.com",
+    "janreylecita@gmail.com"
   ];
 
   useEffect(() => {
@@ -701,7 +703,7 @@ export default function AdminDashboard() {
                     : "text-gray-600 hover:text-green-700 hover:bg-gray-200/50"
                 }`}
               >
-                <Activity className="w-4 h-4" />
+                <RotateCw className="w-4 h-4" />
                 <span className="hidden sm:inline">Overview</span>
               </button>
               <button
@@ -722,7 +724,7 @@ export default function AdminDashboard() {
               className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-full transition-colors flex-shrink-0"
               title="Refresh Data"
             >
-              <Activity
+              <RotateCw
                 className={`w-5 h-5 ${refreshing ? "animate-spin text-green-600" : ""}`}
               />
             </button>

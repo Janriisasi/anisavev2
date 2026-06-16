@@ -17,12 +17,17 @@ function AppContent() {
   const { user, loading } = useAuth();
   const location = useLocation();
   const { showTutorial, closeTutorial } = useTutorialContext();
+
+  // All routes where Navbar should NEVER appear — even if a session exists
   const isPublicPage = [
     "/landing",
     "/login",
     "/signup",
     "/privacy",
     "/terms",
+    "/verify-otp",       // OTP step — no session yet
+    "/forgot-password",  // No session
+    "/reset-password",   // Supabase creates a temp session here — hide navbar anyway
   ].includes(location.pathname);
 
   if (loading && !isPublicPage) {
@@ -31,7 +36,8 @@ function AppContent() {
 
   return (
     <>
-      {user && <Navbar />}
+      {/* Only show Navbar when logged in AND not on a public/auth page */}
+      {user && !isPublicPage && <Navbar />}
       <Routes />
       <TutorialOverlay isOpen={showTutorial} onClose={closeTutorial} />
       <Toaster

@@ -7,6 +7,9 @@ import Loader from './components/loader';
 const LandingPage    = lazy(() => import('./pages/landingPage'));
 const Login          = lazy(() => import('./pages/loginPage'));
 const SignUp         = lazy(() => import('./pages/signupPage'));
+const VerifyOtp      = lazy(() => import('./pages/verifyOtpPage'));       // NEW
+const ForgotPassword = lazy(() => import('./pages/forgotPasswordPage'));  // NEW
+const ResetPassword  = lazy(() => import('./pages/resetPasswordPage'));   // NEW
 const Homepage       = lazy(() => import('./pages/homepage'));
 const Profile        = lazy(() => import('./pages/profile'));
 const Categories     = lazy(() => import('./pages/categoriesPage'));
@@ -21,7 +24,6 @@ const CartPage       = lazy(() => import('./pages/cartPage'));
 export default function Routes() {
   const { user } = useAuth();
 
-  // Check inside the component so it runs after the window is fully ready
   const isTauri = typeof window !== 'undefined' && (
     Boolean(window.__TAURI__) ||
     Boolean(window.__TAURI_INTERNALS__) ||
@@ -31,7 +33,7 @@ export default function Routes() {
   return (
     <Suspense fallback={<Loader />}>
       <RouterRoutes>
-        {/* default route — skip landing page on Tauri app */}
+        {/* Default route */}
         <Route
           path="/"
           element={
@@ -39,7 +41,7 @@ export default function Routes() {
           }
         />
 
-        {/* public routes */}
+        {/* Public routes */}
         <Route
           path="/landing"
           element={
@@ -50,23 +52,27 @@ export default function Routes() {
                 : <LandingPage />
           }
         />
-        <Route path="/login"   element={user ? <Navigate to="/homepage" replace /> : <Login />} />
-        <Route path="/signup"  element={user ? <Navigate to="/homepage" replace /> : <SignUp />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms"   element={<TermsOfService />} />
+        <Route path="/login"          element={user ? <Navigate to="/homepage" replace /> : <Login />} />
+        <Route path="/signup"         element={user ? <Navigate to="/homepage" replace /> : <SignUp />} />
 
-        {/* protected routes */}
-        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        {/* Auth flow routes — accessible without a session */}
+        <Route path="/verify-otp"     element={<VerifyOtp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        <Route path="/privacy"        element={<PrivacyPolicy />} />
+        <Route path="/terms"          element={<TermsOfService />} />
+
+        {/* Protected routes */}
+        <Route path="/admin"    element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/homepage" element={<ProtectedRoute><Homepage /></ProtectedRoute>} />
         <Route path="/profile"  element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
+        <Route path="/categories"     element={<ProtectedRoute><Categories /></ProtectedRoute>} />
         <Route path="/categories/:name" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
         <Route path="/product/:productName/sellers" element={<ProtectedRoute><ProductSellers /></ProtectedRoute>} />
         <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
-        <Route path="/farmer/:id" element={<ProtectedRoute><Farmer /></ProtectedRoute>} />
-
-        {/* Cart page */}
-        <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+        <Route path="/farmer/:id"     element={<ProtectedRoute><Farmer /></ProtectedRoute>} />
+        <Route path="/cart"     element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
 
         {/* 404 */}
         <Route path="*" element={
