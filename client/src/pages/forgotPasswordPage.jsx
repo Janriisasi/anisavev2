@@ -26,10 +26,13 @@ function ForgotPassword() {
 
     setLoading(true);
     try {
+      // Always redirect to the Vercel deployment.
+      // That page is a thin bridge: if running in a plain browser (not Tauri),
+      // it immediately forwards to anisave://reset-password?token_hash=...&type=recovery
+      // which Android intercepts and opens the app.
+      // Works whether the email is opened on the emulator, a real device, or desktop.
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        // This URL must be added to your Supabase "Redirect URLs" allowlist
-        // in: Auth → URL Configuration → Redirect URLs
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: "https://anisavedevelopment.vercel.app/reset-password",
       });
 
       if (error) {
@@ -37,7 +40,6 @@ function ForgotPassword() {
         return;
       }
 
-      // Always show success — don't reveal if email exists (security best practice)
       setSent(true);
     } catch (err) {
       toast.error("Something went wrong. Please try again.");
@@ -59,14 +61,12 @@ function ForgotPassword() {
       <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-11 rounded-2xl shadow-xl w-full max-w-md border border-white/20">
         {!sent ? (
           <>
-            {/* Icon */}
             <div className="flex justify-center mb-4">
               <div className="bg-green-100 p-4 rounded-full">
                 <KeyRound className="w-8 h-8 text-green-700" />
               </div>
             </div>
 
-            {/* Header */}
             <div className="text-center mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold text-black">
                 Forgot Password?
@@ -76,7 +76,6 @@ function ForgotPassword() {
               </p>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
               <div className="space-y-1">
                 <label
@@ -105,7 +104,6 @@ function ForgotPassword() {
               </button>
             </form>
 
-            {/* Back to login */}
             <button
               onClick={() => navigate("/login")}
               className="flex items-center justify-center gap-2 w-full mt-5 text-gray-500 hover:text-green-800 text-xs sm:text-sm font-medium transition-colors"
@@ -115,7 +113,6 @@ function ForgotPassword() {
             </button>
           </>
         ) : (
-          /* Success State */
           <>
             <div className="flex justify-center mb-4">
               <div className="bg-green-100 p-4 rounded-full">

@@ -156,15 +156,21 @@ export function useAIAdvisor({ myProducts, prices }) {
   // ── Auto-scroll chat only when user sends a message ──────────────────────────
   useEffect(() => {
     if (showChat && chatHistory.length > 0) {
-      // Only scroll if the last message is from the user (not AI response)
       const lastMsg = chatHistory[chatHistory.length - 1];
       if (lastMsg && lastMsg.role === "user") {
         setTimeout(() => {
-          chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          // Scroll inside the chat container only — never the page
+          const el = chatEndRef.current;
+          if (el) {
+            const container = el.closest(".overflow-y-auto");
+            if (container) {
+              container.scrollTop = container.scrollHeight;
+            }
+          }
         }, 50);
       }
     }
-  }, [showChat]);
+  }, [showChat, chatHistory]);
 
   // ── Lazy data helpers ───────────────────────────────────────────────────────
   const ensureTrendData = useCallback(async () => {

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Mail, RefreshCw } from "lucide-react";
 import supabase from "../lib/supabase";
+import { releaseAuthState } from "../lib/authFlowGuard";
 
 function VerifyOtp() {
   const navigate = useNavigate();
@@ -15,20 +16,16 @@ function VerifyOtp() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   const inputRefs = useRef([]);
 
-  // Email is passed via navigation state from loginPage
   const email = location.state?.email;
 
   useEffect(() => {
-    // If no email in state, redirect back to login
     if (!email) {
       navigate("/login", { replace: true });
       return;
     }
-    // Auto-focus first input
     inputRefs.current[0]?.focus();
   }, [email, navigate]);
 
-  // Countdown timer for resend
   useEffect(() => {
     if (countdown <= 0) {
       setCanResend(true);
@@ -44,21 +41,25 @@ function VerifyOtp() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Safety net: if the user abandons this page without verifying
+  // (closes app, navigates back manually), release the guard so the
+  // app doesn't get stuck thinking a login is permanently in-progress.
+  useEffect(() => {
+    return () => releaseAuthState();
+  }, []);
+
   const handleChange = (index, value) => {
-    // Only allow single digit
     const digit = value.replace(/\D/g, "").slice(-1);
     const newOtp = [...otp];
     newOtp[index] = digit;
     setOtp(newOtp);
 
-    // Auto-advance to next input
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleKeyDown = (index, e) => {
-    // On backspace with empty input, go to previous
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -73,7 +74,6 @@ function VerifyOtp() {
       if (i < 6) newOtp[i] = digit;
     });
     setOtp(newOtp);
-    // Focus last filled input
     const lastIndex = Math.min(pasted.length, 5);
     inputRefs.current[lastIndex]?.focus();
   };
@@ -95,13 +95,23 @@ function VerifyOtp() {
 
       if (error) {
         toast.error("Invalid or expired code. Please try again.");
-        // Clear OTP inputs
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         return;
       }
 
-      // Check/create profile after OTP verification (same logic as loginPage)
+      // SUCCESS — release the guard now. This is the ONLY point where
+      // AuthContext is allowed to pick up the session again, so `user`
+      // becomes truthy right as we navigate to /homepage. No earlier
+      // page (login, OTP) ever saw a flash of being logged in.
+      releaseAuthState();
+
+      // Manually sync AuthContext immediately rather than waiting on
+      // the next onAuthStateChange tick — keeps things snappy on
+      // slower Tauri/Android webviews too.
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Check/create profile after OTP verification
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, username, full_name, avatar_url")
@@ -127,6 +137,7 @@ function VerifyOtp() {
     } catch (err) {
       toast.error("Something went wrong. Please try again.");
       console.error("OTP verify error:", err);
+      releaseAuthState();
     } finally {
       setLoading(false);
     }

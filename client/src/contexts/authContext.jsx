@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import supabase from "../lib/supabase";
+import { isAuthStateSuppressed } from "../lib/authFlowGuard";
 
 export const AuthContext = createContext({});
 
@@ -27,6 +28,13 @@ export function AuthProvider({ children }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      // While the login page is mid-flow (verifying password, about to
+      // sign out + send OTP), ignore this event entirely. This prevents
+      // `user` from ever becoming truthy during that window, which is
+      // what was causing the flash to homepage/landing before /verify-otp.
+      if (isAuthStateSuppressed()) {
+        return;
+      }
       setUser(session?.user ?? null);
     });
 

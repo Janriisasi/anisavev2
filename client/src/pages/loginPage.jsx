@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import supabase from "../lib/supabase";
 import { useAuth } from "../contexts/authContext";
+import { suppressAuthState, releaseAuthState } from "../lib/authFlowGuard";
 
 function Login() {
   const { user } = useAuth();
@@ -14,7 +15,9 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
-  // FIX 2: Only redirect if already logged in — do NOT redirect during OTP send
+  // Only redirect if a REAL completed session exists (post-OTP).
+  // Because of the authFlowGuard, `user` will stay null throughout the
+  // password-check + OTP-send steps below, so this won't fire prematurely.
   useEffect(() => {
     if (user) {
       const from = location.state?.from?.pathname || "/homepage";
@@ -28,6 +31,12 @@ function Login() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Safety net: always release the guard if this page unmounts mid-flow
+  // (e.g. user closes tab or navigates away manually before OTP step).
+  useEffect(() => {
+    return () => releaseAuthState();
+  }, []);
+
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -37,8 +46,13 @@ function Login() {
     e.preventDefault();
     setLoading(true);
 
-    // FIX 2: Show a persistent loading toast while sending — user stays on login page
     const sendingToast = toast.loading("Checking credentials...");
+
+    // Turn the guard ON before triggering any Supabase auth call.
+    // This stops AuthContext from reacting to the SIGNED_IN event that
+    // signInWithPassword() is about to fire — so `user` stays null and
+    // nothing redirects/flashes to homepage or landing.
+    suppressAuthState();
 
     try {
       // Step 1: Verify email + password credentials
@@ -53,10 +67,10 @@ function Login() {
         return;
       }
 
-      // Step 2: Sign them out immediately — complete login only after OTP
+      // Step 2: Sign them out immediately — guard is still ON, so this
+      // SIGNED_OUT event is also ignored, no flicker either direction.
       await supabase.auth.signOut();
 
-      // Update toast to show sending state
       toast.loading("Sending verification code...", { id: sendingToast });
 
       // Step 3: Send Email OTP
@@ -71,22 +85,22 @@ function Login() {
         return;
       }
 
-      // Step 4: Dismiss loader, show success, THEN navigate
       toast.dismiss(sendingToast);
       toast.success("Code sent! Check your email.");
 
-      // Small delay so user sees the success toast before navigating
-      setTimeout(() => {
-        navigate("/verify-otp", {
-          state: { email: form.email },
-          replace: false,
-        });
-      }, 800);
-
+      // Navigate to OTP screen. Guard stays ON until verifyOtpPage
+      // explicitly releases it after a SUCCESSFUL verification —
+      // so even on slow Tauri/Android webviews there is no window where
+      // a stale session can leak through to protected routes.
+      navigate("/verify-otp", {
+        state: { email: form.email },
+        replace: true, // replace so back button doesn't return to a half-finished login
+      });
     } catch (error) {
       toast.dismiss(sendingToast);
       toast.error("An unexpected error occurred");
       console.error("Login error:", error);
+      releaseAuthState(); // release on unexpected failure so app isn't stuck
     } finally {
       setLoading(false);
     }
@@ -131,7 +145,7 @@ function Login() {
             />
           </div>
 
-          {/* Password — FIX 1: label only, no forgot link here */}
+          {/* Password */}
           <div className="space-y-1">
             <label
               htmlFor="password"
@@ -163,7 +177,7 @@ function Login() {
               </button>
             </div>
 
-            {/* FIX 1: Forgot password link BELOW the password input */}
+            {/* Forgot password link below the input */}
             <div className="flex justify-end pt-1">
               <button
                 type="button"

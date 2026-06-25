@@ -299,7 +299,7 @@ export default function Navbar() {
               {/* Logout button */}
               <button
                 onClick={handleLogout}
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-green-700 hover:bg-red-500 transition-colors flex-shrink-0"
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-red-600 hover:bg-red-700 transition-colors flex-shrink-0"
                 title="Logout"
               >
                 <LogOut className="w-4 h-4 text-white" />

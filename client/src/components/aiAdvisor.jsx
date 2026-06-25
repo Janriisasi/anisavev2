@@ -42,8 +42,8 @@ const SlideshowLoader = memo(({ promptKey }) => {
 
   return (
     <div className="flex items-start gap-3 pb-2 px-3">
-      <div className="w-9 h-9 rounded-full bg-green-700 flex-shrink-0 flex items-center justify-center text-white mt-0.5">
-        <img src="/images/ai_logo2.png" alt="Bot" className="w-5 h-5" />
+      <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white mt-0.5">
+        <img src="/images/ai_logo.png" alt="Bot" className="w-5 h-5" />
       </div>
       <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex-1 min-h-[44px] flex items-center">
         <AnimatePresence mode="wait">
@@ -571,8 +571,8 @@ const ChatBubble = memo(({ msg }) => {
       transition={{ duration: 0.25 }}
     >
       {!isUser && (
-        <div className="w-9 h-9 rounded-full bg-green-700 flex-shrink-0 flex items-center justify-center text-white mb-0.5">
-          <img src="/images/ai_logo2.png" alt="Bot" className="w-5 h-5" />
+        <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white mb-0.5">
+          <img src="/images/ai_logo.png" alt="Bot" className="w-5 h-5" />
         </div>
       )}
       <div
@@ -649,8 +649,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
         {/* Top row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-3xl bg-green-700 flex items-center justify-center">
-              <img src="/images/ai_logo2.png" alt="Bot" className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-3xl flex items-center justify-center">
+              <img src="/images/ai_logo.png" alt="Bot" className="w-7 h-7" />
             </div>
             <div>
               <h3 className="text-green-700 font-bold text-base leading-tight">

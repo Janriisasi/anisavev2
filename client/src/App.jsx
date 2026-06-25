@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/authContext";
 import { useAuth } from "./hooks/useAuth";
 import { CartProvider } from "./contexts/cartContext";
@@ -12,10 +12,13 @@ import Routes from "./Routes";
 import Loader from "./components/loader";
 import TutorialOverlay from "./components/tutorialOverlay";
 import { Toaster } from "react-hot-toast";
+import { useEffect } from "react";
+import { onOpenUrl, getCurrent } from "@tauri-apps/plugin-deep-link";
 
 function AppContent() {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { showTutorial, closeTutorial } = useTutorialContext();
 
   // All routes where Navbar should NEVER appear — even if a session exists
@@ -25,10 +28,47 @@ function AppContent() {
     "/signup",
     "/privacy",
     "/terms",
-    "/verify-otp",       // OTP step — no session yet
-    "/forgot-password",  // No session
-    "/reset-password",   // Supabase creates a temp session here — hide navbar anyway
+    "/verify-otp",        // OTP step — no session yet
+    "/forgot-password",   // No session
+    "/reset-password",    // Supabase creates a temp session here — hide navbar anyway
   ].includes(location.pathname);
+
+  useEffect(() => {
+    const isTauri =
+      typeof window !== "undefined" &&
+      (Boolean(window.__TAURI__) || Boolean(window.__TAURI_INTERNALS__));
+
+    if (!isTauri) return;
+
+    const handleUrl = (url) => {
+      if (!url) return;
+      if (url.includes("reset-password")) {
+        // Normalise anisave:// → https://placeholder.com/ so URL() can parse it
+        const parsed = new URL(url.replace("anisave://", "https://placeholder.com/"));
+
+        // The bridge converts hash fragments to query params, so both styles
+        // (token_hash=... and access_token=...) arrive as search params here.
+        // Just forward the whole query string to the in-app route.
+        navigate(`/reset-password${parsed.search}`, { replace: true });
+      }
+    };
+
+    // Case 1: App was CLOSED and opened via deep link — grab the launch URL
+    // getCurrent() returns string[] | null (not a single string)
+    getCurrent().then((urls) => {
+      if (urls?.[0]) handleUrl(urls[0]);
+    }).catch(() => {});
+
+    // Case 2: App was ALREADY OPEN when deep link fired
+    let unlisten;
+    onOpenUrl((urls) => {
+      handleUrl(urls[0]);
+    }).then((fn) => {
+      unlisten = fn;
+    });
+
+    return () => unlisten?.();
+  }, [navigate]);
 
   if (loading && !isPublicPage) {
     return <Loader />;

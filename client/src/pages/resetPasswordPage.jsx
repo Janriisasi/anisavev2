@@ -4,11 +4,21 @@ import toast from "react-hot-toast";
 import { Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react";
 import supabase from "../lib/supabase";
 
-// FIX 3: This page renders WITHOUT the Navbar by handling its own full-screen layout.
-// The Navbar in App.jsx only renders when `user` is truthy.
-// On this page, the PASSWORD_RECOVERY session is temporary and doesn't set `user`
-// in AuthContext the same way — so Navbar won't appear. But we also add a
-// dedicated wrapper to guarantee no layout bleed from parent routes.
+// FIXED: PageWrapper is now defined OUTSIDE the component, at module scope.
+function PageWrapper({ isMobile, children }) {
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: isMobile
+          ? `url(/images/bg_mobile.png)`
+          : `url(/images/bg_login.png)`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 function ResetPassword() {
   const navigate = useNavigate();
@@ -27,26 +37,83 @@ function ResetPassword() {
   }, []);
 
   useEffect(() => {
-    // Listen for Supabase PASSWORD_RECOVERY event fired when the reset link is clicked
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "PASSWORD_RECOVERY" && session) {
-          setValidSession(true);
-        }
-        setCheckingSession(false);
+    // If we're running in a plain browser (not inside Tauri),
+    // this page is acting as a redirect bridge for the email link.
+    // Supabase emails can deliver tokens two ways:
+    //   - Hash fragment: /reset-password#access_token=xxx&type=recovery  (older style)
+    //   - Query string:  /reset-password?token_hash=xxx&type=recovery    (PKCE style)
+    // Either way, forward everything into the custom scheme so Android
+    // intercepts it and opens the app.
+    const isTauri =
+      Boolean(window.__TAURI__) || Boolean(window.__TAURI_INTERNALS__);
+
+    if (!isTauri) {
+      const hash = window.location.hash;   // e.g. "#access_token=...&type=recovery"
+      const search = window.location.search; // e.g. "?token_hash=...&type=recovery"
+
+      if (hash) {
+        // Convert hash to query string so the app can read it via URLSearchParams
+        // anisave://reset-password?access_token=...&type=recovery
+        const params = hash.startsWith("#") ? hash.slice(1) : hash;
+        window.location.href = `anisave://reset-password?${params}`;
+        return;
       }
-    );
 
-    // Fallback for page reloads
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setValidSession(true);
-      setCheckingSession(false);
-    });
+      if (search) {
+        // anisave://reset-password?token_hash=...&type=recovery
+        window.location.href = `anisave://reset-password${search}`;
+        return;
+      }
 
-    return () => subscription.unsubscribe();
+      // No token at all — nothing to forward, fall through to session check
+    }
+
+    // --- From here down: we're inside the Tauri app ---
+
+    // If the deep link delivered an access_token (hash-style flow), Supabase won't
+    // auto-detect it inside Tauri. Set the session manually from URL params.
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const tokenHash = params.get("token_hash");
+    const type = params.get("type");
+
+    if (accessToken && refreshToken) {
+      // Hash-style: access_token + refresh_token directly in URL
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ data: { session } }) => {
+          if (session) setValidSession(true);
+          setCheckingSession(false);
+        })
+        .catch(() => setCheckingSession(false));
+    } else if (tokenHash && type === "recovery") {
+      // PKCE-style: exchange token_hash for a session
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" })
+        .then(({ data: { session } }) => {
+          if (session) setValidSession(true);
+          setCheckingSession(false);
+        })
+        .catch(() => setCheckingSession(false));
+    } else {
+      // Fallback: listen for auth state change (PASSWORD_RECOVERY or SIGNED_IN)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
+            setValidSession(true);
+          }
+          setCheckingSession(false);
+        }
+      );
+
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) setValidSession(true);
+        setCheckingSession(false);
+      });
+
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
-  // Password requirements — same as signup
   const hasMinLength = form.password.length >= 6;
   const hasUpperCase = /[A-Z]/.test(form.password);
   const hasLowerCase = /[a-z]/.test(form.password);
@@ -87,24 +154,9 @@ function ResetPassword() {
     }
   };
 
-  // Shared background wrapper — same as login/verify pages, no Navbar
-  const PageWrapper = ({ children }) => (
-    <div
-      className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
-      style={{
-        backgroundImage: isMobile
-          ? `url(/images/bg_mobile.png)`
-          : `url(/images/bg_login.png)`,
-      }}
-    >
-      {children}
-    </div>
-  );
-
-  // Loading spinner while checking session
   if (checkingSession) {
     return (
-      <PageWrapper>
+      <PageWrapper isMobile={isMobile}>
         <div className="bg-white/90 backdrop-blur-sm p-10 rounded-2xl shadow-xl flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-green-700 animate-spin" />
           <p className="text-gray-500 text-sm">Verifying your link...</p>
@@ -113,10 +165,9 @@ function ResetPassword() {
     );
   }
 
-  // Expired or invalid link
   if (!validSession) {
     return (
-      <PageWrapper>
+      <PageWrapper isMobile={isMobile}>
         <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-11 rounded-2xl shadow-xl w-full max-w-md border border-white/20 text-center">
           <div className="flex justify-center mb-4">
             <div className="bg-red-100 p-4 rounded-full">
@@ -140,9 +191,8 @@ function ResetPassword() {
     );
   }
 
-  // Main reset form
   return (
-    <PageWrapper>
+    <PageWrapper isMobile={isMobile}>
       <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-11 rounded-2xl shadow-xl w-full max-w-md border border-white/20">
         {/* Icon */}
         <div className="flex justify-center mb-4">

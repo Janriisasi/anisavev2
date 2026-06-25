@@ -618,7 +618,7 @@ export default function LandingPage() {
                   ].map((item) => (
                     <li key={item}>
                       <a
-                        href="#"
+                        href="/signup"
                         className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
                       >
                         {item}
@@ -636,7 +636,6 @@ export default function LandingPage() {
                 <ul className="space-y-3">
                   {[
                     { label: "About Us", href: "#about" },
-                    { label: "Careers", href: "#" },
                     { label: "Privacy Policy", href: "/privacy" },
                     { label: "Terms of Service", href: "/terms" },
                   ].map((item) => (

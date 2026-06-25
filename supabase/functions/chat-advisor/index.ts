@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -25,9 +24,6 @@ Deno.serve(async (req: Request) => {
       throw new Error("Invalid systemContext");
     }
 
-    // Support two modes:
-    // 1. Legacy quick-prompt mode: { systemContext, userText }
-    // 2. Multi-turn chat mode: { systemContext, messages }
     let rawMessages: { role: string; content: string }[] = [];
 
     if (messages && Array.isArray(messages) && messages.length > 0) {
@@ -40,7 +36,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Convert to Gemini format
     const contents = rawMessages.map((msg) => ({
       role: msg.role === "assistant" ? "model" : "user",
       parts: [{ text: msg.content }],
@@ -53,9 +48,18 @@ Deno.serve(async (req: Request) => {
       contents,
       generationConfig: {
         temperature: 0.5,
-        maxOutputTokens: 2000,
+        // ✅ FIX 1: Raised from 2000 — 2.5 Flash uses tokens for thinking
+        // on top of output, so 2000 was too low and caused truncation/500s
+        maxOutputTokens: 8192,
         topP: 0.9,
         topK: 40,
+        // ✅ FIX 2: Disable thinking entirely for this use case.
+        // Gemini 2.5 Flash thinks by default; for short farming advice
+        // responses, thinking adds latency and token cost with no benefit.
+        // Set thinkingBudget: -1 to re-enable if you want thinking back.
+        thinkingConfig: {
+          thinkingBudget: 0,
+        },
       },
     };
 
@@ -64,78 +68,56 @@ Deno.serve(async (req: Request) => {
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(geminiPayload),
       },
     );
+
     if (!response.ok) {
+      // ✅ FIX 3: Log the full Gemini error body so you can debug future issues
       const errorText = await response.text();
+      console.error(`Gemini HTTP ${response.status}:`, errorText);
       throw new Error(`Gemini API error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
     console.timeEnd("gemini");
 
-    // Validate Gemini response structure
     if (!data.candidates || data.candidates.length === 0) {
+      // ✅ FIX 4: Check for promptFeedback block — Gemini returns this
+      // instead of candidates when the prompt is blocked by safety filters
+      const blocked = data.promptFeedback?.blockReason;
       throw new Error(
-        "Gemini API returned an empty response candidates array.",
+        blocked
+          ? `Gemini blocked the prompt: ${blocked}`
+          : "Gemini API returned an empty candidates array.",
       );
     }
-
-    // DIAGNOSTIC LOGGING
-    console.log("🔍 GEMINI RESPONSE DEBUG:");
-    console.log("Full response data:", JSON.stringify(data, null, 2));
-    console.log("Candidate count:", data.candidates.length);
-    console.log(
-      "First candidate:",
-      JSON.stringify(data.candidates[0], null, 2),
-    );
 
     const candidate = data.candidates[0];
     const finishReason = candidate?.finishReason;
-    console.log("⚠️ FINISH REASON:", finishReason);
-    if (finishReason !== "STOP") {
-      console.warn(
-        "⚠️ Response may be incomplete! Finish reason:",
-        finishReason,
+
+    // ✅ FIX 5: Treat MAX_TOKENS as a hard error, not a warning.
+    // Before this fix, a truncated response was silently returned to the
+    // frontend, causing broken/cut-off Tagalog text.
+    if (finishReason === "MAX_TOKENS") {
+      throw new Error(
+        "Gemini response was cut off (MAX_TOKENS). Increase maxOutputTokens or shorten the system context.",
       );
     }
 
-    console.log("📦 PARTS ARRAY DEBUG:");
-    console.log("Number of parts:", candidate?.content?.parts?.length);
-    candidate?.content?.parts?.forEach((part: any, index: number) => {
-      console.log(`Part ${index}:`);
-      console.log("  Type:", typeof part.text);
-      console.log("  Length:", part.text?.length);
-      console.log("  Content (first 200 chars):", part.text?.substring(0, 200));
-      console.log(
-        "  Content (last 100 chars):",
-        part.text?.substring(Math.max(0, (part.text?.length || 1) - 100)),
-      );
-    });
+    if (finishReason !== "STOP") {
+      console.warn("Unexpected finishReason:", finishReason);
+    }
 
     const generatedText = candidate?.content?.parts
       ?.map((part: any) => part.text || "")
       .join("");
 
-    console.log("✅ Extracted text length:", generatedText?.length);
-    console.log(
-      "✅ Extracted text (first 500 chars):",
-      generatedText?.substring(0, 500),
-    );
-    console.log(
-      "✅ Extracted text (last 200 chars):",
-      generatedText?.substring(Math.max(0, (generatedText?.length || 1) - 200)),
-    );
-
     if (typeof generatedText !== "string" || !generatedText) {
       throw new Error("Failed to extract text from Gemini response.");
     }
 
-    // Convert back to format expected by frontend (OpenAI-style)
     const formattedResponse = {
       choices: [
         {
@@ -146,22 +128,12 @@ Deno.serve(async (req: Request) => {
       ],
     };
 
-    console.log("✅ Final response being sent to frontend:");
-    console.log(
-      "Content length:",
-      formattedResponse.choices[0].message.content.length,
-    );
-    console.log(
-      "Content (first 500 chars):",
-      formattedResponse.choices[0].message.content.substring(0, 500),
-    );
-
     return new Response(JSON.stringify(formattedResponse), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error(error);
+    console.error("chat-advisor error:", (error as Error).message);
     return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
