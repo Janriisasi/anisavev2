@@ -35,6 +35,15 @@ export function AuthProvider({ children }) {
       if (isAuthStateSuppressed()) {
         return;
       }
+
+      // On the reset-password page, verifyOtp() creates a temporary session
+      // so the user can call updateUser(). We must NOT propagate that session
+      // to the global auth state — otherwise the app sees a logged-in user
+      // and may redirect away before the password form is submitted.
+      if (window.location.pathname === "/reset-password") {
+        return;
+      }
+
       setUser(session?.user ?? null);
     });
 
