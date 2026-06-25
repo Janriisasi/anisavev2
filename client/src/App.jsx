@@ -43,12 +43,7 @@ function AppContent() {
     const handleUrl = (url) => {
       if (!url) return;
       if (url.includes("reset-password")) {
-        // Normalise anisave:// → https://placeholder.com/ so URL() can parse it
         const parsed = new URL(url.replace("anisave://", "https://placeholder.com/"));
-
-        // The bridge converts hash fragments to query params, so both styles
-        // (token_hash=... and access_token=...) arrive as search params here.
-        // Just forward the whole query string to the in-app route.
         navigate(`/reset-password${parsed.search}`, { replace: true });
       }
     };
@@ -79,7 +74,9 @@ function AppContent() {
       {/* Only show Navbar when logged in AND not on a public/auth page */}
       {user && !isPublicPage && <Navbar />}
       <Routes />
-      <TutorialOverlay isOpen={showTutorial} onClose={closeTutorial} />
+      {/* Never show tutorial on public/auth pages — reset-password creates a
+          temporary session that would otherwise trigger it */}
+      {!isPublicPage && <TutorialOverlay isOpen={showTutorial} onClose={closeTutorial} />}
       <Toaster
         position="center-top"
         toastOptions={{

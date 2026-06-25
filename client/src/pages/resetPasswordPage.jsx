@@ -37,41 +37,37 @@ function ResetPassword() {
   }, []);
 
   useEffect(() => {
-    // If we're running in a plain browser (not inside Tauri),
-    // this page is acting as a redirect bridge for the email link.
-    // Supabase emails can deliver tokens two ways:
-    //   - Hash fragment: /reset-password#access_token=xxx&type=recovery  (older style)
-    //   - Query string:  /reset-password?token_hash=xxx&type=recovery    (PKCE style)
-    // Either way, forward everything into the custom scheme so Android
-    // intercepts it and opens the app.
     const isTauri =
       Boolean(window.__TAURI__) || Boolean(window.__TAURI_INTERNALS__);
 
     if (!isTauri) {
-      const hash = window.location.hash;   // e.g. "#access_token=...&type=recovery"
-      const search = window.location.search; // e.g. "?token_hash=...&type=recovery"
+      // ── Browser bridge ──────────────────────────────────────────────────
+      // Supabase emails deliver tokens two ways:
+      //   Hash:   /reset-password#access_token=xxx&type=recovery  (older flow)
+      //   Search: /reset-password?token_hash=xxx&type=recovery    (PKCE flow)
+      // Forward whichever is present so Android opens the app via deep link.
+      const hash = window.location.hash;     // e.g. '#access_token=...'
+      const search = window.location.search; // e.g. '?token_hash=...'
 
-      if (hash) {
-        // Convert hash to query string so the app can read it via URLSearchParams
-        // anisave://reset-password?access_token=...&type=recovery
-        const params = hash.startsWith("#") ? hash.slice(1) : hash;
-        window.location.href = `anisave://reset-password?${params}`;
+      if (hash && hash.length > 1) {
+        // Convert #fragment → ?query so the app can read it via URLSearchParams
+        window.location.href = `anisave://reset-password?${hash.slice(1)}`;
+        // Keep checkingSession=true — tab shows "Opening app..." and stays there
         return;
       }
 
       if (search) {
-        // anisave://reset-password?token_hash=...&type=recovery
         window.location.href = `anisave://reset-password${search}`;
         return;
       }
 
-      // No token at all — nothing to forward, fall through to session check
+      // No token in URL — nothing to bridge, stop the spinner
+      setCheckingSession(false);
+      return;
     }
 
-    // --- From here down: we're inside the Tauri app ---
-
-    // If the deep link delivered an access_token (hash-style flow), Supabase won't
-    // auto-detect it inside Tauri. Set the session manually from URL params.
+    // ── Inside Tauri app ──────────────────────────────────────────────────
+    // Tokens arrive as search params (App.jsx deep link handler puts them there).
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
@@ -79,7 +75,7 @@ function ResetPassword() {
     const type = params.get("type");
 
     if (accessToken && refreshToken) {
-      // Hash-style: access_token + refresh_token directly in URL
+      // Hash-style: set session directly from tokens
       supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
         .then(({ data: { session } }) => {
           if (session) setValidSession(true);
@@ -87,7 +83,7 @@ function ResetPassword() {
         })
         .catch(() => setCheckingSession(false));
     } else if (tokenHash && type === "recovery") {
-      // PKCE-style: exchange token_hash for a session
+      // PKCE style: exchange token_hash for a real session
       supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" })
         .then(({ data: { session } }) => {
           if (session) setValidSession(true);
@@ -95,7 +91,7 @@ function ResetPassword() {
         })
         .catch(() => setCheckingSession(false));
     } else {
-      // Fallback: listen for auth state change (PASSWORD_RECOVERY or SIGNED_IN)
+      // Fallback: let Supabase fire the auth event on its own
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, session) => {
           if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
@@ -154,12 +150,25 @@ function ResetPassword() {
     }
   };
 
+  const isBrowserBridge =
+    typeof window !== "undefined" &&
+    !Boolean(window.__TAURI__) &&
+    !Boolean(window.__TAURI_INTERNALS__);
+
   if (checkingSession) {
     return (
       <PageWrapper isMobile={isMobile}>
         <div className="bg-white/90 backdrop-blur-sm p-10 rounded-2xl shadow-xl flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-green-700 animate-spin" />
-          <p className="text-gray-500 text-sm">Verifying your link...</p>
+          <p className="text-gray-500 text-sm">
+            {isBrowserBridge ? "Opening app..." : "Verifying your link..."}
+          </p>
+          {isBrowserBridge && (
+            <p className="text-gray-400 text-xs text-center max-w-xs">
+              The AniSave app should open automatically. If it doesn't,{" "}
+              make sure the app is installed or manually go back and open it.
+            </p>
+          )}
         </div>
       </PageWrapper>
     );
