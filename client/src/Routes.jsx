@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes as RouterRoutes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/protectedRoute';
+import AdminGate from './components/admin/adminGate';
 import { useAuth } from './contexts/authContext';
 import Loader from './components/loader';
 
@@ -20,6 +21,7 @@ const AdminDashboard = lazy(() => import('./pages/adminDashboard'));
 const PrivacyPolicy  = lazy(() => import('./pages/privacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/terms'));
 const CartPage       = lazy(() => import('./pages/cartPage'));
+const NotFoundPage   = lazy(() => import('./pages/notFoundPage'));
 
 export default function Routes() {
   const { user } = useAuth();
@@ -63,8 +65,14 @@ export default function Routes() {
         <Route path="/privacy"        element={<PrivacyPolicy />} />
         <Route path="/terms"          element={<TermsOfService />} />
 
+        {/* Admin — deliberately NOT wrapped in ProtectedRoute. AdminGate's
+            own server-side check (verify_admin_access RPC) already covers
+            auth + admin role, and needs to be the outermost wrapper so a
+            visit to /admin with no/wrong key bounces straight to 404
+            instead of a login redirect that would hint something's here. */}
+        <Route path="/admin"    element={<AdminGate><AdminDashboard /></AdminGate>} />
+
         {/* Protected routes */}
-        <Route path="/admin"    element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/homepage" element={<ProtectedRoute><Homepage /></ProtectedRoute>} />
         <Route path="/profile"  element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/categories"     element={<ProtectedRoute><Categories /></ProtectedRoute>} />
@@ -75,14 +83,7 @@ export default function Routes() {
         <Route path="/cart"     element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
 
         {/* 404 */}
-        <Route path="*" element={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-green-800 mb-4">404</h1>
-              <p className="text-gray-600">Page not found</p>
-            </div>
-          </div>
-        } />
+        <Route path="*" element={<NotFoundPage />} />
       </RouterRoutes>
     </Suspense>
   );

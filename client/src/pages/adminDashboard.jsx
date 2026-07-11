@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
   AreaChart,
   Area,
@@ -28,20 +29,33 @@ import {
   AlertCircle,
   Database,
   ChartBar,
-  Tag
+  Tag,
+  HardDrive,
+  ImageIcon,
+  MessageSquare,
 } from "lucide-react";
 import supabase from "../lib/supabase";
 import PriceManagement from "../components/admin/priceManagement";
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [adminCode, setAdminCode] = useState("");
   const [debugInfo, setDebugInfo] = useState(null);
   const [error, setError] = useState("");
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [activeTab, setActiveTab] = useState("overview");
+  const [systemHealth, setSystemHealth] = useState({
+    database: { status: "checking", latency: null },
+    realtime: { status: "checking" },
+    storage: { status: "checking" },
+  });
+  const [bucketSizes, setBucketSizes] = useState({
+    loading: true,
+    error: null,
+    buckets: [],
+  });
   const [dashboardData, setDashboardData] = useState({
     users: {
       total: 0,
@@ -71,20 +85,6 @@ export default function AdminDashboard() {
       tablesFound: [],
     },
   });
-
-  //adminpass
-  const ADMIN_CODE = "admin";
-  //admins
-  const ADMIN_EMAILS = [
-    "adminjanri0255@gmail.com",
-    "caromayashleymarie@gmail.com",
-    "castillanocharles405@gmail.com",
-    "bellezakathereen96@gmail.com",
-    "lawrencefrankmantiquilla15@gmail.com",
-    "catajoannahmarie@gmail.com",
-    "paolojohnlatorilla711@gmail.com",
-    "janreylecita@gmail.com"
-  ];
 
   useEffect(() => {
     checkAdminAuth();
@@ -136,135 +136,55 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated]);
 
+  // AdminGate (Routes.jsx) already verified this session against the
+  // server-side is_admin() RPC before this component was ever mounted.
+  // This second check is defense-in-depth only — it re-confirms with the
+  // database rather than trusting any client-held flag, and protects
+  // against someone bookmarking the dashboard URL after their admin
+  // access is later revoked (admin_roles row deleted) but their browser
+  // session is still alive.
   const checkAdminAuth = async () => {
     try {
       setLoading(true);
       setError("");
 
-      console.log("Checking admin authentication...");
-
-      const isLocallyAuthenticated =
-        localStorage.getItem("admin_authenticated") === "true";
-      console.log("Local admin auth status:", isLocallyAuthenticated);
-
       const {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
 
-      console.log("Current user:", user?.email || "No user");
-      console.log("User error:", userError?.message || "None");
-
-      setDebugInfo({
-        hasLocalAuth: isLocallyAuthenticated,
-        currentUser: user?.email || null,
-        userError: userError?.message || null,
-        isAdminEmail: user ? ADMIN_EMAILS.includes(user.email) : false,
-        hasAdminRole: user?.user_metadata?.role === "admin",
-      });
-
       if (!user || userError) {
-        console.log("No valid user session");
-        localStorage.removeItem("admin_authenticated");
         setIsAuthenticated(false);
-        if (!user) {
-          setError(
-            "You must be logged in to access the admin dashboard. Please login to your regular account first.",
-          );
-        }
+        setError("You must be logged in to access the admin dashboard.");
         return;
       }
 
-      if (isLocallyAuthenticated) {
-        const isAdminEmail = ADMIN_EMAILS.includes(user.email);
-        const hasAdminRole = user.user_metadata?.role === "admin";
+      const { data: isAdmin, error: rpcError } = await supabase.rpc(
+        "is_admin",
+      );
 
-        console.log(
-          "Admin check - Email:",
-          isAdminEmail,
-          "Role:",
-          hasAdminRole,
-        );
+      setDebugInfo({
+        currentUser: user.email,
+        isAdmin: !!isAdmin,
+        rpcError: rpcError?.message || null,
+      });
 
-        if (isAdminEmail || hasAdminRole) {
-          console.log("Admin access granted");
-          setIsAuthenticated(true);
-          await fetchDashboardData();
-        } else {
-          console.log("User not authorized as admin");
-          localStorage.removeItem("admin_authenticated");
-          setIsAuthenticated(false);
-          setError(
-            `Access denied. User ${user.email} is not authorized as an admin.`,
-          );
-        }
-      } else {
-        console.log("No local admin auth, showing login form");
+      if (rpcError || !isAdmin) {
         setIsAuthenticated(false);
+        setError("Access denied.");
+        return;
       }
+
+      setIsAuthenticated(true);
+      await Promise.all([
+        fetchDashboardData(),
+        checkSystemHealth(),
+        fetchBucketSizes(),
+      ]);
     } catch (error) {
       console.error("Auth error:", error);
       setError("Authentication error: " + error.message);
       setIsAuthenticated(false);
-      localStorage.removeItem("admin_authenticated");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAdminLogin = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      console.log("Attempting admin login...");
-
-      if (adminCode !== ADMIN_CODE) {
-        setError("Invalid admin code");
-        setAdminCode("");
-        setLoading(false);
-        return;
-      }
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      console.log("User during login:", user?.email || "No user");
-
-      if (userError || !user) {
-        setError(
-          "You need to be logged in to access the admin dashboard. Please login to your regular account first.",
-        );
-        setLoading(false);
-        return;
-      }
-
-      const isAdminEmail = ADMIN_EMAILS.includes(user.email);
-      const hasAdminRole = user.user_metadata?.role === "admin";
-
-      console.log(
-        "Admin login check - Email:",
-        isAdminEmail,
-        "Role:",
-        hasAdminRole,
-      );
-
-      if (isAdminEmail || hasAdminRole) {
-        console.log("Admin login successful");
-        localStorage.setItem("admin_authenticated", "true");
-        setIsAuthenticated(true);
-        await fetchDashboardData();
-      } else {
-        setError(
-          `Access denied. User ${user.email} is not authorized as an admin.`,
-        );
-        console.log("Admin login failed - unauthorized user");
-      }
-    } catch (error) {
-      console.error("Admin login error:", error);
-      setError("Error during admin authentication: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -274,14 +194,6 @@ export default function AdminDashboard() {
     try {
       setRefreshing(true);
       console.log("Fetching dashboard data...");
-
-      //check what tables exist first
-      const { data: tablesData } = await supabase.rpc("get_table_names");
-      console.log("Available tables:", tablesData);
-
-      //check the auth.users count
-      const { count: authUsersCount } = await supabase.auth.admin.listUsers();
-      console.log("Auth users count:", authUsersCount);
 
       const today = new Date();
       const yesterday = new Date(today);
@@ -462,7 +374,6 @@ export default function AdminDashboard() {
         debug: {
           authUsers: authUsers.length,
           profilesUsers: (allUsers || []).length,
-          tablesFound: tablesData || [],
         },
       });
 
@@ -561,16 +472,103 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    console.log("Admin logout");
-    localStorage.removeItem("admin_authenticated");
-    setIsAuthenticated(false);
-    setAdminCode("");
-    setError("");
-    setDebugInfo(null);
+    // This exits the admin view only — it does NOT sign you out of your
+    // Supabase account. You're still logged in as yourself, just no
+    // longer viewing /admin. Ending the whole site session isn't needed
+    // here: the honeypot key isn't stored anywhere, so getting back into
+    // /admin later still requires re-entering the ?k= URL, and is_admin()
+    // still governs access either way.
+    navigate("/homepage");
   };
 
   const handleRefresh = async () => {
-    await fetchDashboardData();
+    await Promise.all([fetchDashboardData(), checkSystemHealth(), fetchBucketSizes()]);
+  };
+
+  const fetchBucketSizes = async () => {
+    setBucketSizes((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const { data, error } = await supabase.rpc("get_bucket_sizes");
+      if (error) throw error;
+
+      const BUCKET_META = {
+        "product-images": { label: "Product Images", icon: "package" },
+        avatars:          { label: "Avatars",         icon: "users"   },
+        "chat-images":    { label: "Chat Images",     icon: "message" },
+      };
+
+      const ALL_BUCKETS = ["product-images", "avatars", "chat-images"];
+      const buckets = ALL_BUCKETS.map((id) => {
+        const row = (data || []).find((r) => r.bucket_id === id);
+        return {
+          id,
+          label: BUCKET_META[id]?.label ?? id,
+          icon:  BUCKET_META[id]?.icon  ?? "package",
+          size:  row ? Number(row.total_size) : 0,
+          count: row ? Number(row.file_count) : 0,
+        };
+      });
+
+      setBucketSizes({ loading: false, error: null, buckets });
+    } catch (err) {
+      setBucketSizes({ loading: false, error: err.message, buckets: [] });
+    }
+  };
+
+  const checkSystemHealth = async () => {
+    // --- Database check: timed query to profiles ---
+    const dbStart = performance.now();
+    try {
+      const { error: dbError } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true });
+      const latency = Math.round(performance.now() - dbStart);
+      setSystemHealth((prev) => ({
+        ...prev,
+        database: {
+          status: dbError ? "error" : latency < 500 ? "healthy" : "slow",
+          latency,
+        },
+      }));
+    } catch {
+      setSystemHealth((prev) => ({
+        ...prev,
+        database: { status: "error", latency: null },
+      }));
+    }
+
+    // --- Realtime check: inspect channel subscription state ---
+    try {
+      const channels = supabase.getChannels();
+      const hasActiveChannel = channels.some(
+        (ch) => ch.state === "joined" || ch.state === "joining"
+      );
+      setSystemHealth((prev) => ({
+        ...prev,
+        realtime: { status: hasActiveChannel ? "active" : "inactive" },
+      }));
+    } catch {
+      setSystemHealth((prev) => ({
+        ...prev,
+        realtime: { status: "error" },
+      }));
+    }
+
+    // --- Storage check: list root of product-images bucket ---
+    try {
+      const { error: storageError } = await supabase.storage
+        .from("product-images")
+        .list("", { limit: 1 });
+      setSystemHealth((prev) => ({
+        ...prev,
+        storage: { status: storageError ? "error" : "available" },
+      }));
+    } catch {
+      setSystemHealth((prev) => ({
+        ...prev,
+        storage: { status: "error" },
+      }));
+    }
   };
 
   if (loading) {
@@ -587,61 +585,27 @@ export default function AdminDashboard() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md">
-          <div className="text-center mb-6 md:mb-8">
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-green-700 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-              <Users className="w-6 h-6 md:w-8 md:h-8 text-white" />
-            </div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
-              Admin Access
-            </h2>
-            <p className="text-sm md:text-base text-gray-600">
-              Enter admin code to access dashboard
-            </p>
-            <p className="text-xs md:text-sm text-red-600 mt-2">
-              If you're not an admin, you don't have access to this page. Return
-              to the homepage.
-            </p>
-          </div>
-
-          {error && (
-            <div className="mb-4 p-2 md:p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 md:w-5 md:h-5 mt-0.5 flex-shrink-0" />
-              <span className="text-xs md:text-sm">{error}</span>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <input
-                type="password"
-                placeholder="Admin Code"
-                value={adminCode}
-                onChange={(e) => setAdminCode(e.target.value)}
-                className="w-full px-3 py-2 md:px-4 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 transition-colors"
-                onKeyPress={(e) => e.key === "Enter" && handleAdminLogin()}
-              />
-            </div>
-            <button
-              onClick={handleAdminLogin}
-              disabled={loading}
-              className="w-full bg-green-700 text-white py-2 px-3 md:py-3 md:px-4 rounded-lg hover:bg-green-800 transition-colors font-medium disabled:opacity-50 text-sm md:text-base"
-            >
-              {loading ? "Checking..." : "Access Dashboard"}
-            </button>
-          </div>
-
-          <div className="mt-5 md:mt-6 text-xs text-gray-500 text-center">
-            <p>
-              This dashboard is restricted to authorized administrators only.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    // No login form here on purpose. Anyone who reaches this component at all
+    // already passed AdminGate's checks once — if we land here it's a revoked
+    // admin_roles row or an expired session. Either way, showing a form or an
+    // "access denied" message only confirms an admin panel exists at this URL.
+    // Bounce silently to a route that looks like any other 404.
+    return <Navigate to="/404" replace />;
   }
+
+  const formatBytes = (bytes) => {
+    if (bytes === 0) return "0 B";
+    const mb = bytes / (1024 * 1024);
+    if (mb < 1) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (mb < 1024) return `${mb.toFixed(1)} MB`;
+    return `${(mb / 1024).toFixed(2)} GB`;
+  };
+
+  const BUCKET_COLORS = {
+    "product-images": { bar: "bg-blue-500",   text: "text-blue-600"  },
+    avatars:          { bar: "bg-green-500",  text: "text-green-600" },
+    "chat-images":    { bar: "bg-purple-500", text: "text-purple-600"},
+  };
 
   const StatCard = ({ title, value, icon: Icon, change, color = "green" }) => (
     <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 hover:shadow-md transition-shadow">
@@ -1108,53 +1072,190 @@ export default function AdminDashboard() {
                 System Health
               </h3>
               <div className="space-y-2.5 md:space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs md:text-base text-gray-600">
-                    Database
-                  </span>
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-green-600">
-                      Healthy
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs md:text-base text-gray-600">
-                    API Response
-                  </span>
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-green-600">
-                      Fast
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs md:text-base text-gray-600">
-                    Real-time Updates
-                  </span>
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-green-600">
-                      Active
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs md:text-base text-gray-600">
-                    Storage
-                  </span>
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs md:text-sm text-green-600">
-                      Available
-                    </span>
-                  </div>
-                </div>
+                {/* Database */}
+                {(() => {
+                  const { status, latency } = systemHealth.database;
+                  const isChecking = status === "checking";
+                  const isHealthy = status === "healthy";
+                  const isSlow = status === "slow";
+                  const dotColor = isChecking
+                    ? "bg-gray-400 animate-pulse"
+                    : isHealthy
+                    ? "bg-green-500"
+                    : isSlow
+                    ? "bg-yellow-500"
+                    : "bg-red-500";
+                  const textColor = isChecking
+                    ? "text-gray-400"
+                    : isHealthy
+                    ? "text-green-600"
+                    : isSlow
+                    ? "text-yellow-600"
+                    : "text-red-600";
+                  const label = isChecking
+                    ? "Checking..."
+                    : isHealthy
+                    ? `Healthy${latency != null ? ` · ${latency}ms` : ""}`
+                    : isSlow
+                    ? `Slow · ${latency}ms`
+                    : "Unreachable";
+                  return (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs md:text-base text-gray-600">Database</span>
+                      <div className="flex items-center gap-1 md:gap-2">
+                        <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${dotColor}`} />
+                        <span className={`text-xs md:text-sm ${textColor}`}>{label}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Real-time */}
+                {(() => {
+                  const { status } = systemHealth.realtime;
+                  const isChecking = status === "checking";
+                  const isActive = status === "active";
+                  const dotColor = isChecking
+                    ? "bg-gray-400 animate-pulse"
+                    : isActive
+                    ? "bg-green-500"
+                    : status === "inactive"
+                    ? "bg-yellow-500"
+                    : "bg-red-500";
+                  const textColor = isChecking
+                    ? "text-gray-400"
+                    : isActive
+                    ? "text-green-600"
+                    : status === "inactive"
+                    ? "text-yellow-600"
+                    : "text-red-600";
+                  const label = isChecking
+                    ? "Checking..."
+                    : isActive
+                    ? "Active"
+                    : status === "inactive"
+                    ? "No Channels"
+                    : "Error";
+                  return (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs md:text-base text-gray-600">Real-time Updates</span>
+                      <div className="flex items-center gap-1 md:gap-2">
+                        <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${dotColor}`} />
+                        <span className={`text-xs md:text-sm ${textColor}`}>{label}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Storage */}
+                {(() => {
+                  const { status } = systemHealth.storage;
+                  const isChecking = status === "checking";
+                  const isOk = status === "available";
+                  const totalMB = bucketSizes.buckets.reduce((acc, b) => acc + b.size, 0);
+                  const dotColor = isChecking
+                    ? "bg-gray-400 animate-pulse"
+                    : isOk
+                    ? "bg-green-500"
+                    : "bg-red-500";
+                  const textColor = isChecking
+                    ? "text-gray-400"
+                    : isOk
+                    ? "text-green-600"
+                    : "text-red-600";
+                  const label = isChecking
+                    ? "Checking..."
+                    : isOk
+                    ? `Available · ${formatBytes(totalMB)}`
+                    : "Unreachable";
+                  return (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs md:text-base text-gray-600">Storage</span>
+                      <div className="flex items-center gap-1 md:gap-2">
+                        <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${dotColor}`} />
+                        <span className={`text-xs md:text-sm ${textColor}`}>{label}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
+        </div>
+        {/* Storage panel */}
+        <div className="bg-white rounded-lg md:rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 mt-4 md:mt-8">
+          <h3 className="text-sm md:text-lg font-semibold text-gray-800 mb-3 md:mb-5 flex items-center gap-1 md:gap-2">
+            <HardDrive className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+            Storage Usage
+          </h3>
+
+          {bucketSizes.loading ? (
+            <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+              <RotateCw className="w-4 h-4 animate-spin" />
+              Loading bucket data...
+            </div>
+          ) : bucketSizes.error ? (
+            <div className="flex items-center gap-2 text-sm text-red-500 py-4">
+              <AlertCircle className="w-4 h-4" />
+              Failed to load: {bucketSizes.error}
+            </div>
+          ) : (() => {
+            const totalBytes = bucketSizes.buckets.reduce((acc, b) => acc + b.size, 0);
+            return (
+              <div className="space-y-4 md:space-y-5">
+                {/* total summary row */}
+                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                  <span className="text-xs md:text-sm text-gray-500 font-medium">Total used</span>
+                  <span className="text-sm md:text-base font-bold text-gray-800">
+                    {formatBytes(totalBytes)}
+                    <span className="text-xs text-gray-400 font-normal ml-1">
+                      across {bucketSizes.buckets.reduce((acc, b) => acc + b.count, 0)} files
+                    </span>
+                  </span>
+                </div>
+
+                {/* per-bucket rows */}
+                {bucketSizes.buckets.map((bucket) => {
+                  const pct = totalBytes > 0 ? (bucket.size / totalBytes) * 100 : 0;
+                  const colors = BUCKET_COLORS[bucket.id] ?? { bar: "bg-gray-400", text: "text-gray-600" };
+                  const BucketIcon =
+                    bucket.icon === "users"   ? Users         :
+                    bucket.icon === "message" ? MessageSquare :
+                    ImageIcon;
+                  return (
+                    <div key={bucket.id}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                          <BucketIcon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${colors.text}`} />
+                          <span className="text-xs md:text-sm font-medium text-gray-700">
+                            {bucket.label}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            ({bucket.count} {bucket.count === 1 ? "file" : "files"})
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-xs md:text-sm font-semibold ${colors.text}`}>
+                            {formatBytes(bucket.size)}
+                          </span>
+                          <span className="text-xs text-gray-400 ml-1">
+                            ({pct.toFixed(1)}%)
+                          </span>
+                        </div>
+                      </div>
+                      {/* progress bar */}
+                      <div className="w-full bg-gray-100 rounded-full h-1.5 md:h-2">
+                        <div
+                          className={`h-1.5 md:h-2 rounded-full transition-all duration-500 ${colors.bar}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
         </>
         )}
