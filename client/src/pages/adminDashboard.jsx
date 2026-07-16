@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import supabase from "../lib/supabase";
 import PriceManagement from "../components/admin/priceManagement";
+import LogoutConfirmationModal from "../components/logoutConfirmation";
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -471,13 +472,20 @@ export default function AdminDashboard() {
     return last7Days;
   };
 
-  const handleLogout = () => {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = () => {
     // This exits the admin view only — it does NOT sign you out of your
     // Supabase account. You're still logged in as yourself, just no
     // longer viewing /admin. Ending the whole site session isn't needed
     // here: the honeypot key isn't stored anywhere, so getting back into
     // /admin later still requires re-entering the ?k= URL, and is_admin()
     // still governs access either way.
+    setShowLogoutConfirm(false);
     navigate("/homepage");
   };
 
@@ -693,7 +701,7 @@ export default function AdminDashboard() {
               />
             </button>
             <button
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium flex-shrink-0"
               title="Logout"
             >
@@ -1264,6 +1272,11 @@ export default function AdminDashboard() {
           <PriceManagement />
         )}
 
+        <LogoutConfirmationModal 
+          isOpen={showLogoutConfirm} 
+          onClose={() => setShowLogoutConfirm(false)} 
+          onConfirm={handleLogoutConfirm} 
+        />
       </div>
     </div>
   );

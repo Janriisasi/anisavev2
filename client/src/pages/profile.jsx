@@ -5,6 +5,7 @@ import ProductFormModal from "../components/productformModal";
 import compressImage from "../utils/imageCompression";
 import DeleteConfirmationModal from "../components/deleteConfirmation";
 import FarmerOrderRequests from "../components/farmerOrderRequests";
+import LogoutConfirmationModal from "../components/logoutConfirmation";
 import toast from "react-hot-toast";
 import {
   Camera,
@@ -426,9 +427,24 @@ export default function Profile() {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleSignOutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleSignOutConfirm = async () => {
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      navigate("/");
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutConfirm(false);
+    }
   };
 
   return (
@@ -717,7 +733,7 @@ export default function Profile() {
 
           <div className="mt-6 pt-6 border-t border-gray-200 hidden md:flex justify-end">
             <button
-              onClick={handleSignOut}
+              onClick={handleSignOutClick}
               className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
             >
               <LogOut className="w-5 h-5" />
@@ -937,6 +953,13 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      <LogoutConfirmationModal 
+        isOpen={showLogoutConfirm} 
+        onClose={() => setShowLogoutConfirm(false)} 
+        onConfirm={handleSignOutConfirm} 
+        isLoggingOut={isLoggingOut} 
+      />
     </div>
   );
 }

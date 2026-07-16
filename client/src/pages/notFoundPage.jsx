@@ -1,60 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-// Simple 5-wide bitmap fonts for the two digits we need — each 1 becomes
-// a filled block. Scaled up big, this gives the same chunky pixel-art
-// feel as the reference without reusing anyone else's exact glyph art.
-const FOUR = [
-  [0, 0, 0, 1, 0],
-  [0, 0, 1, 1, 0],
-  [0, 1, 0, 1, 0],
-  [1, 0, 0, 1, 0],
-  [1, 1, 1, 1, 1],
-  [0, 0, 0, 1, 0],
-  [0, 0, 0, 1, 0],
-];
-
-const ZERO = [
-  [0, 1, 1, 1, 0],
-  [1, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1],
-  [0, 1, 1, 1, 0],
-];
-
-const CELL = 14;
-const CELL_GAP = 3;
-
-// Plain inline styles here on purpose — this avoids depending on Tailwind's
-// JIT picking up brand-new arbitrary-value classes it hasn't generated
-// before, which is what caused the blocks to disappear.
-function PixelDigit({ pattern }) {
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${pattern[0].length}, ${CELL}px)`,
-        gap: `${CELL_GAP}px`,
-      }}
-    >
-      {pattern.flatMap((row, r) =>
-        row.map((cell, c) => (
-          <div
-            key={`${r}-${c}`}
-            style={{
-              width: CELL,
-              height: CELL,
-              backgroundColor: cell ? "#064e3b" : "transparent",
-            }}
-          />
-        )),
-      )}
-    </div>
-  );
-}
-
 const visuallyHidden = {
   position: "absolute",
   width: 1,
@@ -71,26 +17,16 @@ export default function NotFoundPage() {
   return (
     <div className="min-h-[calc(100vh-80px)] bg-white flex flex-col overflow-hidden">
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-        <Link to="/" className="inline-flex justify-center mb-8 md:mb-10">
+        <h1 className="text-xl font-bold tracking-wider uppercase text-green-700 mb-6 md:mb-8">
+          Page Not Found
+        </h1>
+
+        <div className="mb-10 md:mb-14 max-w-[280px] sm:max-w-md w-full" aria-hidden="true">
           <img
-            src="/images/invertedcolor_logo.webp"
-            alt="AniSave"
-            className="h-16 md:h-20 w-auto"
+            src="/images/404.svg"
+            alt="404"
+            className="w-full h-auto mx-auto"
           />
-        </Link>
-
-        <span className="text-xs font-medium tracking-widest uppercase text-green-700 mb-6 md:mb-8">
-          Page not found
-        </span>
-
-        <div
-          style={{ display: "flex", alignItems: "flex-end", gap: 20 }}
-          className="mb-10 md:mb-14"
-          aria-hidden="true"
-        >
-          <PixelDigit pattern={FOUR} />
-          <PixelDigit pattern={ZERO} />
-          <PixelDigit pattern={FOUR} />
         </div>
 
         <h1 style={visuallyHidden}>Page not found</h1>

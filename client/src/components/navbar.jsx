@@ -9,6 +9,7 @@ import ChatButton from './chatButton';
 import CartButton from './cartButton';
 import NotificationButton from './notificationButton';
 import { usePresence } from '../hooks/usePresence';
+import LogoutConfirmationModal from './logoutConfirmation';
 
 export default function Navbar() {
   const { user } = useAuth();
@@ -52,12 +53,23 @@ export default function Navbar() {
     closeSearch();
   };
 
-  const handleLogout = async () => {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
     try {
       await supabase.auth.signOut();
       navigate('/landing');
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutConfirm(false);
     }
   };
 
@@ -298,7 +310,7 @@ export default function Navbar() {
 
               {/* Logout button */}
               <button
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="flex items-center justify-center w-9 h-9 rounded-full bg-red-600 hover:bg-red-700 transition-colors flex-shrink-0"
                 title="Logout"
               >
@@ -374,6 +386,12 @@ export default function Navbar() {
       </div>
 
       <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
+      <LogoutConfirmationModal 
+        isOpen={showLogoutConfirm} 
+        onClose={() => setShowLogoutConfirm(false)} 
+        onConfirm={handleLogoutConfirm} 
+        isLoggingOut={isLoggingOut} 
+      />
     </>
   );
 }
