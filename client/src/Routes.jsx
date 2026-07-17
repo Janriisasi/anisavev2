@@ -21,6 +21,7 @@ const AdminDashboard = lazy(() => import('./pages/adminDashboard'));
 const PrivacyPolicy  = lazy(() => import('./pages/privacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/terms'));
 const CartPage       = lazy(() => import('./pages/cartPage'));
+const DownloadPage   = lazy(() => import('./pages/downloadPage'));       // NEW
 const NotFoundPage   = lazy(() => import('./pages/notFoundPage'));
 
 export default function Routes() {
@@ -64,6 +65,7 @@ export default function Routes() {
 
         <Route path="/privacy"        element={<PrivacyPolicy />} />
         <Route path="/terms"          element={<TermsOfService />} />
+        <Route path="/download"       element={<DownloadPage />} />
 
         {/* Admin — deliberately NOT wrapped in ProtectedRoute. AdminGate's
             own server-side check (verify_admin_access RPC) already covers

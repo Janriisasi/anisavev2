@@ -1,29 +1,40 @@
 import React, { useEffect, useState, useRef, lazy, Suspense } from "react";
-import { useNavigate } from 'react-router-dom';
-import { Facebook, Instagram, Linkedin, ChevronUp } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { Facebook, Instagram, Linkedin, ChevronUp } from "lucide-react";
 
 // Lazy load TrueFocus component
-const TrueFocus = lazy(() => import('../components/trueFocus.jsx'));
+const TrueFocus = lazy(() => import("../components/trueFocus.jsx"));
 
 // Inline critical CSS for buttons to avoid render blocking
-const Button = ({ className, variant = "default", size = "md", children, onClick, ...props }) => {
-  const base = "inline-flex items-center justify-center font-semibold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
-  
+const Button = ({
+  className,
+  variant = "default",
+  size = "md",
+  children,
+  onClick,
+  ...props
+}) => {
+  const base =
+    "inline-flex items-center justify-center font-semibold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+
   const variantStyles = {
-    default: "bg-[#024310] hover:bg-[#035815] text-white shadow-lg hover:shadow-xl focus-visible:ring-[#024310]/50",
-    outline: "bg-white text-[#024310] hover:bg-gray-50 border border-gray-300 shadow-sm hover:shadow-md focus-visible:ring-[#024310]/50",
-    ghost: "bg-transparent text-white hover:bg-white/10 border border-white/10 focus-visible:ring-white/50"
+    default:
+      "bg-[#024310] hover:bg-[#035815] text-white shadow-lg hover:shadow-xl focus-visible:ring-[#024310]/50",
+    outline:
+      "bg-white text-[#024310] hover:bg-gray-50 border border-gray-300 shadow-sm hover:shadow-md focus-visible:ring-[#024310]/50",
+    ghost:
+      "bg-transparent text-white hover:bg-white/10 border border-white/10 focus-visible:ring-white/50",
   };
-  
+
   const sizeStyles = {
     sm: "h-8 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm rounded-md",
     md: "h-10 px-4 text-sm sm:h-12 sm:px-6 sm:text-base rounded-lg",
-    lg: "h-12 px-5 text-base sm:h-14 sm:px-8 sm:text-lg rounded-lg"
+    lg: "h-12 px-5 text-base sm:h-14 sm:px-8 sm:text-lg rounded-lg",
   };
-  
+
   return (
     <button
-      className={`${base} ${variantStyles[variant]} ${sizeStyles[size]} ${className || ''}`}
+      className={`${base} ${variantStyles[variant]} ${sizeStyles[size]} ${className || ""}`}
       onClick={onClick}
       {...props}
     >
@@ -33,7 +44,16 @@ const Button = ({ className, variant = "default", size = "md", children, onClick
 };
 
 // Optimized image component with native lazy loading and blur placeholder
-const OptimizedImage = ({ src, alt, className, width, height, priority = false, onError, fillContainer = false }) => {
+const OptimizedImage = ({
+  src,
+  alt,
+  className,
+  width,
+  height,
+  priority = false,
+  onError,
+  fillContainer = false,
+}) => {
   const [loaded, setLoaded] = useState(false);
   const imgRef = useRef(null);
 
@@ -59,7 +79,7 @@ const OptimizedImage = ({ src, alt, className, width, height, priority = false, 
           loading={priority ? "eager" : "lazy"}
           decoding="async"
           fetchpriority={priority ? "high" : "auto"}
-          className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`${className} transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
           onLoad={() => setLoaded(true)}
           onError={onError}
         />
@@ -70,9 +90,11 @@ const OptimizedImage = ({ src, alt, className, width, height, priority = false, 
   return (
     <div className="relative overflow-hidden">
       {!loaded && (
-        <div 
+        <div
           className={`absolute inset-0 bg-gray-200 animate-pulse ${className}`}
-          style={{ aspectRatio: width && height ? `${width}/${height}` : 'auto' }}
+          style={{
+            aspectRatio: width && height ? `${width}/${height}` : "auto",
+          }}
         />
       )}
       <img
@@ -84,7 +106,7 @@ const OptimizedImage = ({ src, alt, className, width, height, priority = false, 
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         fetchpriority={priority ? "high" : "auto"}
-        className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`${className} transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
         onLoad={() => setLoaded(true)}
         onError={onError}
       />
@@ -93,21 +115,30 @@ const OptimizedImage = ({ src, alt, className, width, height, priority = false, 
 };
 
 // Simplified feature card with better performance
-const FeatureCard = ({ image, title, description, isHighlighted = false, width, height }) => {
+const FeatureCard = ({
+  image,
+  title,
+  description,
+  isHighlighted = false,
+  width,
+  height,
+}) => {
   const [isHovered, setIsHovered] = useState(false);
-  
+
   return (
-    <div 
+    <div
       className={`bg-white rounded-[20px] shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden group cursor-pointer transform hover:-translate-y-2 ${
-        isHighlighted ? 'ring-2 ring-[#00573C] ring-opacity-50' : ''
+        isHighlighted ? "ring-2 ring-[#00573C] ring-opacity-50" : ""
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative overflow-hidden h-[180px] sm:h-[220px] lg:h-[280px]">
-        <div className={`absolute inset-0 transition-transform duration-500 ${
-          isHovered ? 'scale-110' : 'scale-100'
-        }`}>
+        <div
+          className={`absolute inset-0 transition-transform duration-500 ${
+            isHovered ? "scale-110" : "scale-100"
+          }`}
+        >
           <OptimizedImage
             src={image}
             alt={title}
@@ -116,7 +147,7 @@ const FeatureCard = ({ image, title, description, isHighlighted = false, width, 
             fillContainer={true}
             className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
-              e.target.style.display = 'none';
+              e.target.style.display = "none";
               const parent = e.target.parentElement;
               if (parent) {
                 parent.innerHTML = `<div class="absolute inset-0 text-gray-500 text-center font-medium flex items-center justify-center bg-gray-200">${title}<br/>Image</div>`;
@@ -124,12 +155,16 @@ const FeatureCard = ({ image, title, description, isHighlighted = false, width, 
             }}
           />
         </div>
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 pointer-events-none ${
-          isHovered ? 'opacity-100' : ''
-        }`} />
+        <div
+          className={`absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 pointer-events-none ${
+            isHovered ? "opacity-100" : ""
+          }`}
+        />
       </div>
       <div className="p-4 sm:p-6 lg:p-6">
-        <h3 className={`font-medium text-base sm:text-lg lg:text-[20px] leading-tight mb-2 sm:mb-3 transition-colors duration-300 text-[#00573C]`}>
+        <h3
+          className={`font-medium text-base sm:text-lg lg:text-[20px] leading-tight mb-2 sm:mb-3 transition-colors duration-300 text-[#00573C]`}
+        >
           {title}
         </h3>
         <p className="text-[#726767] text-sm sm:text-base lg:text-[16px] leading-relaxed">
@@ -142,9 +177,12 @@ const FeatureCard = ({ image, title, description, isHighlighted = false, width, 
 
 const Logo = () => {
   return (
-    <a href="" className="flex items-center gap-2 sm:gap-3 transition-all duration-300 cursor-pointer">
+    <a
+      href=""
+      className="flex items-center gap-2 sm:gap-3 transition-all duration-300 cursor-pointer"
+    >
       <button className="flex items-center hover:opacity-80 transition-opacity cursor-pointer">
-        <OptimizedImage 
+        <OptimizedImage
           src="/images/anisave_logo.webp"
           alt="Anisave Logo"
           width={162}
@@ -178,7 +216,7 @@ export default function LandingPage() {
   // Optimized scroll handler with RAF throttling
   useEffect(() => {
     let ticking = false;
-    
+
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
@@ -190,7 +228,7 @@ export default function LandingPage() {
         ticking = true;
       }
     };
-    
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -204,7 +242,7 @@ export default function LandingPage() {
           if (entry.isIntersecting) setActiveSection(entry.target.id);
         });
       },
-      { threshold: 0.3, rootMargin: '-50px' }
+      { threshold: 0.3, rootMargin: "-50px" },
     );
     sections.forEach((s) => observer.observe(s));
     return () => sections.forEach((s) => observer.unobserve(s));
@@ -213,7 +251,7 @@ export default function LandingPage() {
   const navLinks = [
     { id: "home", label: "Home" },
     { id: "features", label: "Features" },
-    { id: "about", label: "About Us" }
+    { id: "about", label: "About Us" },
   ];
 
   return (
@@ -221,13 +259,18 @@ export default function LandingPage() {
       {/* Preconnect to critical origins */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-      
+
       <div className="min-h-screen">
         {/* Navbar */}
-        <header className={`fixed inset-x-0 top-0 z-50`} style={{ position: 'absolute' }}>
-          <nav className={`max-w-7xl mx-auto px-4 sm:px-6 h-12 sm:h-14 lg:h-18 flex items-center justify-between ${
-            isScrolled ? 'mt-1 sm:mt-2' : 'mt-1 sm:mt-2'
-          }`}>
+        <header
+          className={`fixed inset-x-0 top-0 z-50`}
+          style={{ position: "absolute" }}
+        >
+          <nav
+            className={`max-w-7xl mx-auto px-4 sm:px-6 h-12 sm:h-14 lg:h-18 flex items-center justify-between ${
+              isScrolled ? "mt-1 sm:mt-2" : "mt-1 sm:mt-2"
+            }`}
+          >
             <Logo />
 
             {/* Desktop Navigation */}
@@ -237,32 +280,38 @@ export default function LandingPage() {
                   key={link.id}
                   onClick={() => scrollToId(link.id)}
                   className={`font-medium text-lg transition-all duration-300 relative group ${
-                    isScrolled ? 'text-gray-700 hover:text-[#00573C]' : 'text-white hover:text-gray-200'
-                  } ${activeSection === link.id ? (isScrolled ? 'text-[#00573C]' : 'text-white') : ''}`}
+                    isScrolled
+                      ? "text-gray-700 hover:text-[#00573C]"
+                      : "text-white hover:text-gray-200"
+                  } ${activeSection === link.id ? (isScrolled ? "text-[#00573C]" : "text-white") : ""}`}
                 >
                   {link.label}
-                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-current transition-all duration-300 ${
-                    activeSection === link.id ? 'w-full' : 'w-0 group-hover:w-full'
-                  }`} />
+                  <span
+                    className={`absolute -bottom-1 left-0 h-0.5 bg-current transition-all duration-300 ${
+                      activeSection === link.id
+                        ? "w-full"
+                        : "w-0 group-hover:w-full"
+                    }`}
+                  />
                 </button>
               ))}
             </div>
 
             {/* Auth Buttons */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="min-w-[60px] sm:min-w-[80px] lg:min-w-[120px]"
-                onClick={() => navigate('/login')}
+                onClick={() => navigate("/login")}
               >
                 Log in
               </Button>
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 size="sm"
                 className="min-w-[70px] sm:min-w-[100px] lg:min-w-[140px] gap-1 sm:gap-2"
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate("/signup")}
               >
                 Sign Up
               </Button>
@@ -279,13 +328,13 @@ export default function LandingPage() {
           <div className="absolute inset-0 w-full h-full">
             <picture className="absolute inset-0 w-full h-full">
               {/* Mobile: 640px wide */}
-              <source 
-                media="(max-width: 640px)" 
+              <source
+                media="(max-width: 640px)"
                 srcSet="/images/bg_feat.webp"
               />
               {/* Tablet: 1024px wide */}
-              <source 
-                media="(max-width: 1024px)" 
+              <source
+                media="(max-width: 1024px)"
                 srcSet="/images/bg_feat.webp"
               />
               {/* Desktop: Full size */}
@@ -301,15 +350,17 @@ export default function LandingPage() {
             </picture>
             <div className="absolute inset-0 bg-black/40 z-[1]" />
           </div>
-          
+
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 w-full">
             <div className="max-w-4xl mx-auto text-center">
-              <Suspense fallback={
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 px-4">
-                  Know your prices like never before
-                </h1>
-              }>
-                <TrueFocus 
+              <Suspense
+                fallback={
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 px-4">
+                    Know your prices like never before
+                  </h1>
+                }
+              >
+                <TrueFocus
                   sentence="Know your prices like never before"
                   manualMode={false}
                   blurAmount={5}
@@ -318,22 +369,24 @@ export default function LandingPage() {
                   pauseBetweenAnimations={0.5}
                 />
               </Suspense>
-              
+
               <p className="text-white/90 text-sm sm:text-base lg:text-xl leading-relaxed max-w-3xl mx-auto mb-6 sm:mb-8 lg:mb-12 px-4">
-                A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops. 
-                With Anisave, every Filipino farmer gains a partner in achieving a more secure and profitable harvest.
+                A simple yet powerful tool designed to help farmers stay
+                informed about real-time market prices for their crops. With
+                Anisave, every Filipino farmer gains a partner in achieving a
+                more secure and profitable harvest.
               </p>
 
               <Button
                 variant="default"
                 size="lg"
                 className="gap-2 sm:gap-3 transform hover:scale-105 transition-all duration-300"
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate("/signup")}
               >
                 Get started
-                <OptimizedImage 
-                  src="/images/ani_logo.webp" 
-                  alt="Wheat icon" 
+                <OptimizedImage
+                  src="/images/ani_logo.webp"
+                  alt="Wheat icon"
                   width={24}
                   height={24}
                   fillContainer={false}
@@ -345,8 +398,8 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section 
-          id="features" 
+        <section
+          id="features"
           className="relative py-12 sm:py-16 lg:py-24 overflow-hidden bg-[#00573C]"
         >
           <div className="absolute inset-0 opacity-20 w-full h-full">
@@ -359,7 +412,7 @@ export default function LandingPage() {
               height={1080}
             />
           </div>
-          
+
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
               <div className="text-white">
@@ -371,22 +424,26 @@ export default function LandingPage() {
                   {[
                     {
                       title: "Real-time Prices",
-                      description: "Displays real-time prices for up-to-date market information."
+                      description:
+                        "Displays real-time prices for up-to-date market information.",
                     },
                     {
                       title: "Categorized",
-                      description: "Organizes products into clear, easy-to-browse categories."
+                      description:
+                        "Organizes products into clear, easy-to-browse categories.",
                     },
                     {
                       title: "Showcase",
-                      description: "Allows users to post and showcase their products quickly and effortlessly."
+                      description:
+                        "Allows users to post and showcase their products quickly and effortlessly.",
                     },
                     {
                       title: "Contact Farmers",
-                      description: "Communicate with farmers for inquiries and deals."
-                    }
+                      description:
+                        "Communicate with farmers for inquiries and deals.",
+                    },
                   ].map((feature, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="group cursor-pointer transition-all duration-300"
                     >
@@ -413,7 +470,8 @@ export default function LandingPage() {
                       fillContainer={true}
                       className="absolute inset-0 w-full h-full object-cover object-center"
                       onError={(e) => {
-                        e.target.parentElement.innerHTML = '<div class="absolute inset-0 bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
+                        e.target.parentElement.innerHTML =
+                          '<div class="absolute inset-0 bg-green-600 flex items-center justify-center text-white text-xl font-semibold rounded-2xl">Feature Image</div>';
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
@@ -439,7 +497,8 @@ export default function LandingPage() {
                       fillContainer={true}
                       className="absolute inset-0 w-full h-full object-cover object-center"
                       onError={(e) => {
-                        e.target.parentElement.innerHTML = '<div class="absolute inset-0 bg-green-200 flex items-center justify-center text-green-800 text-xl font-semibold rounded-lg shadow-xl">About Image</div>';
+                        e.target.parentElement.innerHTML =
+                          '<div class="absolute inset-0 bg-green-200 flex items-center justify-center text-green-800 text-xl font-semibold rounded-lg shadow-xl">About Image</div>';
                       }}
                     />
                   </div>
@@ -451,8 +510,9 @@ export default function LandingPage() {
                     About Anisave
                   </h2>
                   <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
-                    To empower farmers with real-time, accessible, and accurate market pricing information, 
-                    enabling them to make informed decisions, improve their profitability, and thrive in an 
+                    To empower farmers with real-time, accessible, and accurate
+                    market pricing information, enabling them to make informed
+                    decisions, improve their profitability, and thrive in an
                     ever-changing agricultural landscape.
                   </p>
                 </div>
@@ -460,19 +520,21 @@ export default function LandingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
                   <div>
                     <h3 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4">
-                      Our <br/> vision
+                      Our <br /> vision
                     </h3>
                     <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
-                      Creating solutions that are capable of adapting to the changing needs of the agricultural community.
+                      Creating solutions that are capable of adapting to the
+                      changing needs of the agricultural community.
                     </p>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-3xl sm:text-4xl lg:text-5xl xl:text-[48px] font-bold text-[#00573C] mb-4">
-                      Our <br/> mission
+                      Our <br /> mission
                     </h3>
                     <p className="text-[#726767] text-xs sm:text-sm lg:text-[20px] leading-relaxed">
-                      To deliver real-time market prices, empowering farmers to make smarter choices.
+                      To deliver real-time market prices, empowering farmers to
+                      make smarter choices.
                     </p>
                   </div>
                 </div>
@@ -501,7 +563,7 @@ export default function LandingPage() {
                 width={1440}
                 height={711}
               />
-              
+
               <FeatureCard
                 image="/images/two-happy-farmers-holding-hands-field_993599-21007.webp"
                 title="Seamless Market Access"
@@ -509,7 +571,7 @@ export default function LandingPage() {
                 width={626}
                 height={417}
               />
-              
+
               <FeatureCard
                 image="/images/Department-of-Agriculture-DA.webp"
                 title="DA's price protection program"
@@ -522,7 +584,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-       {/* CTA Section */}
+        {/* CTA Section */}
         <section className="py-16 sm:py-20 lg:py-24 overflow-hidden relative">
           {/* Background image */}
           <div className="absolute inset-0 w-full h-full">
@@ -557,6 +619,7 @@ export default function LandingPage() {
                 variant="ghost"
                 size="lg"
                 className="border border-white/30 text-white font-bold"
+                onClick={() => navigate("/download")}
               >
                 Download Mobile App
               </Button>
@@ -614,7 +677,6 @@ export default function LandingPage() {
                     "Market Prices",
                     "Product Directory",
                     "Farmer Profiles",
-                    "Government Feed",
                   ].map((item) => (
                     <li key={item}>
                       <a
@@ -651,24 +713,44 @@ export default function LandingPage() {
                 </ul>
               </div>
 
-              {/* Support */}
+              {/* Install */}
               <div>
                 <h5 className="font-bold text-slate-900 mb-4 text-sm tracking-wide uppercase">
-                  Support
+                  Download
                 </h5>
                 <ul className="space-y-3">
-                  {["Help Center", "Contact Sales", "Live Support"].map(
-                    (item) => (
-                      <li key={item}>
-                        <a
-                          href="#"
-                          className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
-                        >
-                          {item}
-                        </a>
-                      </li>
-                    ),
-                  )}
+                  <li>
+                    <a
+                      href="/download"
+                      className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
+                    >
+                      Download for Android
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/download"
+                      className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
+                    >
+                      Download for IOS
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/download"
+                      className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
+                    >
+                      Download for Windows
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/download"
+                      className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
+                    >
+                      Download for MacOS
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>

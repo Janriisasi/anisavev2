@@ -28,6 +28,7 @@ function AppContent() {
     "/signup",
     "/privacy",
     "/terms",
+    "/download",           // Has its own marketing-style header, like /landing
     "/verify-otp",        // OTP step — no session yet
     "/forgot-password",   // No session
     "/reset-password",    // Supabase creates a temp session here — hide navbar anyway
