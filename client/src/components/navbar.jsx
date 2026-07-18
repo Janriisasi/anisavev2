@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
@@ -21,6 +21,55 @@ export default function Navbar() {
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Top nav is `position: fixed` so it truly stays put on scroll (sticky can
+  // break if any ancestor has overflow/transform set). Measuring its real
+  // height lets the spacer below match exactly, including safe-area insets.
+  //
+  // We also publish this height as a CSS variable (--nav-height) on the root
+  // element. Both bars are `fixed` and out of document flow, so any page
+  // that needs to size itself to "the space between the two bars" (e.g.
+  // ChatPage building a non-scrolling chat pane) has no way to know these
+  // heights otherwise — they previously had to hardcode a guess like `4rem`,
+  // which drifts out of sync the moment padding/safe-areas/content change
+  // and causes the whole page to scroll instead of just the intended area.
+  const navRef = useRef(null);
+  const [navHeight, setNavHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+
+    const updateHeight = () => {
+      const h = el.offsetHeight;
+      setNavHeight(h);
+      document.documentElement.style.setProperty('--nav-height', `${h}px`);
+    };
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Same treatment for the bottom tab bar — its height was previously just
+  // assumed to be `4rem` in the CSS below. Measuring it directly removes
+  // that guess entirely.
+  const tabBarRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const el = tabBarRef.current;
+    if (!el) return;
+
+    const updateHeight = () => {
+      document.documentElement.style.setProperty('--tabbar-height', `${el.offsetHeight}px`);
+    };
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   usePresence();
 
@@ -94,15 +143,6 @@ export default function Navbar() {
   const activeTab = '/' + (location.pathname.split('/')[1] || '');
   const isTabActive = (path) => activeTab === path;
 
-  // For overlay tabs (notifications, chat) that don't change the URL,
-  // track which one is open so only one indicator shows at a time.
-  const [activeOverlayTab, setActiveOverlayTab] = useState(null);
-
-  // When the URL-based tab changes, clear any overlay tab
-  useEffect(() => {
-    setActiveOverlayTab(null);
-  }, [location.pathname]);
-
   if (!user) return null;
 
   return (
@@ -114,10 +154,14 @@ export default function Navbar() {
         }
         .animate-fadeIn { animation: fadeIn 0.1s ease-out; }
 
-        /* Mobile body padding: top nav + bottom nav + safe areas */
+        /* Mobile body padding: reserves space for the fixed bottom tab bar.
+           --tabbar-height is measured live in JS (see tabBarRef effect above)
+           and already includes the safe-area-inset-bottom padding applied to
+           the bar itself, so it isn't added again here. The literal 4rem is
+           only a fallback for the brief moment before that effect runs. */
         @media (max-width: 767px) {
           body {
-            padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
+            padding-bottom: var(--tabbar-height, 4rem);
           }
           .mobile-nav-safe-top {
             padding-top: calc(env(safe-area-inset-top) + 0.75rem) !important;
@@ -127,7 +171,8 @@ export default function Navbar() {
 
       {/* ── TOP NAV ── */}
       <nav
-        className="bg-green-800 text-white shadow-lg backdrop-blur-sm sticky top-0 z-[70] block"
+        ref={navRef}
+        className="bg-green-800 text-white shadow-lg backdrop-blur-sm fixed top-0 left-0 w-full z-[70] block"
       >
         <div className="px-4 py-3 mobile-nav-safe-top">
           <div className="max-w-7xl mx-auto flex justify-between items-center gap-3 relative">
@@ -322,64 +367,66 @@ export default function Navbar() {
         </div>
       </nav>
 
+      {/* Spacer — reserves the space the fixed nav no longer takes up in flow */}
+      <div style={{ height: navHeight }} aria-hidden="true" />
+
       {/* ── BOTTOM TAB BAR (Mobile Only) ── */}
       <div
+        ref={tabBarRef}
         data-tutorial="mobile-bottom-bar"
         className="md:hidden fixed bottom-0 left-0 w-full bg-green-800 text-white z-[60] flex justify-around items-center shadow-[0_-4px_10px_rgba(0,0,0,0.1)] px-1"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Home */}
         <motion.button
-          onClick={() => { setActiveOverlayTab(null); handleNavigation('/homepage'); }}
+          onClick={() => handleNavigation('/homepage')}
           data-tutorial="mobile-tab-home"
           className={`relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${
-            isTabActive('/homepage') && !activeOverlayTab ? 'text-white' : 'text-green-100/70 hover:text-white'
+            isTabActive('/homepage') ? 'text-white' : 'text-green-100/70 hover:text-white'
           }`}
         >
-          <div className={`relative ${isTabActive('/homepage') && !activeOverlayTab ? 'scale-110' : ''} transition-transform`}>
+          <div className={`relative ${isTabActive('/homepage') ? 'scale-110' : ''} transition-transform`}>
             <Home className="w-6 h-6" />
           </div>
           <span className="text-[10px] mt-1 font-medium">Home</span>
-          {isTabActive('/homepage') && !activeOverlayTab && (
+          {isTabActive('/homepage') && (
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
           )}
         </motion.button>
 
-        {/* Alerts */}
+        {/* Alerts — real /notifications route now, no overlay tracking needed */}
         <NotificationButton
           mobileTab
           mobileMenu
-          isActive={activeOverlayTab === 'notifications'}
-          onOpen={(open) => setActiveOverlayTab(open ? 'notifications' : null)}
+          isActive={isTabActive('/notifications')}
         />
 
         {/* Cart */}
         <CartButton
           mobileTab
           mobileMenu
-          isActive={isTabActive('/cart') && !activeOverlayTab}
+          isActive={isTabActive('/cart')}
         />
 
-        {/* Chat */}
+        {/* Chat — real /chat route now, no overlay tracking needed */}
         <ChatButton
           mobileTab
           mobileMenu
-          isActive={activeOverlayTab === 'chat'}
-          onOpen={(open) => setActiveOverlayTab(open ? 'chat' : null)}
+          isActive={isTabActive('/chat')}
         />
 
         {/* Profile (replaces Menu) */}
         <motion.button
-          onClick={() => { setActiveOverlayTab(null); handleNavigation('/profile'); }}
+          onClick={() => handleNavigation('/profile')}
           className={`relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${
-            isTabActive('/profile') && !activeOverlayTab ? 'text-white' : 'text-green-100/70 hover:text-white'
+            isTabActive('/profile') ? 'text-white' : 'text-green-100/70 hover:text-white'
           }`}
         >
-          <div className={`relative ${isTabActive('/profile') && !activeOverlayTab ? 'scale-110' : ''} transition-transform`}>
+          <div className={`relative ${isTabActive('/profile') ? 'scale-110' : ''} transition-transform`}>
             <User className="w-6 h-6" />
           </div>
           <span className="text-[10px] mt-1 font-medium">Profile</span>
-          {isTabActive('/profile') && !activeOverlayTab && (
+          {isTabActive('/profile') && (
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
           )}
         </motion.button>

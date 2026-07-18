@@ -87,7 +87,7 @@ function EmptyState({ icon, title, description, action }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center py-16 text-center"
+      className="flex-1 flex flex-col items-center justify-center py-16 text-center"
     >
       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
         {icon}
@@ -333,10 +333,10 @@ export default function CartPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9fafb]">
+    <div className="min-h-screen bg-[#f9fafb] flex flex-col">
       {/* Page header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-center md:justify-start gap-3">
           <button
             onClick={() => navigate(-1)}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors hidden md:block"
@@ -344,10 +344,9 @@ export default function CartPage() {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-green-700" />
-            <h1 className="text-xl font-bold text-gray-800">
+            <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
               My Cart & Orders
-            </h1>
+            </h2>
           </div>
         </div>
 
@@ -383,7 +382,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div data-tutorial="cart-main" className="max-w-7xl mx-auto px-4 py-6">
+      <div data-tutorial="cart-main" className="max-w-7xl mx-auto px-4 py-6 flex-1 flex flex-col w-full">
         <AnimatePresence mode="wait">
           {/* ── CART TAB ── */}
           {activeTab === "cart" && (
@@ -393,9 +392,10 @@ export default function CartPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
+              className="flex-1 flex flex-col"
             >
               {cartLoading ? (
-                <div className="flex items-center justify-center py-20">
+                <div className="flex-1 flex items-center justify-center py-20">
                   <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
                 </div>
               ) : cartItems.length === 0 ? (
@@ -568,9 +568,10 @@ export default function CartPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
+              className="flex-1 flex flex-col"
             >
               {ordersLoading ? (
-                <div className="flex items-center justify-center py-20">
+                <div className="flex-1 flex items-center justify-center py-20">
                   <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
                 </div>
               ) : recentOrders.length === 0 ? (
@@ -689,9 +690,10 @@ export default function CartPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
+              className="flex-1 flex flex-col"
             >
               {ordersLoading ? (
-                <div className="flex items-center justify-center py-20">
+                <div className="flex-1 flex items-center justify-center py-20">
                   <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
                 </div>
               ) : historyOrders.length === 0 ? (

@@ -151,7 +151,7 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.2, type: 'spring', stiffness: 300, damping: 25 }}
-        className="fixed bg-white shadow-2xl md:border border-gray-200 flex flex-col
+        className="fixed bg-white shadow-2xl md:border border-gray-200 flex flex-col overflow-hidden
           md:bottom-0 md:right-4 md:rounded-t-2xl md:w-96 md:max-w-[400px] md:z-[9999]
           max-md:inset-0 max-md:rounded-none max-md:w-full max-md:z-[50] max-md:pb-[4rem] max-md:pt-[calc(env(safe-area-inset-top)+4rem)]"
         style={{ 
@@ -194,7 +194,7 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
             </div>
 
             {/* Conversation List */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 min-h-0">
               <ChatConversationList
                 conversations={filteredConversations}
                 loading={loading}

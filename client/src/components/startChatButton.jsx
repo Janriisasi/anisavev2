@@ -5,6 +5,7 @@ import supabase from '../lib/supabase';
 import { useAuth } from '../contexts/authContext';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 /**
  * StartChatButton - Reusable button to start chat with any user
@@ -21,6 +22,7 @@ export default function StartChatButton({
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
 
   const handleStartChat = async (e) => {
@@ -78,10 +80,17 @@ export default function StartChatButton({
         unreadCount: 0
       };
 
-      // Dispatch custom event to open chat with this conversation
-      window.dispatchEvent(new CustomEvent('openChat', { 
-        detail: { conversationData, productContext } 
-      }));
+      if (isMobile) {
+        // Mobile: navigate straight to the full chat page with the
+        // conversation pre-selected. Doesn't rely on a ChatButton
+        // instance being mounted to pick up the event.
+        navigate('/chat', { state: { conversationData, productContext } });
+      } else {
+        // Desktop: keep existing popup behavior via the openChat event.
+        window.dispatchEvent(new CustomEvent('openChat', { 
+          detail: { conversationData, productContext } 
+        }));
+      }
 
       toast.success(`Opening chat with ${recipientName || 'farmer'}...`);
       

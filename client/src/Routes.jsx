@@ -8,9 +8,9 @@ import Loader from './components/loader';
 const LandingPage    = lazy(() => import('./pages/landingPage'));
 const Login          = lazy(() => import('./pages/loginPage'));
 const SignUp         = lazy(() => import('./pages/signupPage'));
-const VerifyOtp      = lazy(() => import('./pages/verifyOtpPage'));       // NEW
-const ForgotPassword = lazy(() => import('./pages/forgotPasswordPage'));  // NEW
-const ResetPassword  = lazy(() => import('./pages/resetPasswordPage'));   // NEW
+const VerifyOtp      = lazy(() => import('./pages/verifyOtpPage'));
+const ForgotPassword = lazy(() => import('./pages/forgotPasswordPage'));
+const ResetPassword  = lazy(() => import('./pages/resetPasswordPage'));
 const Homepage       = lazy(() => import('./pages/homepage'));
 const Profile        = lazy(() => import('./pages/profile'));
 const Categories     = lazy(() => import('./pages/categoriesPage'));
@@ -22,6 +22,8 @@ const PrivacyPolicy  = lazy(() => import('./pages/privacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/terms'));
 const CartPage       = lazy(() => import('./pages/cartPage'));
 const DownloadPage   = lazy(() => import('./pages/downloadPage'));       // NEW
+const ChatPageMobile    = lazy(() => import('./pages/chatPage'));        // NEW — mobile full-page chat
+const NotificationsPage = lazy(() => import('./pages/notificationsPage')); // NEW — mobile full-page notifications
 const NotFoundPage   = lazy(() => import('./pages/notFoundPage'));
 
 export default function Routes() {
@@ -83,6 +85,8 @@ export default function Routes() {
         <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
         <Route path="/farmer/:id"     element={<ProtectedRoute><Farmer /></ProtectedRoute>} />
         <Route path="/cart"     element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+        <Route path="/chat"          element={<ProtectedRoute><ChatPageMobile /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />

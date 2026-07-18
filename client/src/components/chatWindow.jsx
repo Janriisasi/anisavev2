@@ -616,24 +616,25 @@ export default function ChatWindow({
 
         if (order.product_id) {
           const { data: productData, error: productError } = await supabase
-            .from('products')
-            .select('quantity_kg, status')
-            .eq('id', order.product_id)
+            .from("products")
+            .select("quantity_kg, status")
+            .eq("id", order.product_id)
             .single();
-          
+
           if (!productError && productData) {
             const currentQty = parseFloat(productData.quantity_kg) || 0;
             const newQuantity = Math.max(0, currentQty - order.quantity_kg);
-            const newStatus = newQuantity === 0 ? 'Unavailable' : productData.status;
+            const newStatus =
+              newQuantity === 0 ? "Unavailable" : productData.status;
 
             const { error: invError } = await supabase
-              .from('products')
+              .from("products")
               .update({
-                 quantity_kg: newQuantity,
-                 status: newStatus
+                quantity_kg: newQuantity,
+                status: newStatus,
               })
-              .eq('id', order.product_id);
-              
+              .eq("id", order.product_id);
+
             if (invError) console.error("Inventory update error:", invError);
           } else {
             console.error("Could not fetch product for inventory update");
@@ -936,7 +937,7 @@ export default function ChatWindow({
 
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* Header */}
       <div className="flex items-center gap-3 p-3 border-b border-gray-100 bg-white md:rounded-t-2xl">
         <button
@@ -1030,13 +1031,13 @@ export default function ChatWindow({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+      <div className="flex-1 overflow-y-scroll overscroll-contain p-4 bg-gray-50 flex flex-col gap-3">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="w-8 h-8 border-4 border-green-200 border-t-green-700 rounded-full animate-spin" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-full mt-auto mb-auto">
             <p className="text-gray-500 text-sm">No messages yet. Say hi!</p>
           </div>
         ) : (
@@ -1052,7 +1053,7 @@ export default function ChatWindow({
                   key={message.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex items-end gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
+                  className={`flex items-end gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"} ${index === 0 ? "mt-auto" : ""}`}
                 >
                   {!isOwn && showAvatar && (
                     <img

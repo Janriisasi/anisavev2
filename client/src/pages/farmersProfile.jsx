@@ -119,9 +119,9 @@ export default function FarmerProfile() {
         .select("id")
         .eq("buyer_id", user.id)
         .eq("farmer_id", id)
-        .single();
+        .limit(1);
 
-      setIsContactSaved(!!data);
+      setIsContactSaved(Boolean(data && data.length > 0));
     } catch (error) {
       setIsContactSaved(false);
     }
@@ -287,7 +287,7 @@ export default function FarmerProfile() {
         {/* farmer profile */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 mb-8" data-tutorial="farmer-profile-card">
           <div className="flex flex-col md:flex-row items-start gap-6">
-            <div className="relative w-32 h-32">
+            <div className="relative w-32 h-32 mx-auto md:mx-0">
               <img
                 src={
                   farmer.avatar_url ||
@@ -301,7 +301,7 @@ export default function FarmerProfile() {
 
             <div className="flex-1 w-full">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                <div className="w-full sm:w-auto">
+                <div className="w-full sm:w-auto text-center md:text-left">
                   <h1 className="text-3xl font-bold text-gray-800 break-words max-w-full">
                     {farmer.full_name || farmer.username}
                   </h1>
@@ -373,16 +373,16 @@ export default function FarmerProfile() {
                 </div>
 
                 {user && user.id !== farmer.id && (
-                  <div className="sm:hidden flex flex-col gap-2 mt-4">
+                  <div className="sm:hidden flex flex-row gap-2 mt-4">
                     <StartChatButton
                       recipientId={id}
                       recipientName={farmer.full_name}
-                      className="w-full !rounded-xl"
+                      className="flex-1 !rounded-xl"
                     />
                     <button
                       onClick={handleSaveContact}
                       disabled={saving}
-                      className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 w-full ${
+                      className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 flex-1 ${
                         isContactSaved
                           ? "bg-red-500 text-white hover:bg-red-600"
                           : "bg-blue-500 text-white hover:bg-blue-600"

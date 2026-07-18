@@ -37,17 +37,18 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
         .select('rating')
         .eq('user_id', profileData.id)
         .eq('farmer_id', farmerId)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error checking existing rating:', error);
         return;
       }
 
-      if (data) {
+      const existing = data?.[0];
+      if (existing) {
         setHasRated(true);
-        setExistingRating(data.rating);
-        setRating(data.rating);
+        setExistingRating(existing.rating);
+        setRating(existing.rating);
       }
     } catch (error) {
       console.error('Error checking existing rating:', error);
