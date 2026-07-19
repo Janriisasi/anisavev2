@@ -459,6 +459,23 @@ export default function ProductSellersPage() {
                         {/* Action buttons */}
                         {seller.user_id !== currentUser?.id ? (
                           <div className="flex gap-2">
+                            <motion.button
+                              onClick={() => openCartModal(seller)}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              title={
+                                inCart
+                                  ? "Already in cart (update)"
+                                  : "Add to cart"
+                              }
+                              className={`px-3 py-2.5 rounded-xl flex items-center justify-center transition-all border ${
+                                inCart
+                                  ? "bg-yellow-100 border-yellow-300 text-yellow-700 hover:bg-yellow-200"
+                                  : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-[#1a5c2a]"
+                              }`}
+                            >
+                              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                            </motion.button>
                             <StartChatButton
                               recipientId={seller.profiles.id}
                               recipientName={seller.profiles.full_name}
@@ -478,23 +495,6 @@ export default function ProductSellersPage() {
                             >
                               View Details
                             </button>
-                            <motion.button
-                              onClick={() => openCartModal(seller)}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              title={
-                                inCart
-                                  ? "Already in cart (update)"
-                                  : "Add to cart"
-                              }
-                              className={`px-3 py-2.5 rounded-xl flex items-center justify-center transition-all border ${
-                                inCart
-                                  ? "bg-yellow-100 border-yellow-300 text-yellow-700 hover:bg-yellow-200"
-                                  : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-[#1a5c2a]"
-                              }`}
-                            >
-                              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                            </motion.button>
                           </div>
                         ) : (
                           <div className="py-2.5 px-3 text-center text-gray-500 bg-gray-100 rounded-xl text-sm">

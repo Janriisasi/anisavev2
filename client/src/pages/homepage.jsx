@@ -3,7 +3,8 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import supabase from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/productCard";
-import StartChatButton from "../components/startChatButton";
+import AddToCartModal from "../components/addToCartModal";
+import { useCart } from "../contexts/cartContext";
 import { useMarketPrices } from "../contexts/marketPricesContext";
 import {
   TrendingUp,
@@ -30,8 +31,10 @@ const Home = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [cartModalData, setCartModalData] = useState(null);
   const navigate = useNavigate();
   const contentRef = useRef(null);
+  const { isInCart } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -320,6 +323,22 @@ const Home = () => {
     }
   };
 
+  const openCartModal = (product) => {
+    const productData = {
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      image_url:
+        product.image_url ||
+        productImages[product.name] ||
+        "/images/placeholder.jpg",
+      price: product.price,
+      quantity_kg: product.quantity_kg,
+      user_id: product.user_id,
+    };
+    setCartModalData({ product: productData, seller: product.profiles });
+  };
+
   const filteredProducts = allProducts.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()),
   );
@@ -592,15 +611,16 @@ const Home = () => {
                     {farmerProducts.map((product, index) => (
                       <motion.div
                         key={product.id}
-                        className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-grey/20 hover:shadow-xl transition-all duration-300 group"
+                        className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-grey/20 hover:shadow-xl transition-all duration-300 group cursor-pointer"
                         variants={{
                           hidden: { opacity: 0, y: 20 },
                           show: { opacity: 1, y: 0 },
                         }}
                         whileHover={{ scale: 1.02 }}
+                        onClick={() => setSelectedProduct(product)}
                       >
                         {/* Product Image */}
-                        <div className="relative h-56 overflow-hidden">
+                        <div className="relative h-56 overflow-hidden cursor-pointer">
                           <img
                             src={
                               product.image_url ||
@@ -632,9 +652,10 @@ const Home = () => {
                           {product.profiles && (
                             <div
                               className="flex items-center gap-2 cursor-pointer group/farmer"
-                              onClick={() =>
-                                navigate(`/farmer/${product.profiles.id}`)
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/farmer/${product.profiles.id}`);
+                              }}
                             >
                               <img
                                 src={
@@ -652,20 +673,26 @@ const Home = () => {
                             </div>
                           )}
 
-                          {/* Action buttons */}
-                          <div className="flex gap-2 pt-1">
-                            <button
-                              onClick={() => setSelectedProduct(product)}
-                              className="flex-1 bg-green-800 text-white py-2 px-3 rounded-xl hover:bg-green-700 transition-all duration-300 text-sm font-medium"
+                          {/* Action button */}
+                          <div className="pt-1">
+                            <motion.button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCartModal(product);
+                              }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-300 text-sm font-medium ${
+                                isInCart(product.id)
+                                  ? "bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200"
+                                  : "bg-green-800 text-white hover:bg-green-700"
+                              }`}
                             >
-                              View Details
-                            </button>
-                            <StartChatButton
-                              recipientId={product.profiles?.id}
-                              recipientName={product.profiles?.full_name}
-                              recipientUsername={product.profiles?.username}
-                              className="flex-1 !rounded-xl !py-2 !text-sm"
-                            />
+                              <ShoppingCart className="w-4 h-4" />
+                              {isInCart(product.id)
+                                ? "Update Cart"
+                                : "Add to Cart"}
+                            </motion.button>
                           </div>
                         </div>
                       </motion.div>
@@ -701,6 +728,14 @@ const Home = () => {
           seller={selectedProduct}
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
+        />
+      )}
+
+      {cartModalData && (
+        <AddToCartModal
+          product={cartModalData.product}
+          seller={cartModalData.seller}
+          onClose={() => setCartModalData(null)}
         />
       )}
     </motion.div>

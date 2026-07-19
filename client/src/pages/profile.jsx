@@ -330,14 +330,6 @@ export default function Profile() {
   };
 
   const handleProfileUpdate = async () => {
-    if (contactError) {
-      toast.error("Please fix contact number errors first");
-      return;
-    }
-    if (formData.contact_number.length !== 11) {
-      toast.error("Contact number must be exactly 11 digits");
-      return;
-    }
     try {
       const { error } = await supabase.from("profiles").upsert(
         {
@@ -522,26 +514,37 @@ export default function Profile() {
                   </label>
                 )}
               </div>
-              <button
-                onClick={() => {
-                  setTempFormData({
-                    full_name: profile?.full_name || "",
-                    address: profile?.address || "",
-                    contact_number: profile?.contact_number || "09",
-                  });
-                  setFormData({
-                    full_name: profile?.full_name || "",
-                    address: profile?.address || "",
-                    contact_number: profile?.contact_number || "09",
-                  });
-                  setContactError("");
-                  setIsEditing(true);
-                }}
-                className="md:hidden mt-4 w-full flex items-center justify-center gap-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-              >
-                <Edit className="w-5 h-5" />
-                <span className="font-medium">Edit Profile</span>
-              </button>
+              {!isEditing && (
+                <div className="md:hidden mt-4 flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setTempFormData({
+                        full_name: profile?.full_name || "",
+                        address: profile?.address || "",
+                        contact_number: profile?.contact_number || "09",
+                      });
+                      setFormData({
+                        full_name: profile?.full_name || "",
+                        address: profile?.address || "",
+                        contact_number: profile?.contact_number || "09",
+                      });
+                      setContactError("");
+                      setIsEditing(true);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  >
+                    <Edit className="w-5 h-5" />
+                    <span className="font-medium">Edit Profile</span>
+                  </button>
+                  <button
+                    onClick={handleSignOutClick}
+                    className="flex-1 flex items-center justify-center gap-2 p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span className="font-medium">Logout</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Profile info / edit form */}
@@ -620,7 +623,6 @@ export default function Profile() {
                     <button
                       onClick={handleProfileUpdate}
                       className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
-                      disabled={!!contactError}
                     >
                       Save Changes
                     </button>
@@ -634,29 +636,39 @@ export default function Profile() {
                 </div>
               ) : (
                 <>
-                  <button
-                    onClick={() => {
-                      setTempFormData({
-                        full_name: profile?.full_name || "",
-                        address: profile?.address || "",
-                        contact_number: profile?.contact_number || "09",
-                      });
-                      setFormData({
-                        full_name: profile?.full_name || "",
-                        address: profile?.address || "",
-                        contact_number: profile?.contact_number || "09",
-                      });
-                      setContactError("");
-                      setIsEditing(true);
-                    }}
-                    className="hidden md:flex absolute top-0 right-0 items-center gap-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                    title="Edit Profile"
-                  >
-                    <Edit className="w-5 h-5" />
-                    <span className="font-medium">Edit Profile</span>
-                  </button>
+                  <div className="hidden md:flex absolute top-0 right-0 items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setTempFormData({
+                          full_name: profile?.full_name || "",
+                          address: profile?.address || "",
+                          contact_number: profile?.contact_number || "09",
+                        });
+                        setFormData({
+                          full_name: profile?.full_name || "",
+                          address: profile?.address || "",
+                          contact_number: profile?.contact_number || "09",
+                        });
+                        setContactError("");
+                        setIsEditing(true);
+                      }}
+                      className="flex items-center gap-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                      title="Edit Profile"
+                    >
+                      <Edit className="w-5 h-5" />
+                      <span className="font-medium">Edit Profile</span>
+                    </button>
+                    <button
+                      onClick={handleSignOutClick}
+                      className="flex items-center gap-2 p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
+                      title="Logout"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span className="font-medium">Logout</span>
+                    </button>
+                  </div>
                   <div className="mb-4">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center md:text-left break-words pr-0 md:pr-28">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center md:text-left break-words pr-0 md:pr-64">
                       {profile?.full_name ||
                         user?.user_metadata?.full_name ||
                         "Loading your name"}
@@ -729,16 +741,6 @@ export default function Profile() {
                 </>
               )}
             </div>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-gray-200 hidden md:flex justify-end">
-            <button
-              onClick={handleSignOutClick}
-              className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Sign Out</span>
-            </button>
           </div>
         </div>
 

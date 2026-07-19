@@ -312,22 +312,12 @@ export default function CartPage() {
         {/* Primary: Send Request */}
         <motion.button
           onClick={() => setConfirmItem(item)}
-          whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           className="w-full flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
         >
           <Send className="w-4 h-4" />
           Send Order Request
         </motion.button>
-
-        {/* Secondary: re-open chat */}
-        <button
-          onClick={() => openChat(item.seller, item)}
-          className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-green-700 py-1 transition-colors"
-        >
-          <MessageCircle className="w-3.5 h-3.5" />
-          Chat with farmer
-        </button>
       </div>
     );
   };
@@ -414,25 +404,6 @@ export default function CartPage() {
                 />
               ) : (
                 <div className="space-y-6">
-                  {/* How-it-works banner */}
-                  <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-sm text-blue-800">
-                    <p className="font-semibold mb-1">How ordering works:</p>
-                    <ol className="list-decimal list-inside space-y-1 text-xs leading-relaxed text-blue-700">
-                      <li>
-                        Review your items and{" "}
-                        <strong>send your order request</strong>.
-                      </li>
-                      <li>
-                        The farmer reviews and approves or declines your
-                        request.
-                      </li>
-                      <li>
-                        Once approved, the order is confirmed and inventory is
-                        updated.
-                      </li>
-                    </ol>
-                  </div>
-
                   {Object.values(cartBySeller).map(({ seller, items }) => {
                     const groupTotal = items.reduce(
                       (s, i) => s + i.quantity_kg * i.price_at_add,
@@ -507,7 +478,7 @@ export default function CartPage() {
                                         ₱{item.price_at_add}/kg
                                       </span>
                                       <span className="text-sm text-gray-500">
-                                        × {item.quantity_kg} kg
+                                        {item.quantity_kg} kg
                                       </span>
                                     </div>
                                   </div>

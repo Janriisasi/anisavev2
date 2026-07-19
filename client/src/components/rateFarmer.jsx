@@ -146,8 +146,7 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
   };
 
   const containerClass = standalone
-    ? "bg-white rounded-xl p-6 shadow-lg border border-gray-100"
-    : "w-full flex flex-col items-center justify-center";
+    "w-full flex flex-col items-center justify-center";
 
   return (
     <div className={containerClass}>
