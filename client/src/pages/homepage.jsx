@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import SellerDetailsPopup from "../components/sellerDetailsPopup";
 import AiAdvisor from "../components/aiAdvisor";
+import MarketPriceTrend from "../components/marketPriceTrend";
 
 const Home = () => {
   const { prices } = useMarketPrices();
@@ -50,22 +51,22 @@ const Home = () => {
 
   const productImages = {
     // vegetables
-    Eggplant: "/images/eggplant.jpg",
-    Tomato: "/images/tomato.jpg",
-    Cabbage: "/images/cabbage.jpg",
-    Carrot: "/images/carrots.jpg",
-    Potato: "/images/potato.jpg",
-    Squash: "/images/squash.jpg",
-    "String Beans": "/images/stringbeans.jpg",
-    Ampalaya: "/images/ampalaya.jpg",
-    Okra: "/images/okra.jpg",
-    Pechay: "/images/pechay.jpg",
-    "Bell Pepper": "/images/bellpepper.jpg",
-    Broccoli: "/images/broccoli.jpg",
-    "Lettuce (Green Ice)": "/images/lettuce_green.png",
-    "Lettuce (Iceberg)": "/images/lettuce_iceberg.png",
-    "Lettuce (Romaine)": "/images/lettuce_romaine.png",
-    Sitao: "/images/sitao.png",
+    Eggplant: "/images/eggplant.webp",
+    Tomato: "/images/tomato.webp",
+    Cabbage: "/images/cabbage.webp",
+    Carrot: "/images/carrots.webp",
+    Potato: "/images/potato.webp",
+    Squash: "/images/squash.webp",
+    "String Beans": "/images/stringbeans.webp",
+    Ampalaya: "/images/ampalaya.webp",
+    Okra: "/images/okra.webp",
+    Pechay: "/images/pechay.webp",
+    "Bell Pepper": "/images/bellpepper.webp",
+    Broccoli: "/images/broccoli.webp",
+    "Lettuce (Green Ice)": "/images/lettuce_green.webp",
+    "Lettuce (Iceberg)": "/images/lettuce_iceberg.webp",
+    "Lettuce (Romaine)": "/images/lettuce_romaine.webp",
+    Sitao: "/images/sitao.webp",
 
     // fruits
     Mango: "/images/mango.webp",
@@ -482,6 +483,9 @@ const Home = () => {
                   Based from Department of Agriculture
                 </p>
               </motion.div>
+
+              {/* Market Price Trend Graph */}
+              <MarketPriceTrend />
 
               {/* Products Grid */}
               <motion.div

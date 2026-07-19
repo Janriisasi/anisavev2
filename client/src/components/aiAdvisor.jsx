@@ -282,15 +282,15 @@ const IdleSlideshow = memo(
       {
         key: "greeting",
         content: (
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
-              <User size={14} className="text-green-700" />
+          <div className="flex items-center gap-3">
+            <div className="w-16 h-16 rounded-full bg-green-200/60 flex items-center justify-center flex-shrink-0">
+              <User size={26} className="text-green-700" />
             </div>
             <div>
-              <p className="text-green-700 text-xs font-semibold leading-snug">
+              <p className="text-green-700 text-sm font-semibold leading-snug">
                 {greetData.greeting}
               </p>
-              <p className="text-green-600 text-[11px] mt-1 leading-snug">
+              <p className="text-green-600 text-xs mt-1 leading-snug">
                 {greetData.tip}
               </p>
             </div>
@@ -305,35 +305,29 @@ const IdleSlideshow = memo(
             {
               key: "market",
               content: (
-                <div className="flex items-center gap-2.5 h-full">
-                  <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <TrendingUp size={14} className="text-red-500" />
+                <div className="flex items-center gap-3 h-full">
+                  <div className="w-16 h-16 rounded-full bg-red-200/60 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp size={26} className="text-red-700" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide mb-1">
+                  <div className="flex-1 min-w-0 w-full pr-1">
+                    <p className="text-xs font-bold text-red-700 uppercase tracking-wide mb-1">
                       Market Trends
                     </p>
-                    <div
-                      className="flex items-center gap-1.5 overflow-x-auto"
-                      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                    >
-                      {trendData.slice(0, 5).map((t, i) => {
+                    <div className="flex items-center justify-center gap-2.5 w-full pt-1 px-1">
+                      {trendData.slice(0, 5).map((t) => {
                         const imgSrc = PRODUCT_IMAGES[t.name];
                         return (
-                          <div key={t.name} className="flex items-center gap-1 flex-shrink-0">
-                            <div className="w-6 h-6 rounded-md overflow-hidden flex-shrink-0 bg-white border border-gray-100">
+                          <div key={t.name} className="flex-1 basis-0 min-w-0 max-w-[220px] flex items-center gap-2 border bg-red-200/50 border-red-300 rounded-2xl p-2">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-red-50/50">
                               {imgSrc ? (
                                 <img src={imgSrc} alt={t.name} className="w-full h-full object-cover" />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-[10px]">🌾</div>
+                                <div className="w-full h-full flex items-center justify-center text-lg">🌾</div>
                               )}
                             </div>
-                            <p className="text-[10px] font-semibold text-gray-700 leading-tight whitespace-nowrap">
+                            <p className="text-sm font-bold text-gray-800 leading-tight truncate">
                               {t.name}
                             </p>
-                            {i < Math.min(trendData.length, 5) - 1 && (
-                              <span className="text-gray-300 text-xs ml-0.5">·</span>
-                            )}
                           </div>
                         );
                       })}
@@ -352,15 +346,15 @@ const IdleSlideshow = memo(
             {
               key: "topbuyer",
               content: (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-3xl">
                     🏆
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
+                    <p className="text-xs font-bold text-yellow-700 uppercase tracking-wide mb-1">
                       Ikaw ang Top Buyer ngayon!
                     </p>
-                    <p className="text-xs text-yellow-800">
+                    <p className="text-sm text-yellow-800 leading-snug">
                       {firstName ? `${firstName}, patuloy` : "Patuloy"} kang
                       sumusuporta sa mga lokal na magsasaka — salamat! 🌾
                     </p>
@@ -375,15 +369,15 @@ const IdleSlideshow = memo(
               {
                 key: "topbuyer",
                 content: (
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-base">
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-3xl">
                       ⭐
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">
+                      <p className="text-xs font-bold text-yellow-700 uppercase tracking-wide mb-1">
                         Top #{userBuyerRank + 1} Buyer ka!
                       </p>
-                      <p className="text-xs text-yellow-800">
+                      <p className="text-sm text-yellow-800 leading-snug">
                         Malapit ka na sa #1! Tuloy-tuloy lang sa pagsuporta. 💪
                       </p>
                     </div>
@@ -400,15 +394,15 @@ const IdleSlideshow = memo(
             {
               key: "sellnudge",
               content: (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-green-200/60 flex items-center justify-center flex-shrink-0">
-                    <ShoppingBag size={14} className="text-green-700" />
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-green-200/60 flex items-center justify-center flex-shrink-0">
+                    <ShoppingBag size={26} className="text-green-700" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-green-700 uppercase tracking-wide mb-0.5">
+                    <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-1">
                       Simulan na ang Pagbebenta!
                     </p>
-                    <p className="text-xs text-green-800">
+                    <p className="text-sm text-green-800 leading-snug">
                       {firstName ? `${firstName}, mag` : "Mag"}-list na ng iyong
                       produkto at kumita ngayon! 🌾{" "}
                       {top3.length > 0 && (
@@ -432,15 +426,15 @@ const IdleSlideshow = memo(
             {
               key: "activebuyers",
               content: (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-200/60 flex items-center justify-center flex-shrink-0">
-                    <Star size={14} className="text-blue-600" />
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-blue-200/60 flex items-center justify-center flex-shrink-0">
+                    <Star size={26} className="text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">
+                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-1">
                       Pinaka-Active na Buyers
                     </p>
-                    <p className="text-xs text-blue-800">
+                    <p className="text-sm text-blue-800 leading-snug">
                       {topBuyers.map((b, i) => {
                         const isMe = userId && b.id === userId;
                         return (
@@ -479,8 +473,8 @@ const IdleSlideshow = memo(
     const inner = (
       <>
         <div
-          className={`relative border rounded-xl px-4 py-3 overflow-hidden ${slide.bg}`}
-          style={{ height: 64 }}
+          className={`relative border rounded-xl px-4 py-3 overflow-hidden flex flex-col justify-center ${slide.bg}`}
+          style={{ height: 106 }}
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -572,7 +566,7 @@ const ChatBubble = memo(({ msg }) => {
     >
       {!isUser && (
         <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white mb-0.5">
-          <img src="/images/ai_logo.png" alt="Bot" className="w-5 h-5" />
+          <img src="/images/aiIcon.svg" alt="Bot" className="w-5 h-5" />
         </div>
       )}
       <div
@@ -649,8 +643,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
         {/* Top row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-3xl flex items-center justify-center">
-              <img src="/images/ai_logo.png" alt="Bot" className="w-7 h-7" />
+            <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+              <img src="/images/aiIcon.svg" alt="Bot" className="w-6 h-6" />
             </div>
             <div>
               <h3 className="text-green-700 font-bold text-base leading-tight">
@@ -790,7 +784,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
               {!showChat && (
                 <motion.div
                   key="quick-prompts"
-                  className="grid grid-cols-2 gap-2 px-3 pt-2 pb-2"
+                  className="grid grid-cols-2 gap-2.5 px-3 pt-2 pb-3"
                   initial={{ opacity: 1, height: "auto" }}
                   exit={{
                     opacity: 0,
@@ -810,7 +804,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       transition={{ delay: i * 0.06 }}
                       className={`
                         relative overflow-hidden
-                        bg-white border rounded-2xl p-2.5
+                        bg-white border rounded-2xl p-3
                         flex flex-col items-center gap-1.5 shadow-sm
                         disabled:opacity-50 disabled:cursor-not-allowed
                         transition-all duration-200
@@ -826,8 +820,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       {activeKey === qp.key && !loading && (
                         <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-600" />
                       )}
-                      <qp.icon size={20} className="text-green-700" />
-                      <span className="text-[11px] font-semibold text-center leading-tight text-gray-700">
+                      <qp.icon size={22} className="text-green-700" />
+                      <span className="text-[11px] sm:text-xs font-semibold text-center leading-tight text-gray-700">
                         {qp.label}
                       </span>
                     </motion.button>

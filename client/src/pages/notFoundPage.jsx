@@ -15,7 +15,10 @@ const visuallyHidden = {
 
 export default function NotFoundPage() {
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-white flex flex-col overflow-hidden">
+    <div
+      className="min-h-[calc(100vh-80px)] flex flex-col overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/images/bg_login.png')" }}
+    >
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
         <h1 className="text-xl font-bold tracking-wider uppercase text-green-700 mb-6 md:mb-8">
           Page Not Found
