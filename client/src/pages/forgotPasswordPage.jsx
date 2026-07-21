@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { KeyRound, ArrowLeft } from "lucide-react";
-import supabase from "../lib/supabase";
+import { callAuthFunction } from "../lib/authApi";
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -26,17 +26,14 @@ function ForgotPassword() {
 
     setLoading(true);
     try {
-      // Always redirect to the Vercel deployment.
-      // That page is a thin bridge: if running in a plain browser (not Tauri),
-      // it immediately forwards to anisave://reset-password?token_hash=...&type=recovery
-      // which Android intercepts and opens the app.
-      // Works whether the email is opened on the emulator, a real device, or desktop.
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: "https://anisavedevelopment.vercel.app/reset-password",
-      });
+      // resetPasswordForEmail() itself now lives in the auth-forgot-password
+      // Edge Function, gated by the rate limiter (3 requests / hour / IP).
+      // Same redirect bridge as before: browser -> anisave://reset-password
+      // deep link, falling back to in-browser reset if the app isn't installed.
+      const { error } = await callAuthFunction("auth-forgot-password", { email });
 
       if (error) {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(error.message);
         return;
       }
 

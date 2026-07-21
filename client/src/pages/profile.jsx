@@ -667,7 +667,7 @@ export default function Profile() {
                       <span className="font-medium">Logout</span>
                     </button>
                   </div>
-                  <div className="mb-4">
+                  <div className="mb-1">
                     <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center md:text-left break-words pr-0 md:pr-64">
                       {profile?.full_name ||
                         user?.user_metadata?.full_name ||

@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import supabase from "../lib/supabase";
 import { useAuth } from "../contexts/authContext";
 import { suppressAuthState, releaseAuthState } from "../lib/authFlowGuard";
+import { callAuthFunction } from "../lib/authApi";
 
 function Login() {
   const { user } = useAuth();
@@ -55,33 +55,17 @@ function Login() {
     suppressAuthState();
 
     try {
-      // Step 1: Verify email + password credentials
-      const { error } = await supabase.auth.signInWithPassword({
+      // Credential check, sign-out, and OTP send now all happen server-side
+      // in the auth-login Edge Function — same three steps as before, just
+      // rate-limited (5 attempts / 15 min per IP) before they run.
+      const { error } = await callAuthFunction("auth-login", {
         email: form.email,
         password: form.password,
       });
 
       if (error) {
         toast.dismiss(sendingToast);
-        toast.error("Incorrect email or password.");
-        return;
-      }
-
-      // Step 2: Sign them out immediately — guard is still ON, so this
-      // SIGNED_OUT event is also ignored, no flicker either direction.
-      await supabase.auth.signOut();
-
-      toast.loading("Sending verification code...", { id: sendingToast });
-
-      // Step 3: Send Email OTP
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: form.email,
-        options: { shouldCreateUser: false },
-      });
-
-      if (otpError) {
-        toast.dismiss(sendingToast);
-        toast.error("Could not send verification code. Please try again.");
+        toast.error(error.message);
         return;
       }
 

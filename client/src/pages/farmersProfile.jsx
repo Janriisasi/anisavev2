@@ -377,12 +377,13 @@ export default function FarmerProfile() {
                     <StartChatButton
                       recipientId={id}
                       recipientName={farmer.full_name}
-                      className="flex-1 !rounded-xl"
+                      variant="small"
+                      className="!rounded-lg !px-4 !py-2 !text-sm !flex-1 !w-full"
                     />
                     <button
                       onClick={handleSaveContact}
                       disabled={saving}
-                      className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 flex-1 ${
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center transition-all duration-200 ${
                         isContactSaved
                           ? "bg-red-500 text-white hover:bg-red-600"
                           : "bg-blue-500 text-white hover:bg-blue-600"

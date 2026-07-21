@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader } from 'lucide-react';
 import supabase from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { callAuthFunction } from '../lib/authApi';
 
 function SignUp() {
   const { user } = useAuth();
@@ -177,27 +178,17 @@ function SignUp() {
     try {
       const { full_name, username, email, password } = form;
 
-      const { data, error } = await supabase.auth.signUp({
+      // signUp() itself — and its error-message branching — now lives in the
+      // auth-signup Edge Function, gated by the rate limiter (5 requests / hour / IP).
+      const { error } = await callAuthFunction('auth-signup', {
         email,
         password,
-        options: {
-          data: { username, full_name },
-        },
+        username,
+        full_name,
       });
 
       if (error) {
-        if (error.message.includes('User already registered')) {
-          // Generic message — don't confirm whether an email exists to attackers
-          throw new Error('Unable to create account. Please check your details or try logging in.');
-        } else if (error.message.includes('Invalid email')) {
-          throw new Error('Please enter a valid email address.');
-        } else {
-          throw new Error('Unable to create account. Please try again later.');
-        }
-      }
-
-      if (!data?.user) {
-        throw new Error('Signup succeeded, but no user data returned.');
+        throw new Error(error.message);
       }
 
       toast.success('Account created!');

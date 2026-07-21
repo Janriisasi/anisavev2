@@ -87,7 +87,7 @@ const MarketPriceTrend = () => {
           <LineChart className="w-5 h-5 text-green-700 shrink-0" />
           <div>
             <h3 className="text-base sm:text-lg font-bold text-gray-800">
-              Market Price Trends
+              Market Price History
             </h3>
             <p className="text-xs text-gray-500">
               {rangeDays}-day price history, based on Department of Agriculture data

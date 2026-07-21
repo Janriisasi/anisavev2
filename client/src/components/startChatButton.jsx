@@ -158,7 +158,6 @@ export default function StartChatButton({
         </>
       ) : (
         <>
-          <MessageCircle className="w-4 h-4" />
           <span>Chat</span>
         </>
       )}

@@ -26,6 +26,8 @@ const Home = () => {
   const [farmerProducts, setFarmerProducts] = useState([]); // Products posted by other farmers
   const [completedOrders, setCompletedOrders] = useState([]);
   const [search, setSearch] = useState("");
+  const [farmerSearch, setFarmerSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [myRating, setMyRating] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -113,6 +115,9 @@ const Home = () => {
     Basil: "/images/basil.webp",
     Turmeric: "/images/turmeric.webp",
   };
+
+  const categoryOrder = ["Vegetables", "Fruits", "Grains", "HerbsAndSpices"];
+  const categoryLabels = { HerbsAndSpices: "Herbs & Spices" };
 
   useEffect(() => {
     const getUser = async () => {
@@ -339,9 +344,28 @@ const Home = () => {
     setCartModalData({ product: productData, seller: product.profiles });
   };
 
-  const filteredProducts = allProducts.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const priceCategories = useMemo(() => {
+    const liveKeys = Object.keys(prices);
+    const ordered = categoryOrder.filter((c) => liveKeys.includes(c));
+    const extras = liveKeys.filter((c) => !categoryOrder.includes(c));
+    return ["All", ...ordered, ...extras];
+  }, [prices]);
+
+  const filteredProducts = allProducts.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "All" || p.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const filteredFarmerProducts = farmerProducts.filter((p) => {
+    const q = farmerSearch.toLowerCase();
+    const matchesProduct = p.name.toLowerCase().includes(q);
+    const matchesFarmer =
+      p.profiles?.full_name?.toLowerCase().includes(q) ||
+      p.profiles?.username?.toLowerCase().includes(q);
+    return matchesProduct || matchesFarmer;
+  });
 
   const totalSales = useMemo(() => {
     return completedOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
@@ -473,6 +497,9 @@ const Home = () => {
             <AiAdvisor myProducts={myProducts} />
           </div>
 
+          {/* Market Price Trend Graph */}
+          <MarketPriceTrend />
+
           {loading ? (
             <div className="text-center py-12">
               <motion.div
@@ -503,77 +530,138 @@ const Home = () => {
                 </p>
               </motion.div>
 
-              {/* Market Price Trend Graph */}
-              <MarketPriceTrend />
+              {/* Category Filter Tabs (mobile only) */}
+              <div
+                className="flex sm:hidden items-center gap-6 overflow-x-auto border-b border-gray-200 mb-6 px-1 [&::-webkit-scrollbar]:hidden"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {priceCategories.map((cat) => {
+                  const isActive = selectedCategory === cat;
+                  const label = categoryLabels[cat] || cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`relative whitespace-nowrap pb-3 pt-1 text-sm font-semibold transition-colors flex-shrink-0 ${
+                        isActive
+                          ? "text-green-800"
+                          : "text-gray-500 hover:text-gray-700"
+                      }`}
+                    >
+                      {label}
+                      {isActive && (
+                        <motion.div
+                          layoutId="priceCategoryTabIndicator"
+                          className="absolute left-0 right-0 -bottom-[1px] h-[3px] bg-green-800 rounded-full"
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Search Bar (mobile only) */}
+              <div className="sm:hidden mb-4">
+                <div className="relative">
+                  <svg
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search products..."
+                    className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-700/30 focus:border-green-700 transition-all duration-200 placeholder-gray-400 text-gray-700"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {/* Products Grid */}
-              <motion.div
-                className="mb-16"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                {filteredProducts.length === 0 ? (
-                  <motion.div
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center"
-                    initial={{ scale: 0.95 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="text-gray-400 mb-4">
-                      <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedCategory + search}
+                  className="mb-16"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {filteredProducts.length === 0 ? (
+                    <motion.div
+                      className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 text-center"
+                      initial={{ scale: 0.95 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="text-gray-400 mb-4">
+                        <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                      </div>
+                      <p className="text-gray-500 text-base sm:text-lg">
+                        {search
+                          ? "No products found matching your search."
+                          : selectedCategory !== "All"
+                            ? "No products found in this category."
+                            : "No products found."}
+                      </p>
+                      {search && (
+                        <button
+                          onClick={() => setSearch("")}
+                          className="mt-2 text-blue-500 hover:text-blue-600 underline"
+                        >
+                          Clear search
+                        </button>
+                      )}
+                      {!search && selectedCategory !== "All" && (
+                        <button
+                          onClick={() => setSelectedCategory("All")}
+                          className="mt-2 text-blue-500 hover:text-blue-600 underline"
+                        >
+                          Show all categories
+                        </button>
+                      )}
+                    </motion.div>
+                  ) : (
+                    <div
+                      data-tutorial="product-cards"
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+                    >
+                      {filteredProducts.map((product) => (
+                        <div
+                          key={product.id}
+                          className="relative"
+                        >
+                          <ProductCard
+                            product={product}
+                            onSaveContact={() =>
+                              handleSaveContact(product.profiles?.id)
+                            }
+                            showSaveButton={false}
+                          />
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-gray-500 text-base sm:text-lg">
-                      {search
-                        ? "No products found matching your search."
-                        : "No products found."}
-                    </p>
-                    {search && (
-                      <button
-                        onClick={() => setSearch("")}
-                        className="mt-2 text-blue-500 hover:text-blue-600 underline"
-                      >
-                        Clear search
-                      </button>
-                    )}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    data-tutorial="product-cards"
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
-                    initial="hidden"
-                    animate="show"
-                    variants={{
-                      hidden: { opacity: 0 },
-                      show: {
-                        opacity: 1,
-                        transition: {
-                          staggerChildren: 0, // No stagger
-                        },
-                      },
-                    }}
-                  >
-                    {filteredProducts.map((product) => (
-                      <motion.div
-                        key={product.id}
-                        className="relative"
-                        variants={{
-                          hidden: { opacity: 0, y: 20 },
-                          show: { opacity: 1, y: 0 },
-                        }}
-                      >
-                        <ProductCard
-                          product={product}
-                          onSaveContact={() =>
-                            handleSaveContact(product.profiles?.id)
-                          }
-                          showSaveButton={false}
-                        />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </motion.div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
 
               {/* Browse Products Section */}
               <motion.div
@@ -586,9 +674,41 @@ const Home = () => {
                 <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 flex items-center justify-center gap-3">
                   Browse Products
                 </h2>
-                <p className="text-center text-sm text-gray-500 mb-6">
+                <p className="text-center text-sm text-gray-500 mb-4">
                   Browse fresh products from farmers
                 </p>
+
+                {/* Browse Search Bar */}
+                <div className="relative mb-6 max-w-7xl mx-auto">
+                  <svg
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={farmerSearch}
+                    onChange={(e) => setFarmerSearch(e.target.value)}
+                    placeholder="Search product or farmer..."
+                    className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700 transition-all duration-200 placeholder-gray-400 text-gray-700"
+                  />
+                  {farmerSearch && (
+                    <button
+                      onClick={() => setFarmerSearch("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
 
                 {farmerProducts.length === 0 ? (
                   <div className="text-center py-8 bg-white/60 backdrop-blur-sm rounded-2xl">
@@ -596,19 +716,28 @@ const Home = () => {
                       No products from other farmers yet.
                     </p>
                   </div>
+                ) : filteredFarmerProducts.length === 0 ? (
+                  <div className="text-center py-8 bg-white/60 backdrop-blur-sm rounded-2xl">
+                    <p className="text-gray-500">No results for &ldquo;{farmerSearch}&rdquo;.</p>
+                    <button
+                      onClick={() => setFarmerSearch("")}
+                      className="mt-2 text-sm text-green-700 hover:text-green-800 underline"
+                    >
+                      Clear search
+                    </button>
+                  </div>
                 ) : (
                   <motion.div
+                    key={farmerSearch}
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                     variants={{
-                      show: {
-                        transition: { staggerChildren: 0 },
-                      },
+                      hidden: { opacity: 0 },
+                      show: { opacity: 1, transition: { staggerChildren: 0 } },
                     }}
                     initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true }}
+                    animate="show"
                   >
-                    {farmerProducts.map((product, index) => (
+                    {filteredFarmerProducts.map((product, index) => (
                       <motion.div
                         key={product.id}
                         className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-grey/20 hover:shadow-xl transition-all duration-300 group cursor-pointer"
@@ -630,20 +759,22 @@ const Home = () => {
                             alt={product.name}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-4 left-4 bg-green-600/60 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                            {product.category === "HerbsAndSpices"
-                              ? "Herbs & Spices"
-                              : product.category}
-                          </div>
                         </div>
 
                         {/* Product Info */}
                         <div className="p-4 space-y-3">
                           <div className="flex justify-between items-start">
-                            <h3 className="font-bold text-gray-800 truncate flex-1 text-base">
-                              {product.name}
-                            </h3>
-                            <p className="text-green-800 font-bold text-base ml-2 whitespace-nowrap">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-gray-400 font-medium mb-0.5">
+                                {product.category === "HerbsAndSpices"
+                                  ? "Herbs & Spices"
+                                  : product.category}
+                              </p>
+                              <h3 className="font-bold text-gray-800 truncate text-base">
+                                {product.name}
+                              </h3>
+                            </div>
+                            <p className="text-green-800 font-bold text-base ml-2 mt-4 whitespace-nowrap">
                               ₱{product.price}/kg
                             </p>
                           </div>
