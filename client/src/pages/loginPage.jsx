@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "../contexts/authContext";
 import { suppressAuthState, releaseAuthState } from "../lib/authFlowGuard";
 import { callAuthFunction } from "../lib/authApi";
+import OAuthButtons from "../components/oauthButtons";
 
 function Login() {
   const { user } = useAuth();
@@ -91,16 +92,22 @@ function Login() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
-      style={{
-        backgroundImage: isMobile
-          ? `url(/images/bg_mobile.png)`
-          : `url(/images/bg_login.png)`,
-      }}
-    >
-      <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-11 rounded-2xl shadow-xl w-full max-w-md border border-white/20 relative">
-        <div className="text-center mb-6 sm:mb-8">
+    <div className="min-h-screen relative">
+      {/* Background layer stays pinned to the viewport so it never
+          stretches or crops oddly when the card (OAuth buttons + form)
+          grows taller than the screen. */}
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: isMobile
+            ? `url(/images/bg_mobile.png)`
+            : `url(/images/bg_login.png)`,
+        }}
+      />
+
+      <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-4 sm:py-8">
+        <div className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 lg:p-8 rounded-2xl shadow-xl w-full max-w-md border border-white/20 relative">
+        <div className="text-center mb-4 sm:mb-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-black">
             Welcome Back
           </h2>
@@ -109,7 +116,8 @@ function Login() {
           </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
+
+        <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
           {/* Email */}
           <div className="space-y-1">
             <label
@@ -189,7 +197,15 @@ function Login() {
           </button>
         </form>
 
-        <p className="text-center mt-4 sm:mt-6 text-gray-600 text-xs sm:text-base">
+        <div className="flex items-center justify-center space-x-3 my-4">
+          <span className="h-px bg-gray-300 w-full"></span>
+          <span className="text-gray-500 text-sm font-medium whitespace-nowrap">or continue with</span>
+          <span className="h-px bg-gray-300 w-full"></span>
+        </div>
+
+        <OAuthButtons />
+
+        <p className="text-center mt-4 text-gray-600 text-xs sm:text-base">
           Don't have an account?{" "}
           <a
             href="/signup"
@@ -198,6 +214,7 @@ function Login() {
             Sign up here
           </a>
         </p>
+        </div>
       </div>
     </div>
   );

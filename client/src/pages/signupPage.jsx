@@ -5,6 +5,7 @@ import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader } 
 import supabase from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { callAuthFunction } from '../lib/authApi';
+import OAuthButtons from '../components/oauthButtons';
 
 function SignUp() {
   const { user } = useAuth();
@@ -345,16 +346,22 @@ function SignUp() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-3 sm:px-4 relative bg-cover bg-center bg-no-repeat"
-      style={{
-        backgroundImage: isMobile
-          ? `url(/images/bg_mobile.png)`
-          : `url(/images/bg_login.png)`,
-      }}
-    >
-      <div className="bg-white/90 backdrop-blur-sm p-6 sm:p-8 lg:p-10 rounded-2xl shadow-2xl w-full max-w-lg border border-white/20 relative z-10">
-        <div className="text-center mb-6 sm:mb-8">
+    <div className="min-h-screen relative">
+      {/* Background layer stays pinned to the viewport so it never
+          stretches or crops oddly when the card (OAuth buttons + form)
+          grows taller than the screen. */}
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: isMobile
+            ? `url(/images/bg_mobile.png)`
+            : `url(/images/bg_login.png)`,
+        }}
+      />
+
+      <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-4 sm:py-8">
+        <div className="bg-white/90 backdrop-blur-sm p-5 sm:p-6 lg:p-8 rounded-2xl shadow-2xl w-full max-w-lg border border-white/20 relative z-10">
+        <div className="text-center mb-4 sm:mb-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-black">Get Started</h2>
           <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Step {currentStep} of {totalSteps}
@@ -362,7 +369,7 @@ function SignUp() {
         </div>
 
         {/* Progress Bar */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             {[1, 2, 3, 4].map((step) => (
               <div
@@ -381,7 +388,7 @@ function SignUp() {
           </div>
         </div>
 
-        <form onSubmit={handleSignUp} className="space-y-4">
+        <form onSubmit={handleSignUp} className="space-y-3">
           <div className="overflow-hidden">
             <div
               className={`transition-all duration-300 ease-in-out ${
@@ -431,12 +438,24 @@ function SignUp() {
           </div>
         </form>
 
-        <p className="text-center mt-6 text-gray-600 text-xs sm:text-base">
+        {currentStep === 1 && (
+          <>
+            <div className="flex items-center justify-center space-x-3 my-4">
+              <span className="h-px bg-gray-300 w-full"></span>
+              <span className="text-gray-500 text-sm font-medium whitespace-nowrap">or continue with</span>
+              <span className="h-px bg-gray-300 w-full"></span>
+            </div>
+            <OAuthButtons />
+          </>
+        )}
+
+        <p className="text-center mt-4 text-gray-600 text-xs sm:text-base">
           Already have an account?{' '}
           <a href="/login" className="text-green-800 hover:text-green-900 font-medium">
             Login here
           </a>
         </p>
+        </div>
       </div>
     </div>
   );
