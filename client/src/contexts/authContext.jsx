@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabase";
 import { isAuthStateSuppressed } from "../lib/authFlowGuard";
 
@@ -7,32 +7,30 @@ export const AuthContext = createContext({});
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const resolvedOnce = useRef(false);
 
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-      } catch (error) {
-        console.error("Error checking auth status:", error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkUser();
-
+    // We rely entirely on onAuthStateChange rather than a separate
+    // getSession() call. Supabase always fires an "INITIAL_SESSION" event
+    // as the first event on every subscription, and it waits for any
+    // pending OAuth redirect session detection to finish first. A separate
+    // getSession() call racing against that detection was what caused
+    // `loading` to flip to false (with `user` still null) right after
+    // Google/Facebook redirected back to /homepage — bouncing straight to
+    // /landing before the real session had landed.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       // While the login page is mid-flow (verifying password, about to
-      // sign out + send OTP), ignore this event entirely. This prevents
-      // `user` from ever becoming truthy during that window, which is
-      // what was causing the flash to homepage/landing before /verify-otp.
+      // sign out + send OTP), ignore this event's session entirely. This
+      // prevents `user` from ever becoming truthy during that window,
+      // which is what was causing the flash to homepage/landing before
+      // /verify-otp. We still resolve `loading` once so pages don't hang.
       if (isAuthStateSuppressed()) {
+        if (!resolvedOnce.current) {
+          resolvedOnce.current = true;
+          setLoading(false);
+        }
         return;
       }
 
@@ -41,10 +39,16 @@ export function AuthProvider({ children }) {
       // to the global auth state — otherwise the app sees a logged-in user
       // and may redirect away before the password form is submitted.
       if (window.location.pathname === "/reset-password") {
+        if (!resolvedOnce.current) {
+          resolvedOnce.current = true;
+          setLoading(false);
+        }
         return;
       }
 
       setUser(session?.user ?? null);
+      resolvedOnce.current = true;
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
