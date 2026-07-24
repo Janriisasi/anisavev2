@@ -18,6 +18,12 @@ export function AuthProvider({ children }) {
     // `loading` to flip to false (with `user` still null) right after
     // Google/Facebook redirected back to /homepage — bouncing straight to
     // /landing before the real session had landed.
+    const isOAuthRedirect =
+      window.location.hash.includes("access_token=") ||
+      window.location.search.includes("code=") ||
+      window.location.search.includes("error=") ||
+      window.location.hash.includes("error=");
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -43,6 +49,19 @@ export function AuthProvider({ children }) {
           resolvedOnce.current = true;
           setLoading(false);
         }
+        return;
+      }
+
+      // If we are handling an OAuth redirect and the session hasn't loaded yet,
+      // wait for SIGNED_IN instead of resolving immediately with null.
+      if (_event === "INITIAL_SESSION" && !session && isOAuthRedirect) {
+        // Fallback timeout in case the OAuth exchange fails silently
+        setTimeout(() => {
+          if (!resolvedOnce.current) {
+            resolvedOnce.current = true;
+            setLoading(false);
+          }
+        }, 4000);
         return;
       }
 
