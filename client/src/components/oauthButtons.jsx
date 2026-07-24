@@ -9,11 +9,21 @@ function OAuthButtons() {
   const handleOAuth = async (provider) => {
     setLoadingProvider(provider);
     try {
+      const options = {
+        redirectTo: `${window.location.origin}/homepage`,
+      };
+
+      // Azure/Microsoft doesn't include an email claim by default the way
+      // Google and Facebook do — without this, Supabase's server-side
+      // callback fails with "Error getting user email from external
+      // provider" before a session is ever created.
+      if (provider === "azure") {
+        options.scopes = "openid email profile";
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: {
-          redirectTo: `${window.location.origin}/homepage`,
-        },
+        options,
       });
 
       if (error) {

@@ -74,11 +74,13 @@ export default function Profile() {
     location.state?.activeSection || "products",
   ); // 'products' | 'orders'
   const [formData, setFormData] = useState({
+    username: "",
     full_name: "",
     address: "",
     contact_number: "",
   });
   const [tempFormData, setTempFormData] = useState({
+    username: "",
     full_name: "",
     address: "",
     contact_number: "",
@@ -334,6 +336,7 @@ export default function Profile() {
       const { error } = await supabase.from("profiles").upsert(
         {
           id: user.id,
+          username: formData.username,
           full_name: formData.full_name,
           address: formData.address,
           contact_number: formData.contact_number,
@@ -363,6 +366,7 @@ export default function Profile() {
     if (tempAvatarUrl)
       setProfile((prev) => ({ ...prev, avatar_url: tempAvatarUrl }));
     setFormData({
+      username: profile?.username || "",
       full_name: profile?.full_name || "",
       address: profile?.address || "",
       contact_number: profile?.contact_number || "09",
@@ -519,11 +523,13 @@ export default function Profile() {
                   <button
                     onClick={() => {
                       setTempFormData({
+                        username: profile?.username || "",
                         full_name: profile?.full_name || "",
                         address: profile?.address || "",
                         contact_number: profile?.contact_number || "09",
                       });
                       setFormData({
+                        username: profile?.username || "",
                         full_name: profile?.full_name || "",
                         address: profile?.address || "",
                         contact_number: profile?.contact_number || "09",
@@ -551,6 +557,29 @@ export default function Profile() {
             <div className="flex-1 w-full relative">
               {isEditing ? (
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Username
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.username}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            username: e.target.value.slice(0, 30),
+                          })
+                        }
+                        maxLength={30}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12"
+                        placeholder="Enter your username"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                        {formData.username.length}/30
+                      </span>
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Full Name
@@ -640,11 +669,13 @@ export default function Profile() {
                     <button
                       onClick={() => {
                         setTempFormData({
+                          username: profile?.username || "",
                           full_name: profile?.full_name || "",
                           address: profile?.address || "",
                           contact_number: profile?.contact_number || "09",
                         });
                         setFormData({
+                          username: profile?.username || "",
                           full_name: profile?.full_name || "",
                           address: profile?.address || "",
                           contact_number: profile?.contact_number || "09",
