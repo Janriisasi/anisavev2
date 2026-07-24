@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef, useMemo } from "react";
 import supabase from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/authContext";
 import ProductCard from "../components/productCard";
 import AddToCartModal from "../components/addToCartModal";
 import { useCart } from "../contexts/cartContext";
@@ -20,7 +21,7 @@ import MarketPriceTrend from "../components/marketPriceTrend";
 
 const Home = () => {
   const { prices } = useMarketPrices();
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [myProducts, setMyProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [farmerProducts, setFarmerProducts] = useState([]); // Products posted by other farmers
@@ -120,21 +121,23 @@ const Home = () => {
   const categoryLabels = { HerbsAndSpices: "Herbs & Spices" };
 
   useEffect(() => {
-    const getUser = async () => {
+    // No auth check here on purpose — ProtectedRoute already guarantees
+    // `user` is a real, verified session by the time Homepage renders.
+    // This used to run its own separate supabase.auth.getUser() call
+    // (a live network round-trip, unlike getSession()) and navigate("/")
+    // if it came back null. Right after an OAuth redirect there's a brief
+    // window where that independent check could resolve null before the
+    // session had fully landed — racing against AuthContext and kicking
+    // people back to landing a moment after they'd already been let in.
+    if (!user) return;
+
+    const loadHomeData = async () => {
       try {
         setLoading(true);
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) {
-          navigate("/");
-        } else {
-          setUser(user);
-          await fetchMyProducts(user.id);
-          await fetchMyRating(user.id);
-          await fetchFarmerProducts(user.id); // Fetch products posted by other farmers
-          await fetchCompletedOrders(user.id);
-        }
+        await fetchMyProducts(user.id);
+        await fetchMyRating(user.id);
+        await fetchFarmerProducts(user.id); // Fetch products posted by other farmers
+        await fetchCompletedOrders(user.id);
       } catch (error) {
         console.error("Error:", error);
       } finally {
@@ -142,8 +145,8 @@ const Home = () => {
       }
     };
 
-    getUser();
-  }, []);
+    loadHomeData();
+  }, [user]);
 
   // Real-time listener for product updates (inventory changes)
   useEffect(() => {
