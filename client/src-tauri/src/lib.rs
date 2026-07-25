@@ -1,3 +1,5 @@
+use tauri::Manager;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(target_os = "android")]
@@ -12,11 +14,17 @@ pub fn run() {
     // separate process instead of routing the link back to the running one.
     #[cfg(desktop)]
     {
-        builder = builder.plugin(tauri_plugin_single_instance::init(|_app, _argv, _cwd| {
-            // No-op — the deep-link plugin's own onOpenUrl event (already
-            // wired up in App.jsx) fires automatically once this plugin
-            // is active. This closure just needs to exist so the second
-            // launch attempt closes instead of opening its own window.
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            // The deep-link plugin's own onOpenUrl event (wired up in
+            // App.jsx) handles reading the actual URL and signing the user
+            // in — this just brings the already-running window to the
+            // front so the person isn't left wondering where the app went
+            // after finishing sign-in in the browser.
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
         }));
     }
 
