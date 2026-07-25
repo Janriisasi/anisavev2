@@ -91,32 +91,35 @@ export default function Profile() {
   const fetchAllUserData = useCallback(async (userId) => {
     try {
       setLoading(true);
-      const [profileRes, productsRes, ratingsRes, buyerRatingsRes, soldRes, completedOrdersRes] =
-        await Promise.all([
-          supabase
-            .from("profiles")
-            .select(
-              "id, username, full_name, avatar_url, address, contact_number, created_at, updated_at",
-            )
-            .eq("id", userId)
-            .maybeSingle(),
-          supabase
-            .from("products")
-            .select("*")
-            .eq("user_id", userId)
-            .order("created_at", { ascending: false }),
-          supabase.from("ratings").select("rating").eq("farmer_id", userId),
-          supabase
-            .from("buyer_ratings")
-            .select("rating")
-            .eq("buyer_id", userId),
-          supabase.rpc("get_seller_sold_count", { p_seller_id: userId }),
-          supabase
-            .from("orders")
-            .select("total_amount")
-            .eq("seller_id", userId)
-            .eq("status", "completed"),
-        ]);
+      const [
+        profileRes,
+        productsRes,
+        ratingsRes,
+        buyerRatingsRes,
+        soldRes,
+        completedOrdersRes,
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select(
+            "id, username, full_name, avatar_url, address, contact_number, created_at, updated_at",
+          )
+          .eq("id", userId)
+          .maybeSingle(),
+        supabase
+          .from("products")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false }),
+        supabase.from("ratings").select("rating").eq("farmer_id", userId),
+        supabase.from("buyer_ratings").select("rating").eq("buyer_id", userId),
+        supabase.rpc("get_seller_sold_count", { p_seller_id: userId }),
+        supabase
+          .from("orders")
+          .select("total_amount")
+          .eq("seller_id", userId)
+          .eq("status", "completed"),
+      ]);
 
       if (!profileRes.error) setProfile(profileRes.data);
       if (!productsRes.error) setProducts(productsRes.data || []);
@@ -135,7 +138,8 @@ export default function Profile() {
         setAvgRating(0);
       }
       if (!soldRes.error) setSoldCount(soldRes.data || 0);
-      if (!completedOrdersRes.error) setCompletedOrders(completedOrdersRes.data || []);
+      if (!completedOrdersRes.error)
+        setCompletedOrders(completedOrdersRes.data || []);
     } catch (error) {
       console.error("Error fetching user data:", error);
       // Fallback: If profile fetch fails, we still want to show metadata
@@ -260,7 +264,10 @@ export default function Profile() {
   }, [profile?.tempAvatarUrl, profile?.avatar_url, profile?.full_name]);
 
   const totalSales = useMemo(() => {
-    return completedOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+    return completedOrders.reduce(
+      (sum, order) => sum + (Number(order.total_amount) || 0),
+      0,
+    );
   }, [completedOrders]);
 
   const handleAddProductClick = useCallback(() => {
@@ -436,7 +443,7 @@ export default function Profile() {
       await supabase.auth.signOut();
       navigate("/");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       setIsLoggingOut(false);
       setShowLogoutConfirm(false);
@@ -987,11 +994,11 @@ export default function Profile() {
         </div>
       )}
 
-      <LogoutConfirmationModal 
-        isOpen={showLogoutConfirm} 
-        onClose={() => setShowLogoutConfirm(false)} 
-        onConfirm={handleSignOutConfirm} 
-        isLoggingOut={isLoggingOut} 
+      <LogoutConfirmationModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleSignOutConfirm}
+        isLoggingOut={isLoggingOut}
       />
     </div>
   );

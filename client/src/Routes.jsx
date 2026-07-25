@@ -11,6 +11,7 @@ const SignUp         = lazy(() => import('./pages/signupPage'));
 const VerifyOtp      = lazy(() => import('./pages/verifyOtpPage'));
 const ForgotPassword = lazy(() => import('./pages/forgotPasswordPage'));
 const ResetPassword  = lazy(() => import('./pages/resetPasswordPage'));
+const CompleteProfile = lazy(() => import('./pages/completeProfilePage')); // NEW — first-time OAuth users
 const Homepage       = lazy(() => import('./pages/homepage'));
 const Profile        = lazy(() => import('./pages/profile'));
 const Categories     = lazy(() => import('./pages/categoriesPage'));
@@ -64,6 +65,7 @@ export default function Routes() {
         <Route path="/verify-otp"     element={<VerifyOtp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
 
         <Route path="/privacy"        element={<PrivacyPolicy />} />
         <Route path="/terms"          element={<TermsOfService />} />

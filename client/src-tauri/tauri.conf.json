@@ -36,11 +36,12 @@
   },
   "plugins": {
     "deep-link": {
-      "mobile": [
-        {
-          "scheme": ["anisave"]
-        }
-      ]
-    }
-  }
+       "desktop": {
+         "schemes": ["anisave"]
+       },
+       "mobile": [
+         { "scheme": ["anisave"] }
+       ]
+     }
+   }
 }

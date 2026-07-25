@@ -11,15 +11,79 @@ import Navbar from "./components/navbar";
 import Routes from "./Routes";
 import Loader from "./components/loader";
 import TutorialOverlay from "./components/tutorialOverlay";
-import { Toaster } from "react-hot-toast";
-import { useEffect } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import { useEffect, useRef } from "react";
 import { onOpenUrl, getCurrent } from "@tauri-apps/plugin-deep-link";
+import supabase from "./lib/supabase";
 
 function AppContent() {
   const { user, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { showTutorial, closeTutorial } = useTutorialContext();
+
+  // Surface OAuth failures (e.g. "an account with this email already
+  // exists" from the before-user-created Auth Hook) as a toast.
+  //
+  // On the web, oauthButtons.jsx sends redirectTo: `${origin}/homepage`.
+  // If the provider/Supabase rejects the sign-in, it still redirects back
+  // to /homepage but with ?error=...&error_description=... in the URL
+  // instead of a session. Because /homepage is behind ProtectedRoute and
+  // there's no session, the user gets bounced to /login almost
+  // immediately — dropping those query params before anyone sees them.
+  // Reading them here, on first mount, happens before that redirect and
+  // toast() is global (via <Toaster/>) so it survives the navigation.
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(
+      window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash
+    );
+    const errorDescription = search.get("error_description") || hash.get("error_description");
+
+    if (errorDescription) {
+      toast.error(decodeURIComponent(errorDescription.replace(/\+/g, " ")));
+      // Strip the params so a refresh or back-navigation doesn't re-show it.
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  // First-time OAuth users get an auto-generated username/blank name (no
+  // 4-step signup form to fill those in). Send them to a one-time
+  // "finish your profile" step instead of dropping them straight into the
+  // app. `profile_completed` is set by handle_new_user() based on whether
+  // the account was created with an explicit username (password signup)
+  // or not (every OAuth provider) — see the migration for that.
+  // profileCheckedRef guards this to a single check per login session so
+  // it isn't re-querying the DB on every navigation.
+  const profileCheckedRef = useRef(null);
+  useEffect(() => {
+    if (!user) {
+      profileCheckedRef.current = null;
+      return;
+    }
+    if (profileCheckedRef.current === user.id) return;
+    if (location.pathname === "/complete-profile") return;
+
+    let cancelled = false;
+    (async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("profile_completed")
+        .eq("id", user.id)
+        .single();
+
+      if (cancelled) return;
+      profileCheckedRef.current = user.id;
+
+      if (profile?.profile_completed === false) {
+        navigate("/complete-profile", { replace: true });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, location.pathname, navigate]);
 
   // All routes where Navbar should NEVER appear — even if a session exists
   const isPublicPage = [
@@ -32,6 +96,7 @@ function AppContent() {
     "/verify-otp",        // OTP step — no session yet
     "/forgot-password",   // No session
     "/reset-password",    // Supabase creates a temp session here — hide navbar anyway
+    "/complete-profile",  // First-time OAuth users finishing their profile
   ].includes(location.pathname);
 
   useEffect(() => {
@@ -43,9 +108,45 @@ function AppContent() {
 
     const handleUrl = (url) => {
       if (!url) return;
+
       if (url.includes("reset-password")) {
         const parsed = new URL(url.replace("anisave://", "https://placeholder.com/"));
         navigate(`/reset-password${parsed.search}`, { replace: true });
+        return;
+      }
+
+      if (url.includes("oauth-callback")) {
+        const parsed = new URL(url.replace("anisave://", "https://placeholder.com/"));
+        // OAuth tokens come back in the hash fragment (#access_token=...),
+        // not the query string — unlike the reset-password link above.
+        const params = new URLSearchParams(
+          parsed.hash ? parsed.hash.slice(1) : parsed.search,
+        );
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+
+        if (accessToken && refreshToken) {
+          supabase.auth
+            .setSession({ access_token: accessToken, refresh_token: refreshToken })
+            .then(({ error }) => {
+              if (error) {
+                console.error("OAuth deep link setSession error:", error);
+                navigate("/login", { replace: true });
+                return;
+              }
+              navigate("/homepage", { replace: true });
+            });
+        } else {
+          const errorDescription = params.get("error_description");
+          console.error("OAuth deep link missing tokens:", errorDescription || url);
+          toast.error(
+            errorDescription
+              ? decodeURIComponent(errorDescription.replace(/\+/g, " "))
+              : "Sign-in failed or was cancelled. Please try again.",
+          );
+          navigate("/login", { replace: true });
+        }
+        return;
       }
     };
 

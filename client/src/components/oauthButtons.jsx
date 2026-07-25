@@ -1,16 +1,23 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import supabase from "../lib/supabase";
 
 function OAuthButtons() {
   const [loadingProvider, setLoadingProvider] = useState(null);
 
+  const isTauri =
+    typeof window !== "undefined" &&
+    (Boolean(window.__TAURI__) || Boolean(window.__TAURI_INTERNALS__));
+
   const handleOAuth = async (provider) => {
     setLoadingProvider(provider);
     try {
       const options = {
-        redirectTo: `${window.location.origin}/homepage`,
+        redirectTo: isTauri
+          ? "anisave://oauth-callback"
+          : `${window.location.origin}/homepage`,
       };
 
       // Azure/Microsoft doesn't include an email claim by default the way
@@ -21,19 +28,37 @@ function OAuthButtons() {
         options.scopes = "openid email profile";
       }
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      if (isTauri) {
+        // Providers block sign-in from embedded webviews (Google shows
+        // "This browser may not be secure"), so the OAuth page has to
+        // open in the system's real browser, not inside the app. This
+        // returns the provider's authorize URL instead of navigating
+        // the current window to it.
+        options.skipBrowserRedirect = true;
+      }
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options,
       });
 
       if (error) {
         toast.error(error.message);
+        return;
+      }
+
+      if (isTauri && data?.url) {
+        await openUrl(data.url);
+        // The system browser now owns the flow. Once the provider and
+        // Supabase finish, the OS hands control back to the app via the
+        // anisave://oauth-callback deep link, caught in App.jsx.
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
       console.error(`${provider} login error:`, error);
     } finally {
-      // Typically the page will redirect, but if there's an error we stop loading
+      // Typically the page will redirect (web) or the browser takes over
+      // (Tauri), but if there's an error we stop loading either way.
       setLoadingProvider(null);
     }
   };

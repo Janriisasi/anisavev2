@@ -52,8 +52,19 @@ Deno.serve(async (req) => {
   });
 
   if (error) {
+    // Rejected by the before-user-created Auth Hook (hook_block_duplicate_email):
+    // this fires specifically when the email already belongs to another
+    // account (password or OAuth). Its message is already written to be
+    // shown to the user as-is, e.g. "An account with this email already
+    // exists. Please continue with google instead."
+    if (error.status === 409 || /already exists/i.test(error.message)) {
+      return jsonResponse(409, { success: false, message: error.message });
+    }
+
     if (error.message.includes("User already registered")) {
-      // Generic message — don't confirm whether an email exists to attackers
+      // Fallback for Supabase's own built-in duplicate check (in case the
+      // hook isn't installed, or a duplicate-email case it doesn't cover).
+      // Deliberately generic — don't confirm whether an email exists to attackers.
       return jsonResponse(400, {
         success: false,
         message: "Unable to create account. Please check your details or try logging in.",

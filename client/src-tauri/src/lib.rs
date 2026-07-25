@@ -1,15 +1,28 @@
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Required for Android: explicitly install a rustls crypto provider.
-    // Without this, any HTTPS request (Supabase, etc.) panics at runtime with
-    // "No rustls crypto provider is configured."
     #[cfg(target_os = "android")]
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
         .unwrap();
 
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+
+    // Must come before the deep-link plugin. Without this, clicking an
+    // anisave:// link while the app is already open spawns a second,
+    // separate process instead of routing the link back to the running one.
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|_app, _argv, _cwd| {
+            // No-op — the deep-link plugin's own onOpenUrl event (already
+            // wired up in App.jsx) fires automatically once this plugin
+            // is active. This closure just needs to exist so the second
+            // launch attempt closes instead of opening its own window.
+        }));
+    }
+
+    builder
         .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
