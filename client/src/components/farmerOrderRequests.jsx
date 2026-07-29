@@ -327,16 +327,6 @@ export default function FarmerOrderRequests() {
         {/* Filter toggle */}
         <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
           <button
-            onClick={() => setFilter("confirming")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              filter === "confirming"
-                ? "bg-white text-green-700 shadow-sm"
-                : "text-gray-500"
-            }`}
-          >
-            Pending
-          </button>
-          <button
             onClick={() => setFilter("all")}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               filter === "all"
@@ -346,6 +336,16 @@ export default function FarmerOrderRequests() {
           >
             All
           </button>
+          <button
+            onClick={() => setFilter("confirming")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              filter === "confirming"
+                ? "bg-white text-green-700 shadow-sm"
+                : "text-gray-500"
+            }`}
+          >
+            Pending
+          </button>
         </div>
       </div>
 
@@ -354,7 +354,7 @@ export default function FarmerOrderRequests() {
           <Loader2 className="w-6 h-6 text-green-600 animate-spin" />
         </div>
       ) : orders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-gray-100">
+        <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl">
           <ShoppingBag className="w-12 h-12 text-gray-200 mb-3" />
           <p className="text-gray-500 font-medium">
             {filter === "confirming"

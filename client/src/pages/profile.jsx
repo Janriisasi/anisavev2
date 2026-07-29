@@ -496,11 +496,36 @@ export default function Profile() {
         {/* Profile card */}
         <div
           data-tutorial="profile-info"
-          className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-8"
+          className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20 mb-8"
         >
+          {/* Mobile-only icon edit button, pinned top-right of the card */}
+          {!isEditing && (
+            <button
+              onClick={() => {
+                setTempFormData({
+                  username: profile?.username || "",
+                  full_name: profile?.full_name || "",
+                  address: profile?.address || "",
+                  contact_number: profile?.contact_number || "09",
+                });
+                setFormData({
+                  username: profile?.username || "",
+                  full_name: profile?.full_name || "",
+                  address: profile?.address || "",
+                  contact_number: profile?.contact_number || "09",
+                });
+                setContactError("");
+                setIsEditing(true);
+              }}
+              className="md:hidden absolute top-4 right-4 z-10 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+              title="Edit Profile"
+            >
+              <Edit className="w-5 h-5" />
+            </button>
+          )}
           <div className="flex flex-col items-center md:flex-row md:items-start gap-6 md:gap-8">
             {/* Avatar */}
-            <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0 mx-auto md:mx-0">
               <div className="relative w-32 h-32 sm:w-40 sm:h-40">
                 <img
                   src={profileImageUrl}
@@ -525,39 +550,6 @@ export default function Profile() {
                   </label>
                 )}
               </div>
-              {!isEditing && (
-                <div className="md:hidden mt-4 flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setTempFormData({
-                        username: profile?.username || "",
-                        full_name: profile?.full_name || "",
-                        address: profile?.address || "",
-                        contact_number: profile?.contact_number || "09",
-                      });
-                      setFormData({
-                        username: profile?.username || "",
-                        full_name: profile?.full_name || "",
-                        address: profile?.address || "",
-                        contact_number: profile?.contact_number || "09",
-                      });
-                      setContactError("");
-                      setIsEditing(true);
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                  >
-                    <Edit className="w-5 h-5" />
-                    <span className="font-medium">Edit Profile</span>
-                  </button>
-                  <button
-                    onClick={handleSignOutClick}
-                    className="flex-1 flex items-center justify-center gap-2 p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span className="font-medium">Logout</span>
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Profile info / edit form */}

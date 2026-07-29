@@ -282,15 +282,15 @@ const IdleSlideshow = memo(
       {
         key: "greeting",
         content: (
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 rounded-full bg-green-200/60 flex items-center justify-center flex-shrink-0">
-              <User size={26} className="text-green-700" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-full bg-green-200/60 flex items-center justify-center flex-shrink-0">
+              <User size={20} className="text-green-700" />
             </div>
             <div>
-              <p className="text-green-700 text-sm font-semibold leading-snug">
+              <p className="text-green-700 text-[11px] sm:text-sm font-semibold leading-snug">
                 {greetData.greeting}
               </p>
-              <p className="text-green-600 text-xs mt-1 leading-snug">
+              <p className="text-green-600 text-[10px] sm:text-xs mt-0.5 sm:mt-1 leading-snug">
                 {greetData.tip}
               </p>
             </div>
@@ -305,27 +305,41 @@ const IdleSlideshow = memo(
             {
               key: "market",
               content: (
-                <div className="flex items-center gap-3 h-full">
-                  <div className="w-16 h-16 rounded-full bg-red-200/60 flex items-center justify-center flex-shrink-0">
-                    <TrendingUp size={26} className="text-red-700" />
+                <div className="flex items-center gap-2 sm:gap-3 h-full">
+                  <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-full bg-red-200/60 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp size={20} className="text-red-700" />
                   </div>
-                  <div className="flex-1 min-w-0 w-full pr-1">
-                    <p className="text-xs font-bold text-red-700 uppercase tracking-wide mb-1">
-                      Market Trends
-                    </p>
-                    <div className="flex items-center justify-center gap-2.5 w-full pt-1 px-1">
-                      {trendData.slice(0, 5).map((t) => {
+                  <div className="flex-1 min-w-0 w-full">
+                    <div className="flex items-center justify-between mb-1 pr-1">
+                      <p className="text-[10px] sm:text-xs font-bold text-red-700 uppercase tracking-wide">
+                        Market Trends
+                      </p>
+                    </div>
+                    <div
+                      className="no-scrollbar flex items-center gap-1.5 sm:gap-2 overflow-x-auto snap-x snap-proximity -mr-3 pr-3 sm:-mr-4 sm:pr-4"
+                      style={{ WebkitOverflowScrolling: "touch" }}
+                    >
+                      {trendData.map((t) => {
                         const imgSrc = PRODUCT_IMAGES[t.name];
                         return (
-                          <div key={t.name} className="flex-1 basis-0 min-w-0 max-w-[220px] flex items-center gap-2 border bg-red-200/50 border-red-300 rounded-2xl p-2">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-red-50/50">
+                          <div
+                            key={t.name}
+                            className="snap-start flex-shrink-0 w-[100px] sm:w-[128px] flex items-center gap-1.5 sm:gap-2 border bg-red-200/50 border-red-300 rounded-xl px-1.5 py-1 sm:px-2 sm:py-1.5"
+                          >
+                            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg overflow-hidden flex-shrink-0 bg-red-50/50">
                               {imgSrc ? (
-                                <img src={imgSrc} alt={t.name} className="w-full h-full object-cover" />
+                                <img
+                                  src={imgSrc}
+                                  alt={t.name}
+                                  className="w-full h-full object-cover"
+                                />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-lg">🌾</div>
+                                <div className="w-full h-full flex items-center justify-center text-sm">
+                                  🌾
+                                </div>
                               )}
                             </div>
-                            <p className="text-sm font-bold text-gray-800 leading-tight truncate">
+                            <p className="text-[10px] sm:text-xs font-bold text-gray-800 leading-tight truncate">
                               {t.name}
                             </p>
                           </div>
@@ -346,15 +360,15 @@ const IdleSlideshow = memo(
             {
               key: "topbuyer",
               content: (
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-3xl">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-full bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-xl sm:text-3xl">
                     🏆
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-yellow-700 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] sm:text-xs font-bold text-yellow-700 uppercase tracking-wide mb-0.5 sm:mb-1">
                       Ikaw ang Top Buyer ngayon!
                     </p>
-                    <p className="text-sm text-yellow-800 leading-snug">
+                    <p className="text-[11px] sm:text-sm text-yellow-800 leading-snug">
                       {firstName ? `${firstName}, patuloy` : "Patuloy"} kang
                       sumusuporta sa mga lokal na magsasaka — salamat! 🌾
                     </p>
@@ -369,15 +383,15 @@ const IdleSlideshow = memo(
               {
                 key: "topbuyer",
                 content: (
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-3xl">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-full bg-yellow-200/60 flex items-center justify-center flex-shrink-0 text-xl sm:text-3xl">
                       ⭐
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-yellow-700 uppercase tracking-wide mb-1">
+                      <p className="text-[10px] sm:text-xs font-bold text-yellow-700 uppercase tracking-wide mb-0.5 sm:mb-1">
                         Top #{userBuyerRank + 1} Buyer ka!
                       </p>
-                      <p className="text-sm text-yellow-800 leading-snug">
+                      <p className="text-[11px] sm:text-sm text-yellow-800 leading-snug">
                         Malapit ka na sa #1! Tuloy-tuloy lang sa pagsuporta. 💪
                       </p>
                     </div>
@@ -394,15 +408,15 @@ const IdleSlideshow = memo(
             {
               key: "sellnudge",
               content: (
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-green-200/60 flex items-center justify-center flex-shrink-0">
-                    <ShoppingBag size={26} className="text-green-700" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-full bg-green-200/60 flex items-center justify-center flex-shrink-0">
+                    <ShoppingBag size={20} className="text-green-700" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] sm:text-xs font-bold text-green-700 uppercase tracking-wide mb-0.5 sm:mb-1">
                       Simulan na ang Pagbebenta!
                     </p>
-                    <p className="text-sm text-green-800 leading-snug">
+                    <p className="text-[11px] sm:text-sm text-green-800 leading-snug">
                       {firstName ? `${firstName}, mag` : "Mag"}-list na ng iyong
                       produkto at kumita ngayon! 🌾{" "}
                       {top3.length > 0 && (
@@ -426,15 +440,15 @@ const IdleSlideshow = memo(
             {
               key: "activebuyers",
               content: (
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-blue-200/60 flex items-center justify-center flex-shrink-0">
-                    <Star size={26} className="text-blue-600" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-full bg-blue-200/60 flex items-center justify-center flex-shrink-0">
+                    <Star size={20} className="text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-1">
+                    <p className="text-[10px] sm:text-xs font-bold text-blue-700 uppercase tracking-wide mb-0.5 sm:mb-1">
                       Pinaka-Active na Buyers
                     </p>
-                    <p className="text-sm text-blue-800 leading-snug">
+                    <p className="text-[11px] sm:text-sm text-blue-800 leading-snug">
                       {topBuyers.map((b, i) => {
                         const isMe = userId && b.id === userId;
                         return (
@@ -472,9 +486,12 @@ const IdleSlideshow = memo(
 
     const inner = (
       <>
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar { display: none; }
+          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `}</style>
         <div
-          className={`relative border rounded-xl px-4 py-3 overflow-hidden flex flex-col justify-center ${slide.bg}`}
-          style={{ height: 106 }}
+          className={`relative border rounded-xl px-3 py-2 sm:px-4 sm:py-3 overflow-hidden flex flex-col justify-center transition-all duration-300 min-h-[74px] sm:min-h-[106px] ${slide.bg}`}
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -491,7 +508,7 @@ const IdleSlideshow = memo(
 
         {/* Dot indicators */}
         {total > 1 && (
-          <div className="flex justify-center gap-1.5 mt-2 mb-1">
+          <div className="flex justify-center gap-1.5 mt-1.5 mb-0.5 sm:mt-2 sm:mb-1">
             {slides.map((s, i) => (
               <button
                 key={s.key}
@@ -682,7 +699,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
 
         {/* ── Unified Slideshow Box (Greeting · Market Trends · Trending · etc.) ── */}
         {trendReady && (
-          <div className="bg-white rounded-2xl px-3 pt-2.5 pb-3">
+          <div className="bg-white rounded-2xl px-2.5 pt-2 pb-2.5 sm:px-3 sm:pt-2.5 sm:pb-3">
             <IdleSlideshow
               userName={userName}
               myProducts={myProducts}
