@@ -6,9 +6,15 @@ import toast from 'react-hot-toast';
 
 export default function AddToCartModal({ product, seller, onClose }) {
   const { addToCart, isInCart } = useCart();
+  const unit = product?.unit || 'kg';
+  // Discrete units (things you can't sell a fraction of) step by whole
+  // numbers; kg/bundle can still be sold in half-units.
+  const isDiscreteUnit = ['piece', 'sack', 'tray', 'crate'].includes(unit);
+  const step = isDiscreteUnit ? 1 : 0.5;
+  const minQty = product?.min_order ? Number(product.min_order) : step;
   // Kept as a string while the person is typing so the field can be
   // cleared/edited normally instead of snapping back on every keystroke.
-  const [quantityInput, setQuantityInput] = useState('1');
+  const [quantityInput, setQuantityInput] = useState(String(minQty));
   const [loading, setLoading] = useState(false);
 
   const maxQty = product?.quantity_kg || 999;
@@ -25,7 +31,7 @@ export default function AddToCartModal({ product, seller, onClose }) {
 
     const num = parseFloat(val);
     if (!isNaN(num) && num > maxQty) {
-      toast.error(`Only ${maxQty} kg available`);
+      toast.error(`Only ${maxQty} ${unit} available`);
       return; // reject the keystroke, field stays at its last valid value
     }
 
@@ -35,8 +41,8 @@ export default function AddToCartModal({ product, seller, onClose }) {
   // Once the person is done typing, snap back to a valid value
   const handleQuantityBlur = () => {
     const num = parseFloat(quantityInput);
-    if (isNaN(num) || num < 0.5) {
-      setQuantityInput('0.5');
+    if (isNaN(num) || num < minQty) {
+      setQuantityInput(String(minQty));
     } else if (num > maxQty) {
       setQuantityInput(String(maxQty));
     } else {
@@ -46,14 +52,14 @@ export default function AddToCartModal({ product, seller, onClose }) {
 
   const adjustQuantity = (delta) => {
     const current = parseFloat(quantityInput) || 0;
-    const next = Math.min(maxQty, Math.max(0.5, Number((current + delta).toFixed(1))));
+    const next = Math.min(maxQty, Math.max(minQty, Number((current + delta).toFixed(1))));
     setQuantityInput(String(next));
   };
 
   const handleAdd = async () => {
     const num = parseFloat(quantityInput);
-    if (isNaN(num) || num < 0.5) { toast.error('Enter a valid quantity'); return; }
-    if (num > maxQty) { toast.error(`Only ${maxQty} kg available`); return; }
+    if (isNaN(num) || num < minQty) { toast.error(`Minimum order is ${minQty} ${unit}`); return; }
+    if (num > maxQty) { toast.error(`Only ${maxQty} ${unit} available`); return; }
 
     setLoading(true);
     const { error } = await addToCart({ product, seller, quantityKg: num });
@@ -101,9 +107,23 @@ export default function AddToCartModal({ product, seller, onClose }) {
             <div className="flex items-start justify-between gap-3 mb-2">
               <h3 className="font-bold text-gray-900 text-2xl truncate">{product?.name}</h3>
               <p className="text-green-700 font-extrabold text-2xl whitespace-nowrap">
-                ₱{product?.price}/kg
+                ₱{product?.price}/{unit}
               </p>
             </div>
+
+            {/* Negotiable + location */}
+            {(product?.negotiable || product?.location) && (
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                {product?.negotiable && (
+                  <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                    Negotiable
+                  </span>
+                )}
+                {product?.location && (
+                  <span className="text-[11px] text-gray-500">{product.location}</span>
+                )}
+              </div>
+            )}
 
             {/* Farmer info + quantity */}
             <div className="flex items-center justify-between gap-3 mb-5">
@@ -118,7 +138,7 @@ export default function AddToCartModal({ product, seller, onClose }) {
                 </span>
               </div>
               <p className="text-gray-400 text-xs whitespace-nowrap flex-shrink-0">
-                {maxQty} kg available
+                {maxQty} {unit} available
               </p>
             </div>
 
@@ -127,7 +147,7 @@ export default function AddToCartModal({ product, seller, onClose }) {
               <span className="font-semibold text-gray-700">Quantity</span>
               <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                 <button
-                  onClick={() => adjustQuantity(-0.5)}
+                  onClick={() => adjustQuantity(-step)}
                   className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
                 >
                   <Minus className="w-4 h-4" />
@@ -143,14 +163,14 @@ export default function AddToCartModal({ product, seller, onClose }) {
                 />
                 <div className="w-px h-6 bg-gray-200" />
                 <button
-                  onClick={() => adjustQuantity(0.5)}
+                  onClick={() => adjustQuantity(step)}
                   className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            <p className="text-xs text-gray-400 text-right mb-5">kg (minimum 0.5 kg)</p>
+            <p className="text-xs text-gray-400 text-right mb-5">{unit} (minimum {minQty} {unit})</p>
 
             {/* Total */}
             <div className="flex items-center justify-between mb-4">

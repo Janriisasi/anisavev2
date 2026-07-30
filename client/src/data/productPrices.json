@@ -15,7 +15,11 @@
     "Sitao": 137.56,
     "Lettuce (Green Ice)": 190.56,
     "Lettuce (Iceberg)": 265.95,
-    "Lettuce (Romaine)": 246.40
+    "Lettuce (Romaine)": 246.40,
+    "Cauliflower": 195.50,
+    "Chayote (Sayote)": 45.00,
+    "Habichuelas (Baguio Beans)": 110.75,
+    "Celery": 165.00
   },
   "Fruits": {
     "Mango": 200.23,
@@ -46,12 +50,14 @@
     "Corn Cracked (Yellow, Feed Grade)": 50.00,
     "Corn Grits (Feed Grade)": 46.67,
     "Sorghum": 25,
-    "Millet": 30
+    "Millet": 30,
+    "Mungbean": 95.40
   },
   "HerbsAndSpices": {
     "Ginger": 155.92,
     "Garlic": 366.67,
     "Red Onion": 150.09,
+    "White Onion": 135.60,
     "Chili": 258.76,
     "Lemongrass": 20,
     "Basil": 35,

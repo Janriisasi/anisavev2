@@ -525,6 +525,7 @@ export default function ChatWindow({
           price: shownProductContext.price,
           image_url: shownProductContext.image_url,
           quantity_kg: shownProductContext.quantity_kg,
+          unit: shownProductContext.unit || 'kg',
           id: shownProductContext.id,
         };
         finalContent = `[PRODUCT_CONTEXT:${JSON.stringify(contextData)}]\n${finalContent || sanitizedMessage}`;
@@ -645,7 +646,7 @@ export default function ChatWindow({
           p_user_id: conversation.otherParticipant.id,
           p_type: "order_approved",
           p_title: "🎉 Order Approved!",
-          p_message: `Your order of ${order.quantity_kg} kg of ${order.product_name} has been approved. Total: ₱${order.total_amount}.`,
+          p_message: `Your order of ${order.quantity_kg} ${order.unit || 'kg'} of ${order.product_name} has been approved. Total: ₱${order.total_amount}.`,
           p_data: { order_id: orderId, product_name: order.product_name },
         });
 
@@ -664,7 +665,7 @@ export default function ChatWindow({
           p_user_id: conversation.otherParticipant.id,
           p_type: "order_declined",
           p_title: "Order Declined",
-          p_message: `Your order of ${order.quantity_kg} kg of ${order.product_name} was declined.`,
+          p_message: `Your order of ${order.quantity_kg} ${order.unit || 'kg'} of ${order.product_name} was declined.`,
           p_data: { order_id: orderId, product_name: order.product_name },
         });
 
@@ -731,9 +732,9 @@ export default function ChatWindow({
                   <div
                     className={`flex gap-3 mt-1 text-xs ${isOwn ? "text-green-100" : "text-gray-600"}`}
                   >
-                    <span>{order.quantity_kg} kg</span>
+                    <span>{order.quantity_kg} {order.unit || 'kg'}</span>
                     <span>·</span>
-                    <span>₱{order.price_per_kg}/kg</span>
+                    <span>₱{order.price_per_kg}/{order.unit || 'kg'}</span>
                   </div>
                 </div>
               </div>
@@ -884,7 +885,7 @@ export default function ChatWindow({
                     <p
                       className={`text-[11px] font-semibold ${isOwn ? "text-green-100" : "text-green-700"}`}
                     >
-                      ₱{product.price}/kg
+                      ₱{product.price}/{product.unit || 'kg'}
                     </p>
                   </div>
                 </div>
@@ -1170,7 +1171,7 @@ export default function ChatWindow({
                 {shownProductContext.name}
               </p>
               <p className="text-green-700 font-bold text-[11px] leading-tight">
-                ₱{shownProductContext.price}/kg
+                ₱{shownProductContext.price}/{shownProductContext.unit || 'kg'}
               </p>
             </div>
 

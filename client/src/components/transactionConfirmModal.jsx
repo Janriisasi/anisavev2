@@ -15,6 +15,7 @@ export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
     name: cartItem?.product_snapshot?.name || product.name,
     image_url: cartItem?.product_snapshot?.image_url || product.image_url,
     category: cartItem?.product_snapshot?.category || product.category,
+    unit: cartItem?.product_snapshot?.unit || product.unit || 'kg',
   };
 
   const total = (cartItem?.quantity_kg * cartItem?.price_at_add).toFixed(2);
@@ -50,7 +51,7 @@ export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
         p_user_id: seller.id,
         p_type: 'order_request',
         p_title: `New Order Request`,
-        p_message: `A buyer wants to purchase ${cartItem.quantity_kg} kg of ${snapshot.name} for ₱${total}. Please check your Order Requests.`,
+        p_message: `A buyer wants to purchase ${cartItem.quantity_kg} ${snapshot.unit} of ${snapshot.name} for ₱${total}. Please check your Order Requests.`,
         p_data: {
           order_id: order.id,
           product_name: snapshot.name,
@@ -73,9 +74,10 @@ export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
         product_name: snapshot.name,
         quantity_kg: cartItem.quantity_kg,
         price_per_kg: cartItem.price_at_add,
+        unit: snapshot.unit,
         total_amount: parseFloat(total),
         image_url: snapshot.image_url,
-      })}]\nI'd like to confirm my order of ${cartItem.quantity_kg} kg of ${snapshot.name} at ₱${cartItem.price_at_add}/kg. Total: ₱${total}. Please review my order request!`;
+      })}]\nI'd like to confirm my order of ${cartItem.quantity_kg} ${snapshot.unit} of ${snapshot.name} at ₱${cartItem.price_at_add}/${snapshot.unit}. Total: ₱${total}. Please review my order request!`;
 
       await supabase.from('messages').insert({
         conversation_id: conversationId,
@@ -152,11 +154,11 @@ export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
                 <div className="flex gap-3 mt-1">
                   <div className="flex items-center gap-1 text-xs text-gray-600">
                     <Package className="w-3 h-3" />
-                    <span>{cartItem?.quantity_kg} kg</span>
+                    <span>{cartItem?.quantity_kg} {snapshot.unit}</span>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-gray-600">
                     <DollarSign className="w-3 h-3" />
-                    <span>₱{cartItem?.price_at_add}/kg</span>
+                    <span>₱{cartItem?.price_at_add}/{snapshot.unit}</span>
                   </div>
                 </div>
               </div>

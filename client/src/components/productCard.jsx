@@ -9,7 +9,8 @@ export default function ProductCard({
 }) {
   const navigate = useNavigate();
   const { prices } = useMarketPrices();
-  const { name, category, image_url, price, profiles } = product;
+  const { name, category, image_url, price, profiles, unit } = product;
+  const displayUnit = unit || 'kg';
 
   // Get market price from dynamic context
   let marketPrice = price;
@@ -55,15 +56,20 @@ export default function ProductCard({
 
       <div className="p-5 space-y-3">
         <div className="">
-          <div className="text-sm font-medium text-gray-500">
-            {category === "HerbsAndSpices" ? "Herbs & Spices" : category}
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+            <span>{category === "HerbsAndSpices" ? "Herbs & Spices" : category}</span>
+            {product.negotiable && (
+              <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                Negotiable
+              </span>
+            )}
           </div>
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-800 truncate flex-1">
               {name}
             </h2>
             <div className="text-right ml-4">
-              <p className="text-2xl font-bold text-green-800">₱{price}/kg</p>
+              <p className="text-2xl font-bold text-green-800">₱{price}/{displayUnit}</p>
               {marketPrice > price && (
                 <p className="text-sm text-gray-500 line-through">
                   ₱{marketPrice}/kg

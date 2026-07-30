@@ -438,17 +438,31 @@ export default function FarmerProfile() {
                         {product.category}
                       </p>
                     </div>
-                    <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                    <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
                       <span className="text-green-600 font-bold text-lg">
-                        ₱{Number(product.price).toFixed(2)}/kg
+                        ₱{Number(product.price).toFixed(2)}/{product.unit || 'kg'}
                       </span>
                       <span className="text-gray-600 text-sm truncate">
                         {Number(product.quantity_kg).toLocaleString(undefined, {
                           maximumFractionDigits: 2,
                         })}{" "}
-                        kg available
+                        {product.unit || 'kg'} available
                       </span>
                     </div>
+                    {(product.negotiable || product.min_order) && (
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        {product.negotiable && (
+                          <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                            Negotiable
+                          </span>
+                        )}
+                        {product.min_order && (
+                          <span className="text-[10px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                            Min. {product.min_order} {product.unit || 'kg'}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     {user && user.id !== farmer.id && (
                       <div className="flex gap-2 mt-3">
@@ -461,6 +475,7 @@ export default function FarmerProfile() {
                             price: product.price,
                             image_url: product.image_url,
                             quantity_kg: product.quantity_kg,
+                            unit: product.unit || 'kg',
                           }}
                           className="flex-1 !rounded-lg !py-2 !text-sm"
                         />

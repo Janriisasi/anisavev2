@@ -890,14 +890,28 @@ export default function Profile() {
                           {product.category}
                         </p>
                       </div>
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center justify-between mb-1">
                         <span className="text-green-600 font-bold text-lg">
-                          ₱{product.price}/kg
+                          ₱{product.price}/{product.unit || 'kg'}
                         </span>
                         <span className="text-gray-600 text-sm">
-                          {product.quantity_kg} kg available
+                          {product.quantity_kg} {product.unit || 'kg'} available
                         </span>
                       </div>
+                      {(product.negotiable || product.min_order) && (
+                        <div className="flex items-center gap-2 mb-3 flex-wrap">
+                          {product.negotiable && (
+                            <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                              Negotiable
+                            </span>
+                          )}
+                          {product.min_order && (
+                            <span className="text-[10px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                              Min. {product.min_order} {product.unit || 'kg'}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <button
                         onClick={() =>
                           toggleProductStatus(product.id, product.status)

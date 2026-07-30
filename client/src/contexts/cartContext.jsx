@@ -30,7 +30,7 @@ export function CartProvider({ children }) {
         .select(
           `
           *,
-          products(id, name, category, image_url, price, quantity_kg, status, user_id),
+          products(id, name, category, image_url, price, quantity_kg, unit, status, user_id),
           seller:profiles!cart_items_seller_id_fkey(id, full_name, username, avatar_url, address, contact_number)
         `,
         )
@@ -81,6 +81,11 @@ export function CartProvider({ children }) {
         name: product.name,
         image_url: product.image_url,
         category: product.category,
+        unit: product.unit || 'kg',
+        harvest_date: product.harvest_date || null,
+        location: product.location || null,
+        min_order: product.min_order || null,
+        negotiable: !!product.negotiable,
       };
       const { error } = await supabase.from("cart_items").upsert(
         {

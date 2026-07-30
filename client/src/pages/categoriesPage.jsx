@@ -52,6 +52,10 @@ export default function CategoriesPage() {
     "Lettuce (Iceberg)": "/images/lettuce_iceberg.webp",
     "Lettuce (Romaine)": "/images/lettuce_romaine.webp",
     Sitao: "/images/sitao.webp",
+    Cauliflower: "/images/cauliflower.webp",
+    "Chayote (Sayote)": "/images/chayote.webp",
+    "Habichuelas (Baguio Beans)": "/images/habichuelas.webp",
+    Celery: "/images/celery.webp",
 
     // fruits
     Mango: "/images/mango.webp",
@@ -85,11 +89,13 @@ export default function CategoriesPage() {
     "Corn Grits (Feed Grade)": "/images/corngrits.webp",
     Sorghum: "/images/sorghum.webp",
     Millet: "/images/millet.webp",
+    Mungbean: "/images/mungbean.webp",
 
     // herbs & spices
     Ginger: "/images/ginger.webp",
     Garlic: "/images/garlic.webp",
     "Red Onion": "/images/onion.webp",
+    "White Onion": "/images/white_onion.webp",
     Chili: "/images/chili.webp",
     Lemongrass: "/images/lemongrass.webp",
     Basil: "/images/basil.webp",
@@ -336,9 +342,9 @@ export default function CategoriesPage() {
                               {seller.profiles.username ||
                                 seller.profiles.full_name}
                             </h4>
-                            {seller.profiles.address && (
+                            {(seller.location || seller.profiles.address) && (
                               <p className="text-sm text-gray-600">
-                                {seller.profiles.address}
+                                {seller.location || seller.profiles.address}
                               </p>
                             )}
                           </div>
@@ -348,15 +354,28 @@ export default function CategoriesPage() {
                           <div>
                             <span className="text-gray-500">Price:</span>
                             <span className="font-semibold text-green-600 ml-1">
-                              ₱{seller.price}/kg
+                              ₱{seller.price}/{seller.unit || 'kg'}
+                              {seller.negotiable && (
+                                <span className="ml-1 text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+                                  Negotiable
+                                </span>
+                              )}
                             </span>
                           </div>
                           <div>
                             <span className="text-gray-500">Available:</span>
                             <span className="font-semibold ml-1">
-                              {seller.quantity_kg} kg
+                              {seller.quantity_kg} {seller.unit || 'kg'}
                             </span>
                           </div>
+                          {seller.min_order && (
+                            <div>
+                              <span className="text-gray-500">Min. order:</span>
+                              <span className="font-semibold ml-1">
+                                {seller.min_order} {seller.unit || 'kg'}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {seller.profiles.contact_number && (
@@ -384,6 +403,7 @@ export default function CategoriesPage() {
                               image_url:
                                 seller.image_url || selectedProduct.image_url,
                               quantity_kg: seller.quantity_kg,
+                              unit: seller.unit || 'kg',
                             }}
                             className="flex-1 !rounded-lg !py-2 !text-sm"
                           />

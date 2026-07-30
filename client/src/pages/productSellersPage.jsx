@@ -50,6 +50,10 @@ export default function ProductSellersPage() {
     "Lettuce (Iceberg)": "/images/lettuce_iceberg.webp",
     "Lettuce (Romaine)": "/images/lettuce_romaine.webp",
     Sitao: "/images/sitao.webp",
+    Cauliflower: "/images/cauliflower.webp",
+    "Chayote (Sayote)": "/images/chayote.webp",
+    "Habichuelas (Baguio Beans)": "/images/habichuelas.webp",
+    Celery: "/images/celery.webp",
     Mango: "/images/mango.webp",
     "Banana (Lakatan)": "/images/lakatan.webp",
     "Banana (Latundan)": "/images/latundan.webp",
@@ -201,6 +205,13 @@ export default function ProductSellersPage() {
       price: seller.price,
       quantity_kg: seller.quantity_kg,
       user_id: seller.user_id,
+      // NOTE: forwarded so AddToCartModal can snapshot them into
+      // cart_items.product_snapshot (see addToCartModal.jsx notes)
+      unit: seller.unit || 'kg',
+      harvest_date: seller.harvest_date,
+      location: seller.location,
+      min_order: seller.min_order,
+      negotiable: seller.negotiable,
     };
     setCartModalData({ product: productData, seller: seller.profiles });
   };
@@ -412,23 +423,32 @@ export default function ProductSellersPage() {
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="text-base sm:text-xl font-bold text-[#1a5c2a]">
-                              ₱{seller.price}/kg
+                              ₱{seller.price}/{seller.unit || 'kg'}
                             </p>
                             <p className="text-xs text-gray-400">
-                              {seller.quantity_kg}kg available
+                              {seller.quantity_kg} {seller.unit || 'kg'} available
                             </p>
                           </div>
                         </div>
 
+                        {seller.negotiable && (
+                          <div className="mb-3">
+                            <span className="inline-block text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                              Negotiable
+                            </span>
+                          </div>
+                        )}
+
                         {/* Seller meta: address / phone */}
-                        {(seller.profiles.address ||
+                        {(seller.location ||
+                          seller.profiles.address ||
                           seller.profiles.contact_number) && (
                           <div className="flex flex-col gap-1 mb-3">
-                            {seller.profiles.address && (
+                            {(seller.location || seller.profiles.address) && (
                               <div className="flex items-center gap-2 text-gray-500 text-xs">
                                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                                 <span className="truncate">
-                                  {seller.profiles.address}
+                                  {seller.location || seller.profiles.address}
                                 </span>
                               </div>
                             )}
@@ -436,6 +456,11 @@ export default function ProductSellersPage() {
                               <div className="flex items-center gap-2 text-gray-500 text-xs">
                                 <Phone className="w-3.5 h-3.5 flex-shrink-0" />
                                 <span>{seller.profiles.contact_number}</span>
+                              </div>
+                            )}
+                            {seller.min_order && (
+                              <div className="flex items-center gap-2 text-gray-500 text-xs">
+                                <span>Min. order: {seller.min_order} {seller.unit || 'kg'}</span>
                               </div>
                             )}
                           </div>
@@ -486,6 +511,7 @@ export default function ProductSellersPage() {
                                 image_url:
                                   seller.image_url || product.image_url,
                                 quantity_kg: seller.quantity_kg,
+                                unit: seller.unit || 'kg',
                               }}
                               className="flex-1 !rounded-xl !py-2.5 !text-sm"
                             />

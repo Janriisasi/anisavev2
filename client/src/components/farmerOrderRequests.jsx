@@ -103,7 +103,7 @@ export default function FarmerOrderRequests() {
           `
           *,
           buyer:profiles!orders_buyer_id_fkey(id, full_name, username, avatar_url, contact_number),
-          product:products(id, name, image_url, quantity_kg)
+          product:products(id, name, image_url, quantity_kg, unit)
         `,
         )
         .eq("seller_id", user.id)
@@ -189,7 +189,7 @@ export default function FarmerOrderRequests() {
         p_user_id: order.buyer_id,
         p_type: "order_approved",
         p_title: "🎉 Order Approved!",
-        p_message: `Your order of ${order.quantity_kg} kg of ${order.product_snapshot?.name} has been approved by the farmer. Total: ₱${order.total_amount}.`,
+        p_message: `Your order of ${order.quantity_kg} ${order.product_snapshot?.unit || 'kg'} of ${order.product_snapshot?.name} has been approved by the farmer. Total: ₱${order.total_amount}.`,
         p_data: {
           order_id: order.id,
           product_name: order.product_snapshot?.name,
@@ -248,7 +248,7 @@ export default function FarmerOrderRequests() {
         p_user_id: order.buyer_id,
         p_type: "order_declined",
         p_title: "Order Declined",
-        p_message: `Your order of ${order.quantity_kg} kg of ${order.product_snapshot?.name} was declined.${reason ? ` Reason: ${reason}` : ""}`,
+        p_message: `Your order of ${order.quantity_kg} ${order.product_snapshot?.unit || 'kg'} of ${order.product_snapshot?.name} was declined.${reason ? ` Reason: ${reason}` : ""}`,
         p_data: {
           order_id: order.id,
           product_name: order.product_snapshot?.name,
@@ -414,10 +414,10 @@ export default function FarmerOrderRequests() {
                       <div className="flex flex-wrap gap-3 mt-1 text-sm">
                         <div className="flex items-center gap-1 text-gray-600">
                           <Package className="w-3.5 h-3.5" />
-                          <span>{order.quantity_kg} kg</span>
+                          <span>{order.quantity_kg} {snap.unit || 'kg'}</span>
                         </div>
                         <div className="flex items-center gap-1 text-gray-600">
-                          <span>₱{order.price_per_kg}/kg</span>
+                          <span>₱{order.price_per_kg}/{snap.unit || 'kg'}</span>
                         </div>
                         <span className="font-bold text-green-700">
                           Total: ₱{order.total_amount}

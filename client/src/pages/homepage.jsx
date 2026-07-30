@@ -73,6 +73,10 @@ const Home = () => {
     "Lettuce (Iceberg)": "/images/lettuce_iceberg.webp",
     "Lettuce (Romaine)": "/images/lettuce_romaine.webp",
     Sitao: "/images/sitao.webp",
+    Cauliflower: "/images/cauliflower.webp",
+    "Chayote (Sayote)": "/images/chayote.webp",
+    "Habichuelas (Baguio Beans)": "/images/habichuelas.webp",
+    Celery: "/images/celery.webp",
 
     // fruits
     Mango: "/images/mango.webp",
@@ -106,11 +110,13 @@ const Home = () => {
     "Corn Grits (Feed Grade)": "/images/corngrits.webp",
     Sorghum: "/images/sorghum.webp",
     Millet: "/images/millet.webp",
+    Mungbean: "/images/mungbean.webp",
 
     // herbs & spices
     Ginger: "/images/ginger.webp",
     Garlic: "/images/garlic.webp",
     "Red Onion": "/images/onion.webp",
+    "White Onion": "/images/white_onion.webp",
     Chili: "/images/chili.webp",
     Lemongrass: "/images/lemongrass.webp",
     Basil: "/images/basil.webp",

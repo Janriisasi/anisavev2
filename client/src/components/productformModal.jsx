@@ -18,6 +18,17 @@ const formatWithCommas = (value) => {
 
 const stripCommas = (value) => value.toString().replace(/,/g, '');
 
+const UNIT_OPTIONS = [
+  { value: 'kg', label: 'kg' },
+  { value: 'sack', label: 'sack' },
+  { value: 'bundle', label: 'bundle' },
+  { value: 'piece', label: 'piece' },
+  { value: 'tray', label: 'tray' },
+  { value: 'crate', label: 'crate' },
+];
+
+const todayISO = () => new Date().toISOString().split('T')[0];
+
 export default function ProductFormModal({ onClose, onSuccess, existingProduct, userProfile }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -27,7 +38,12 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     price: existingProduct?.price ? formatWithCommas(existingProduct.price) : '',
     quantity_kg: existingProduct?.quantity_kg ? formatWithCommas(existingProduct.quantity_kg) : '',
     image_url: existingProduct?.image_url || '',
-    description: existingProduct?.description || ''
+    description: existingProduct?.description || '',
+    harvest_date: existingProduct?.harvest_date || '',
+    unit: existingProduct?.unit || 'kg',
+    location: existingProduct?.location || '',
+    min_order: existingProduct?.min_order ? formatWithCommas(existingProduct.min_order) : '',
+    negotiable: existingProduct?.negotiable ?? false
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(existingProduct?.image_url || null);
@@ -36,8 +52,10 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [productOpen, setProductOpen] = useState(false);
+  const [unitOpen, setUnitOpen] = useState(false);
   const categoryRef = useRef(null);
   const productRef = useRef(null);
+  const unitRef = useRef(null);
 
   const isProfileComplete = userProfile?.address && userProfile?.contact_number;
 
@@ -65,6 +83,9 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
       }
       if (productRef.current && !productRef.current.contains(event.target)) {
         setProductOpen(false);
+      }
+      if (unitRef.current && !unitRef.current.contains(event.target)) {
+        setUnitOpen(false);
       }
     };
 
@@ -96,7 +117,27 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
     if (!form.quantity_kg || form.quantity_kg === '' || parseFloat(stripCommas(form.quantity_kg)) <= 0) {
       newErrors.quantity_kg = 'Valid quantity is required';
     } else if (parseFloat(stripCommas(form.quantity_kg)) > 5000) {
-      newErrors.quantity_kg = 'Quantity cannot exceed 5,000 kg';
+      newErrors.quantity_kg = `Quantity cannot exceed 5,000 ${form.unit || 'kg'}`;
+    }
+
+    if (!form.harvest_date) {
+      newErrors.harvest_date = 'Harvest date is required';
+    } else if (form.harvest_date > todayISO()) {
+      newErrors.harvest_date = 'Harvest date cannot be in the future';
+    }
+
+    if (!form.unit) {
+      newErrors.unit = 'Unit is required';
+    }
+
+    if (form.min_order && form.min_order !== '') {
+      const minOrderVal = parseFloat(stripCommas(form.min_order));
+      const qtyVal = parseFloat(stripCommas(form.quantity_kg)) || 0;
+      if (isNaN(minOrderVal) || minOrderVal <= 0) {
+        newErrors.min_order = 'Minimum order must be greater than 0';
+      } else if (qtyVal && minOrderVal > qtyVal) {
+        newErrors.min_order = `Minimum order cannot exceed available quantity (${form.quantity_kg} ${form.unit || 'kg'})`;
+      }
     }
 
     setErrors(newErrors);
@@ -269,6 +310,11 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
             quantity_kg: stripCommas(form.quantity_kg),
             image_url: imageUrl,
             description: form.description,
+            harvest_date: form.harvest_date,
+            unit: form.unit,
+            location: form.location || null,
+            min_order: form.min_order ? stripCommas(form.min_order) : null,
+            negotiable: form.negotiable,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingProduct.id);
@@ -287,6 +333,11 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
               quantity_kg: stripCommas(form.quantity_kg),
               image_url: imageUrl,
               description: form.description,
+              harvest_date: form.harvest_date,
+              unit: form.unit,
+              location: form.location || null,
+              min_order: form.min_order ? stripCommas(form.min_order) : null,
+              negotiable: form.negotiable,
               status: 'Available'
             }
           ]);
@@ -312,14 +363,14 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50"
+        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 md:pt-[calc(var(--nav-height,4rem)_+_1.5rem)] z-50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="bg-white rounded-xl sm:rounded-2xl w-full max-w-[95%] sm:max-w-3xl p-4 sm:p-5 max-h-[80vh] sm:max-h-[85vh] overflow-y-auto shadow-2xl"
+          className="bg-white rounded-xl sm:rounded-2xl w-full max-w-[95%] sm:max-w-3xl p-4 sm:p-5 max-h-[78vh] sm:max-h-[85vh] overflow-y-auto shadow-2xl"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -456,7 +507,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 
                 <div className="space-y-1 sm:space-y-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    Price per kg <span className="text-red-500">*</span>
+                    Price per {form.unit || 'kg'} <span className="text-red-500">*</span>
                   </label>
                   <div className={`flex border rounded-lg overflow-hidden transition-all duration-200 ${
                     errors.price
@@ -483,15 +534,15 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                   {errors.price && <p className="text-xs sm:text-sm text-red-500">{errors.price}</p>}
                   {form.name && !errors.price && prices[form.category]?.[form.name] && (
                     <p className="text-xs text-gray-500">
-                      Suggested: ₱ {formatWithCommas(prices[form.category][form.name])}/kg
+                      Suggested: ₱ {formatWithCommas(prices[form.category][form.name])}/kg (market reference, priced per kg)
                     </p>
                   )}
                 </div>
                 
                 <div className="space-y-1 sm:space-y-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    Quantity (kg) <span className="text-red-500">*</span>
-                    <p className="text-xs sm:text-xs text-gray-400">Max: 5,000 kg</p>
+                    Quantity ({form.unit || 'kg'}) <span className="text-red-500">*</span>
+                    <p className="text-xs sm:text-xs text-gray-400">Max: 5,000 {form.unit || 'kg'}</p>
                   </label>
                   <input
                     type="text"
@@ -516,6 +567,144 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 </div>
               </motion.div>
             </div>
+
+            <motion.div
+              className="space-y-3 sm:space-y-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.42 }}
+            >
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-700">Additional Details</h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Harvest Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    max={todayISO()}
+                    className={`input w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
+                      errors.harvest_date
+                        ? 'border-red-500 focus:ring-red-200 focus:border-red-500'
+                        : 'border-gray-300 focus:ring-2 focus:ring-green-200 focus:border-green-500'
+                    }`}
+                    value={form.harvest_date}
+                    onChange={(e) => {
+                      setForm({ ...form, harvest_date: e.target.value });
+                      setErrors(prev => ({ ...prev, harvest_date: '' }));
+                    }}
+                  />
+                  {errors.harvest_date && <p className="text-xs sm:text-sm text-red-500">{errors.harvest_date}</p>}
+                </div>
+
+                <CustomDropdown
+                  label="Unit"
+                  value={form.unit}
+                  options={UNIT_OPTIONS}
+                  onSelect={(unit) => {
+                    setForm(prev => ({ ...prev, unit }));
+                    setErrors(prev => ({ ...prev, unit: '' }));
+                  }}
+                  placeholder="Select unit"
+                  isOpen={unitOpen}
+                  setIsOpen={setUnitOpen}
+                  dropdownRef={unitRef}
+                  error={errors.unit}
+                />
+
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Barangay / Municipality
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Roxas City, Panitan, Dao, Pilar"
+                    maxLength={100}
+                    className="input w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200"
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-start">
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Minimum Order
+                  </label>
+                  <div className={`flex border rounded-lg overflow-hidden transition-all duration-200 ${
+                    errors.min_order
+                      ? 'border-red-500 ring-2 ring-red-200'
+                      : 'border-gray-300 focus-within:ring-2 focus-within:ring-green-200 focus-within:border-green-500'
+                  }`}>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="No minimum"
+                      className="input flex-1 pl-3 sm:pl-4 pr-2 py-2.5 sm:py-3 text-sm outline-none border-none bg-white"
+                      value={form.min_order}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+                        const formatted = formatWithCommas(raw);
+                        setForm({ ...form, min_order: formatted });
+                        setErrors(prev => ({ ...prev, min_order: '' }));
+                      }}
+                    />
+                    <span className="flex items-center px-3 text-sm text-gray-500 bg-gray-50 border-l border-gray-200 whitespace-nowrap">
+                      {form.unit || 'kg'}
+                    </span>
+                  </div>
+                  {errors.min_order && <p className="text-xs sm:text-sm text-red-500">{errors.min_order}</p>}
+                </div>
+
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                    Negotiable?
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, negotiable: !prev.negotiable }))}
+                    className={`w-full flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-sm border rounded-lg transition-all duration-200 ${
+                      form.negotiable
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-300 text-gray-600 hover:border-green-400'
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded flex items-center justify-center border-2 flex-shrink-0 ${
+                      form.negotiable ? 'bg-green-600 border-green-600' : 'border-gray-300'
+                    }`}>
+                      {form.negotiable && (
+                        <svg viewBox="0 0 16 16" className="w-3 h-3 text-white" fill="none">
+                          <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </span>
+                    {form.negotiable ? 'Yes, price is negotiable' : 'No, fixed price'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="space-y-1 sm:space-y-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+            >
+              <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                rows={3}
+                maxLength={500}
+                placeholder="Freshly harvested today. No pesticides used. Can deliver around your area."
+                className="input w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 transition-all duration-200 resize-none"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+              <p className="text-xs text-gray-400 text-right">{form.description.length}/500</p>
+            </motion.div>
             
             <motion.div 
               className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4"

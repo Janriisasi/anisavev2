@@ -141,7 +141,7 @@ export default function CartPage() {
         p_user_id: order.seller_id,
         p_type: "order_received",
         p_title: "Order Received by Buyer",
-        p_message: `${user.user_metadata?.full_name || "The buyer"} has confirmed receiving ${order.quantity_kg} kg of ${order.product_snapshot?.name}. The order is now complete!`,
+        p_message: `${user.user_metadata?.full_name || "The buyer"} has confirmed receiving ${order.quantity_kg} ${order.product_snapshot?.unit || 'kg'} of ${order.product_snapshot?.name}. The order is now complete!`,
         p_data: {
           order_id: order.id,
           product_name: order.product_snapshot?.name,
@@ -182,7 +182,7 @@ export default function CartPage() {
           `
           *,
           seller:profiles!orders_seller_id_fkey(id, full_name, username, avatar_url, contact_number),
-          product:products(id, name, image_url, category)
+          product:products(id, name, image_url, category, unit)
         `,
         )
         .eq("buyer_id", user.id)
@@ -447,6 +447,7 @@ export default function CartPage() {
                         <div className="divide-y divide-gray-50">
                           {items.map((item) => {
                             const snap = item.product_snapshot || {};
+                            const unit = snap.unit || item.products?.unit || 'kg';
                             const itemTotal = (
                               item.quantity_kg * item.price_at_add
                             ).toFixed(2);
@@ -475,10 +476,10 @@ export default function CartPage() {
                                     </p>
                                     <div className="flex items-center gap-3 mt-1.5">
                                       <span className="text-sm text-green-700 font-bold">
-                                        ₱{item.price_at_add}/kg
+                                        ₱{item.price_at_add}/{unit}
                                       </span>
                                       <span className="text-sm text-gray-500">
-                                        {item.quantity_kg} kg
+                                        {item.quantity_kg} {unit}
                                       </span>
                                     </div>
                                   </div>
@@ -596,7 +597,7 @@ export default function CartPage() {
                               </div>
                               <div className="flex flex-wrap gap-3 mt-2 text-sm">
                                 <span className="text-gray-600">
-                                  {order.quantity_kg} kg
+                                  {order.quantity_kg} {snap.unit || 'kg'}
                                 </span>
                                 <span className="text-gray-400">·</span>
                                 <span className="text-green-700 font-semibold">
@@ -714,7 +715,7 @@ export default function CartPage() {
                               </div>
                               <div className="flex flex-wrap gap-3 mt-2 text-sm">
                                 <span className="text-gray-600">
-                                  {order.quantity_kg} kg
+                                  {order.quantity_kg} {snap.unit || 'kg'}
                                 </span>
                                 <span className="text-gray-400">·</span>
                                 <span
