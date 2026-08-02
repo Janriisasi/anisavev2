@@ -421,7 +421,7 @@ export default function CartPage() {
                           <img
                             src={
                               seller?.avatar_url ||
-                              `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`
+                              `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`
                             }
                             alt=""
                             className="w-9 h-9 rounded-full object-cover border-2 border-green-100"
@@ -613,7 +613,7 @@ export default function CartPage() {
                               <img
                                 src={
                                   seller?.avatar_url ||
-                                  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`
+                                  `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`
                                 }
                                 alt=""
                                 className="w-5 h-5 rounded-full"
@@ -737,7 +737,7 @@ export default function CartPage() {
                               <img
                                 src={
                                   seller?.avatar_url ||
-                                  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`
+                                  `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`
                                 }
                                 alt=""
                                 className="w-5 h-5 rounded-full"

@@ -32,7 +32,7 @@ export default function PostTransactionRatingModal({
     ? 'How was your experience with this farmer?'
     : 'How was this buyer to work with?';
   const avatarSeed = targetName?.replace(/\s+/g, '') || 'user';
-  const avatarSrc = targetAvatar || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${avatarSeed}`;
+  const avatarSrc = targetAvatar || `https://api.dicebear.com/9.x/dylan/svg?seed=${avatarSeed}`;
 
   return (
     <AnimatePresence>
@@ -68,7 +68,7 @@ export default function PostTransactionRatingModal({
                     alt={targetName}
                     className="w-14 h-14 rounded-full object-cover border-3 border-white/40 shadow-lg"
                     onError={(e) => {
-                      e.target.src = `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${avatarSeed}`;
+                      e.target.src = `https://api.dicebear.com/9.x/dylan/svg?seed=${avatarSeed}`;
                     }}
                   />
                   <div className="absolute -bottom-1 -right-1 bg-green-400 rounded-full p-0.5 border-2 border-white">

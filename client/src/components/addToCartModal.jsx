@@ -129,7 +129,7 @@ export default function AddToCartModal({ product, seller, onClose }) {
             <div className="flex items-center justify-between gap-3 mb-5">
               <div className="flex items-center gap-2 min-w-0">
                 <img
-                  src={seller?.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`}
+                  src={seller?.avatar_url || `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`}
                   alt=""
                   className="w-7 h-7 rounded-full object-cover flex-shrink-0 border border-gray-200"
                 />

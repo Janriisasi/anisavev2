@@ -291,7 +291,7 @@ export default function FarmerProfile() {
               <img
                 src={
                   farmer.avatar_url ||
-                  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${farmer.username || farmer.id}`
+                  `https://api.dicebear.com/9.x/dylan/svg?seed=${farmer.username || farmer.id}`
                 }
                 alt={farmer.full_name || "Farmer Profile"}
                 className="w-full h-full rounded-full object-cover border-4 border-green-200"

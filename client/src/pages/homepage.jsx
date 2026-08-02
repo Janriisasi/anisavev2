@@ -75,7 +75,7 @@ const Home = () => {
     Sitao: "/images/sitao.webp",
     Cauliflower: "/images/cauliflower.webp",
     "Chayote (Sayote)": "/images/chayote.webp",
-    "Habichuelas (Baguio Beans)": "/images/habichuelas.webp",
+    "Habichuelas": "/images/habichuelas.webp",
     Celery: "/images/celery.webp",
 
     // fruits
@@ -800,7 +800,7 @@ const Home = () => {
                               <img
                                 src={
                                   product.profiles.avatar_url ||
-                                  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${product.profiles.username || product.profiles.id}`
+                                  `https://api.dicebear.com/9.x/dylan/svg?seed=${product.profiles.username || product.profiles.id}`
                                 }
                                 alt={product.profiles.full_name}
                                 className="w-7 h-7 rounded-full object-cover border border-green-200"

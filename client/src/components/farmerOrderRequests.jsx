@@ -432,7 +432,7 @@ export default function FarmerOrderRequests() {
                       <img
                         src={
                           buyer?.avatar_url ||
-                          `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${buyer?.username}`
+                          `https://api.dicebear.com/9.x/dylan/svg?seed=${buyer?.username}`
                         }
                         alt=""
                         className="w-7 h-7 rounded-full object-cover"

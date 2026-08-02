@@ -239,7 +239,7 @@ export default function Navbar() {
                             >
                               <div className="flex items-center gap-3">
                                 <img
-                                  src={u.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`}
+                                  src={u.avatar_url || `https://api.dicebear.com/9.x/dylan/svg?seed=${u.username || u.id}`}
                                   alt=""
                                   className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                                 />
@@ -323,7 +323,7 @@ export default function Navbar() {
                               <img
                                 src={
                                   u.avatar_url ||
-                                  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${u.username || u.id}`
+                                  `https://api.dicebear.com/9.x/dylan/svg?seed=${u.username || u.id}`
                                 }
                                 alt=""
                                 className="w-7 h-7 rounded-full object-cover flex-shrink-0"

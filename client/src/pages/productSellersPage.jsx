@@ -406,7 +406,7 @@ export default function ProductSellersPage() {
                             <img
                               src={
                                 seller.profiles.avatar_url ||
-                                `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller.profiles.username}`
+                                `https://api.dicebear.com/9.x/dylan/svg?seed=${seller.profiles.username}`
                               }
                               alt="Seller"
                               className="w-11 h-11 rounded-full object-cover border-2 border-[#e8f5e9] flex-shrink-0"

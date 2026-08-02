@@ -181,7 +181,7 @@ export default function ChatConversationList({
                 <img
                   src={
                     otherUser?.avatar_url ||
-                    `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${otherUser?.username || "user"}`
+                    `https://api.dicebear.com/9.x/dylan/svg?seed=${otherUser?.username || "user"}`
                   }
                   alt={otherUser?.full_name || otherUser?.username}
                   className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"

@@ -952,7 +952,7 @@ export default function ChatWindow({
           <img
             src={
               otherUser?.avatar_url ||
-              `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${otherUser?.username}`
+              `https://api.dicebear.com/9.x/dylan/svg?seed=${otherUser?.username}`
             }
             alt={otherUser?.full_name}
             className="w-10 h-10 rounded-full object-cover border-2 border-green-50"
@@ -1060,7 +1060,7 @@ export default function ChatWindow({
                     <img
                       src={
                         otherUser?.avatar_url ||
-                        `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${otherUser?.username}`
+                        `https://api.dicebear.com/9.x/dylan/svg?seed=${otherUser?.username}`
                       }
                       alt=""
                       className="w-6 h-6 rounded-full flex-shrink-0"
@@ -1111,7 +1111,7 @@ export default function ChatWindow({
                   <img
                     src={
                       otherUser?.avatar_url ||
-                      `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${otherUser?.username}`
+                      `https://api.dicebear.com/9.x/dylan/svg?seed=${otherUser?.username}`
                     }
                     alt=""
                     className="w-6 h-6 rounded-full"

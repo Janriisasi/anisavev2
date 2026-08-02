@@ -372,7 +372,7 @@ export default function SavedContacts() {
                         <img
                           src={
                             contact.farmer.avatar_url ||
-                            `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${contact.farmer.username || contact.farmer.id}`
+                            `https://api.dicebear.com/9.x/dylan/svg?seed=${contact.farmer.username || contact.farmer.id}`
                           }
                           alt="Farmer Avatar"
                           className="w-20 h-20 rounded-full object-cover border-2 border-green-200"

@@ -167,7 +167,7 @@ export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
             {/* Seller */}
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <img
-                src={seller?.avatar_url || `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seller?.username}`}
+                src={seller?.avatar_url || `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`}
                 alt=""
                 className="w-8 h-8 rounded-full object-cover"
               />

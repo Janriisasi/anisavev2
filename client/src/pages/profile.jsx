@@ -260,7 +260,7 @@ export default function Profile() {
   const profileImageUrl = useMemo(() => {
     if (profile?.tempAvatarUrl) return profile.tempAvatarUrl;
     if (profile?.avatar_url) return profile.avatar_url;
-    return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${profile?.full_name || "User"}&size=160`;
+    return `https://api.dicebear.com/9.x/dylan/svg?seed=${profile?.full_name || "User"}&size=160`;
   }, [profile?.tempAvatarUrl, profile?.avatar_url, profile?.full_name]);
 
   const totalSales = useMemo(() => {
@@ -890,11 +890,11 @@ export default function Profile() {
                           {product.category}
                         </p>
                       </div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-green-600 font-bold text-lg">
+                      <div className="mb-2">
+                        <span className="text-green-600 font-bold text-lg block">
                           ₱{product.price}/{product.unit || 'kg'}
                         </span>
-                        <span className="text-gray-600 text-sm">
+                        <span className="text-gray-500 text-xs">
                           {product.quantity_kg} {product.unit || 'kg'} available
                         </span>
                       </div>
