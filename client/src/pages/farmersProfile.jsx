@@ -18,17 +18,26 @@ import { useCart } from "../contexts/cartContext";
 import { motion } from "framer-motion";
 import AddToCartModal from "../components/addToCartModal";
 
+// Module-level cache, keyed by farmer id since this page shows a
+// different farmer each time. It lives outside the component, so it
+// survives this page unmounting when you navigate away and remounting
+// when you come back — without it, every return trip re-showed the
+// full skeleton loading state even for a farmer you'd just viewed.
+const farmerProfileCache = new Map();
+
 export default function FarmerProfile() {
   const { id } = useParams();
   const { user } = useUser();
   const navigate = useNavigate();
-  const [farmer, setFarmer] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [avgRating, setAvgRating] = useState(0);
-  const [totalRatings, setTotalRatings] = useState(0);
+  const cached = farmerProfileCache.get(id);
+  const [farmer, setFarmer] = useState(cached?.farmer || null);
+  const [products, setProducts] = useState(cached?.products || []);
+  const [avgRating, setAvgRating] = useState(cached?.avgRating || 0);
+  const [totalRatings, setTotalRatings] = useState(cached?.totalRatings || 0);
   const [isContactSaved, setIsContactSaved] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // Only show the full skeleton on a farmer we've never loaded before.
+  const [loading, setLoading] = useState(!cached);
   const [cartModalData, setCartModalData] = useState(null);
   const { isInCart } = useCart();
 
@@ -50,11 +59,15 @@ export default function FarmerProfile() {
         },
         (payload) => {
           if (payload.new.user_id !== id) return;
-          setProducts((prev) =>
-            prev.map((p) =>
+          setProducts((prev) => {
+            const next = prev.map((p) =>
               p.id === payload.new.id ? { ...p, ...payload.new } : p,
-            ),
-          );
+            );
+            const existing = farmerProfileCache.get(id);
+            if (existing)
+              farmerProfileCache.set(id, { ...existing, products: next });
+            return next;
+          });
         },
       )
       .subscribe();
@@ -65,8 +78,20 @@ export default function FarmerProfile() {
   }, [id, user]);
 
   const fetchFarmerData = async () => {
-    try {
+    const existing = farmerProfileCache.get(id);
+    if (existing) {
+      // Show what we already have for this farmer instantly, then
+      // refresh quietly in the background instead of blocking on a
+      // spinner.
+      setFarmer(existing.farmer);
+      setProducts(existing.products);
+      setAvgRating(existing.avgRating);
+      setTotalRatings(existing.totalRatings);
+      setLoading(false);
+    } else {
       setLoading(true);
+    }
+    try {
       // ✅ Never select email — only safe public fields + contact info
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -92,17 +117,24 @@ export default function FarmerProfile() {
         .select("rating")
         .eq("farmer_id", id);
 
+      let nextAvgRating = 0;
+      let nextTotalRatings = 0;
       if (ratingsError) {
         console.error("Error fetching ratings:", ratingsError);
       } else if (ratingsData && ratingsData.length > 0) {
         const totalRating = ratingsData.reduce((sum, r) => sum + r.rating, 0);
-        const average = (totalRating / ratingsData.length).toFixed(1);
-        setAvgRating(parseFloat(average));
-        setTotalRatings(ratingsData.length);
-      } else {
-        setAvgRating(0);
-        setTotalRatings(0);
+        nextAvgRating = parseFloat((totalRating / ratingsData.length).toFixed(1));
+        nextTotalRatings = ratingsData.length;
       }
+      setAvgRating(nextAvgRating);
+      setTotalRatings(nextTotalRatings);
+
+      farmerProfileCache.set(id, {
+        farmer: profile,
+        products: products || [],
+        avgRating: nextAvgRating,
+        totalRatings: nextTotalRatings,
+      });
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to load farmer profile");

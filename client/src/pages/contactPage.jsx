@@ -6,11 +6,20 @@ import { useUser } from "../hooks/useUser";
 import { Copy, Star, Trash2, User, Eye, MoreVertical } from "lucide-react";
 import toast from "react-hot-toast";
 
+// Module-level cache: lives outside the component, so it survives this
+// page unmounting when you navigate away and remounting when you come
+// back. Without this, every return trip started from an empty list and
+// re-showed the full skeleton-loading state even though we'd just
+// fetched the same contacts moments earlier.
+let contactsCache = null;
+
 export default function SavedContacts() {
   const { user } = useUser();
   const navigate = useNavigate();
-  const [contacts, setContacts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [contacts, setContacts] = useState(contactsCache || []);
+  // Only show the big skeleton loader on the very first load. On repeat
+  // visits we already have cached data to show instantly.
+  const [loading, setLoading] = useState(!contactsCache);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -18,7 +27,7 @@ export default function SavedContacts() {
   const fetchContacts = useCallback(async () => {
     if (!user) return;
 
-    setLoading(true);
+    if (!contactsCache) setLoading(true);
     try {
       // ✅ user.id already available from auth — no redundant profiles lookup needed
       const { data, error } = await supabase
@@ -72,6 +81,7 @@ export default function SavedContacts() {
       );
 
       setContacts(contactsWithRatings);
+      contactsCache = contactsWithRatings;
     } catch (error) {
       console.error("Error fetching contacts:", error);
       toast.error("Failed to load contacts");
@@ -109,7 +119,11 @@ export default function SavedContacts() {
     // Also listen for the custom event fired by ChatWindow for instant UI update
     const handleContactRemoved = (e) => {
       const { farmerId } = e.detail;
-      setContacts((prev) => prev.filter((c) => c.farmer_id !== farmerId));
+      setContacts((prev) => {
+        const next = prev.filter((c) => c.farmer_id !== farmerId);
+        contactsCache = next;
+        return next;
+      });
     };
 
     const handleContactAdded = () => {

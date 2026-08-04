@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronUp,
   ChevronDown,
-  ShieldCheck,
   ArrowLeft,
+  Search,
   Facebook,
   Instagram,
   Linkedin,
 } from "lucide-react";
-import { DOWNLOAD_LINKS } from "../config/downloadLinks";
 
-// Same inline Button primitive used on the landing page, kept identical so
-// every marketing/public page shares one look.
+// Same inline Button primitive used across every marketing/public page
+// (landing, download) so the look stays identical site-wide.
 const Button = ({
   className,
   variant = "default",
@@ -52,25 +51,6 @@ const Button = ({
   );
 };
 
-// Anchor-based "button" — real <a> tags are what make browsers actually
-// trigger a file download instead of just calling an onClick handler.
-const DownloadLink = ({ href, external, className, children }) => {
-  const base =
-    "inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 active:scale-95 h-11 px-4 text-sm sm:h-12 sm:text-sm rounded-lg bg-[#024310] hover:bg-[#035815] text-white shadow-lg hover:shadow-xl w-full";
-
-  return (
-    <a
-      href={href}
-      className={`${base} ${className || ""}`}
-      {...(external
-        ? { target: "_blank", rel: "noopener noreferrer" }
-        : { download: true })}
-    >
-      {children}
-    </a>
-  );
-};
-
 const Logo = ({ onClick }) => (
   <button
     onClick={onClick}
@@ -86,104 +66,131 @@ const Logo = ({ onClick }) => (
 
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-// Detect the visitor's OS so we can highlight the build that's actually
-// relevant to them — purely cosmetic, never blocks the other downloads.
-const detectPlatform = () => {
-  if (typeof navigator === "undefined") return null;
-  const ua = navigator.userAgent || "";
-  if (/android/i.test(ua)) return "android";
-  if (/iphone|ipad|ipod/i.test(ua)) return "ios";
-  if (/win/i.test(ua)) return "windows";
-  if (/mac/i.test(ua)) return "mac";
-  return null;
-};
+const categories = [
+  "All",
+  "Getting Started",
+  "Market Prices & Selling",
+  "Account & Security",
+  "App & Downloads",
+  "Payments & Fees",
+];
 
-const platforms = [
+const faqs = [
   {
-    id: "android",
-    name: "Android",
-    iconSrc: "/images/androidIcon.svg",
-    tagline: "Phones & tablets",
-    cta: "Download APK",
-    note: "Requires Android 8.0+. You'll be asked to allow \u201cinstall from unknown sources\u201d the first time — that's expected.",
+    id: "what-is-anisave",
+    category: "Getting Started",
+    question: "What is AniSave?",
+    answer:
+      "AniSave is a marketplace and market-intelligence app built for Filipino farmers. It gives you real-time crop prices, connects you directly with buyers and sellers, and puts an AI market advisor in your pocket \u2014 all in one place.",
   },
   {
-    id: "windows",
-    name: "Windows",
-    iconSrc: "/images/windowsIcon.svg",
-    tagline: "Windows 10 & 11",
-    cta: "Download for Windows",
-    note: "64-bit installer. Windows SmartScreen may show a warning since the app isn't code-signed yet — this is normal for a new installer.",
+    id: "is-it-free",
+    category: "Getting Started",
+    question: "Is AniSave free to use?",
+    answer:
+      "Yes. Creating an account, browsing market prices, and messaging other users is completely free. Some optional seller tools may carry a small fee, which is always shown to you before you confirm.",
   },
   {
-    id: "mac",
-    name: "macOS",
-    iconSrc: "/images/macosIcon.svg",
-    tagline: "Apple Silicon & Intel",
-    cta: "Download for Mac",
-    note: "If macOS says the app \u201cis damaged\u201d or can't be opened, right-click the app and choose Open once to bypass Gatekeeper.",
+    id: "who-can-use",
+    category: "Getting Started",
+    question: "Who can use AniSave?",
+    answer:
+      "AniSave is open to farmers, cooperatives, traders, and buyers anywhere in the Philippines. Anyone can sign up with a valid email address \u2014 no special certification is required to start browsing prices.",
   },
   {
-    id: "ios",
-    name: "iOS",
-    iconSrc: "/images/iosIcon.svg",
-    tagline: "iPhone & iPad",
-    cta: "Get via TestFlight",
-    note: "AniSave for iOS is currently distributed through TestFlight. Please install the free TestFlight app first to join our open beta.",
+    id: "price-updates",
+    category: "Market Prices & Selling",
+    question: "How often are market prices updated?",
+    answer:
+      "Market prices are refreshed regularly throughout the day using data sourced in partnership with the Department of Agriculture's price protection program, so you're always working with current numbers.",
+  },
+  {
+    id: "list-product",
+    category: "Market Prices & Selling",
+    question: "How do I list a product for sale?",
+    answer:
+      "From your profile, tap \u201cSell a Product,\u201d fill in the crop details, quantity, and asking price, then publish. Your listing becomes visible to buyers browsing the product directory right away.",
+  },
+  {
+    id: "ai-advisor",
+    category: "Market Prices & Selling",
+    question: "Can I chat with an AI market advisor?",
+    answer:
+      "Yes. The built-in AI Advisor answers questions about pricing trends and crop planning in Tagalog, so you can get quick, plain-language guidance without digging through charts.",
+  },
+  {
+    id: "reset-password",
+    category: "Account & Security",
+    question: "How do I reset my password?",
+    answer:
+      "Tap \u201cForgot Password\u201d on the login screen and enter your email. We'll send you a one-time code to verify it's really you, then let you set a new password right away.",
+  },
+  {
+    id: "otp-code",
+    category: "Account & Security",
+    question: "Why did I receive a 6-digit code by email?",
+    answer:
+      "That's your one-time verification code (OTP). We use email OTP instead of authenticator apps so the extra security step stays simple, even if you're new to smartphones.",
+  },
+  {
+    id: "data-safety",
+    category: "Account & Security",
+    question: "Is my personal information safe?",
+    answer:
+      "Your data is protected with role-based access controls and encrypted connections, and we routinely audit our systems for vulnerabilities. We never sell your personal information to third parties.",
+  },
+  {
+    id: "platforms",
+    category: "App & Downloads",
+    question: "Which platforms is AniSave available on?",
+    answer:
+      "AniSave runs on Android, iOS (via TestFlight), Windows, and macOS. Visit the Download page and we'll automatically point you to the right build for your device.",
+  },
+  {
+    id: "android-warning",
+    category: "App & Downloads",
+    question: "Why does my phone warn me about installing the APK?",
+    answer:
+      "Android shows an \u201cinstall from unknown sources\u201d prompt for any app installed outside the Play Store, including AniSave's direct APK. This is expected \u2014 simply allow it to continue.",
+  },
+  {
+    id: "desktop-warning",
+    category: "App & Downloads",
+    question:
+      "Why does Windows or macOS show a security warning during install?",
+    answer:
+      "Our desktop installers aren't code-signed yet, so Windows SmartScreen or macOS Gatekeeper may flag them the first time. Choosing \u201cRun anyway\u201d or right-click \u2192 Open resolves it safely.",
+  },
+  {
+    id: "commission",
+    category: "Payments & Fees",
+    question: "Does AniSave charge a commission on sales?",
+    answer:
+      "Browsing, listing, and messaging are free. Any transaction-related fee is disclosed up front on the listing before you confirm a sale, so there are never hidden charges.",
+  },
+  {
+    id: "payment-methods",
+    category: "Payments & Fees",
+    question: "What payment methods are supported?",
+    answer:
+      "Buyers and sellers arrange payment directly with each other, and AniSave supports common options like GCash, bank transfer, and cash on meetup \u2014 whichever works best for both parties.",
   },
 ];
 
-const installGuides = [
-  {
-    id: "android",
-    title: "Installing on Android",
-    steps: [
-      "Tap \u201cDownload APK\u201d above and wait for the download to finish.",
-      "Open the downloaded AniSave.apk file from your Notifications or Files app.",
-      "If prompted, allow installs from this source (Settings > Apps > Special access > Install unknown apps).",
-      "Tap Install, then open AniSave once it finishes.",
-    ],
-  },
-  {
-    id: "windows",
-    title: "Installing on Windows",
-    steps: [
-      "Download the installer and open it once it finishes.",
-      "If SmartScreen appears, click \u201cMore info\u201d then \u201cRun anyway.\u201d",
-      "Follow the setup wizard — AniSave will add a shortcut to your Start Menu.",
-    ],
-  },
-  {
-    id: "mac",
-    title: "Installing on macOS",
-    steps: [
-      "Open the downloaded .dmg file and drag AniSave into Applications.",
-      "On first launch, right-click (or Control-click) the app and choose Open.",
-      "Click Open again in the confirmation dialog — you'll only need to do this once.",
-    ],
-  },
-  {
-    id: "ios",
-    title: "Installing on iOS",
-    steps: [
-      "Tap \u201cGet via TestFlight\u201d and install the free TestFlight app if you don't have it yet.",
-      "Accept the invite to join the AniSave beta.",
-      "Install AniSave from within TestFlight.",
-    ],
-  },
-];
-
-export default function DownloadPage() {
+export default function FaqPage() {
   const navigate = useNavigate();
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [detected, setDetected] = useState(null);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    setDetected(detectPlatform());
-    const onScroll = () => setShowScrollTop(window.pageYOffset > 300);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const filteredFaqs = faqs.filter((faq) => {
+    const matchesCategory =
+      activeCategory === "All" || faq.category === activeCategory;
+    const matchesQuery =
+      query.trim() === "" ||
+      faq.question.toLowerCase().includes(query.trim().toLowerCase()) ||
+      faq.answer.toLowerCase().includes(query.trim().toLowerCase());
+    return matchesCategory && matchesQuery;
+  });
 
   return (
     <div className="min-h-screen">
@@ -214,110 +221,89 @@ export default function DownloadPage() {
       >
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6">
-            Take AniSave wherever you farm
+            Frequently Asked Questions
           </h1>
           <p className="text-white/90 text-sm sm:text-base lg:text-xl leading-relaxed max-w-3xl mx-auto">
-            One app, every device. Get real-time market prices on your phone,
-            laptop, or desktop — online or on the go.
+            Everything you need to know about using AniSave — from your
+            first login to your next sale.
           </p>
         </div>
       </section>
 
-      {/* Platform cards + Install guides (shared background) */}
-      <section
-        className="pt-12 sm:pt-16 lg:pt-20 pb-12 sm:pb-16 lg:pb-20 bg-[#F5F5F5] bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/images/dp-bg.jpg')" }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-center gap-2 text-white text-sm sm:text-base font-medium mb-10 sm:mb-12">
-            <ShieldCheck size={18} />
-            Official builds, provided directly by the AniSave team
+      {/* Search + category filter */}
+      <section className="py-10 sm:py-12 bg-[#F5F5F5]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="relative mb-6">
+            <Search
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9a9a9a]"
+            />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search for a question..."
+              className="w-full h-12 sm:h-14 pl-11 pr-4 rounded-xl border border-black/10 bg-white text-sm sm:text-base text-[#024310] placeholder:text-[#9a9a9a] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#024310]/30 transition-shadow"
+            />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {platforms.map((platform) => {
-              const link = DOWNLOAD_LINKS[platform.id];
-              const isRecommended = detected === platform.id;
-
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+            {categories.map((cat) => {
+              const isActive = activeCategory === cat;
               return (
-                <div
-                  key={platform.id}
-                  className={`relative bg-white rounded-[20px] shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:-translate-y-2 p-6 sm:p-8 flex flex-col ${
-                    isRecommended ? "ring-2 ring-[#00573C] ring-opacity-50" : ""
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all duration-300 ${
+                    isActive
+                      ? "bg-[#024310] border-[#024310] text-white shadow-md"
+                      : "bg-white border-black/10 text-[#00573C] hover:bg-[#D5E9D6]"
                   }`}
                 >
-                  {isRecommended && (
-                    <span className="absolute top-4 right-4 bg-[#00573C] text-white text-[10px] sm:text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full">
-                      For your device
-                    </span>
-                  )}
-
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#D5E9D6] flex items-center justify-center mb-5 sm:mb-6">
-                    <img
-                      src={platform.iconSrc}
-                      alt={`${platform.name} icon`}
-                      className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
-                    />
-                  </div>
-
-                  <h3 className="font-bold text-lg sm:text-xl text-[#00573C] mb-1">
-                    {platform.name}
-                  </h3>
-                  <p className="text-[#726767] text-sm mb-1">
-                    {platform.tagline}
-                  </p>
-                  <p className="text-[#9a9a9a] text-xs mb-5 sm:mb-6">
-                    {link.version} &middot; {link.size}
-                  </p>
-
-                  <div className="mt-auto">
-                    <DownloadLink href={link.url} external={link.external}>
-                      {platform.cta}
-                    </DownloadLink>
-                    <p className="text-[#9a9a9a] text-xs leading-relaxed mt-3 min-h-[85px]">
-                      {platform.note}
-                    </p>
-                  </div>
-                </div>
+                  {cat}
+                </button>
               );
             })}
           </div>
         </div>
+      </section>
 
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-16 sm:mt-20 lg:mt-24">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">
-              Need help installing?
-            </h2>
-            <p className="text-[#ffffff] text-sm sm:text-base">
-              A couple of extra taps are normal the first time — here's exactly
-              what to expect.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {installGuides.map((guide) => (
-              <details
-                key={guide.id}
-                className="group bg-[#F5F5F5] rounded-xl border border-black/5 open:shadow-md transition-shadow"
-              >
-                <summary className="flex items-center justify-between cursor-pointer list-none px-5 sm:px-6 py-4 sm:py-5">
-                  <span className="font-semibold text-[#00573C] text-sm sm:text-base">
-                    {guide.title}
-                  </span>
-                  <ChevronDown
-                    size={18}
-                    className="text-[#00573C] transition-transform duration-300 group-open:rotate-180"
-                  />
-                </summary>
-                <ol className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-2.5 list-decimal list-inside text-[#726767] text-sm leading-relaxed">
-                  {guide.steps.map((step, i) => (
-                    <li key={i}>{step}</li>
-                  ))}
-                </ol>
-              </details>
-            ))}
-          </div>
+      {/* FAQ list */}
+      <section
+        className="py-12 sm:py-16 lg:py-20 bg-white bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/images/bg_privacy.png')" }}
+      >
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          {filteredFaqs.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-[#726767] text-sm sm:text-base">
+                No questions match your search. Try a different keyword, or
+                contact our support team below.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredFaqs.map((faq) => (
+                <details
+                  key={faq.id}
+                  className="group bg-[#F5F5F5] rounded-xl border border-black/5 open:shadow-md transition-shadow"
+                >
+                  <summary className="flex items-center justify-between gap-4 cursor-pointer list-none px-5 sm:px-6 py-4 sm:py-5">
+                    <span className="font-semibold text-[#00573C] text-sm sm:text-base">
+                      {faq.question}
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      className="shrink-0 text-[#00573C] transition-transform duration-300 group-open:rotate-180"
+                    />
+                  </summary>
+                  <p className="px-5 sm:px-6 pb-5 sm:pb-6 text-[#726767] text-sm leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </details>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -345,9 +331,9 @@ export default function DownloadPage() {
               variant="default"
               size="md"
               className="w-full sm:w-auto sm:min-w-[180px]"
-              onClick={() => navigate("/faq")}
+              onClick={() => navigate("/download")}
             >
-              FAQ
+              Get the App
             </Button>
           </div>
         </div>

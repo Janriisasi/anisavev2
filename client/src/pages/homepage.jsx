@@ -19,20 +19,29 @@ import SellerDetailsPopup from "../components/sellerDetailsPopup";
 import AiAdvisor from "../components/aiAdvisor";
 import MarketPriceTrend from "../components/marketPriceTrend";
 
+// Module-level cache: lives outside the component, so it survives the
+// Home page unmounting when you navigate away and remounting when you
+// come back. Without this, every return trip started from empty state
+// and re-showed the full-page "Finding products and farmers!" spinner
+// even though we'd just fetched the same data moments earlier.
+let homeDataCache = null;
+
 const Home = () => {
   const { prices } = useMarketPrices();
   const { user } = useAuth();
-  const [myProducts, setMyProducts] = useState([]);
+  const [myProducts, setMyProducts] = useState(homeDataCache?.myProducts || []);
   const [allProducts, setAllProducts] = useState([]);
-  const [farmerProducts, setFarmerProducts] = useState([]); // Products posted by other farmers
-  const [completedOrders, setCompletedOrders] = useState([]);
+  const [farmerProducts, setFarmerProducts] = useState(homeDataCache?.farmerProducts || []); // Products posted by other farmers
+  const [completedOrders, setCompletedOrders] = useState(homeDataCache?.completedOrders || []);
   const [search, setSearch] = useState("");
   const [farmerSearch, setFarmerSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [myRating, setMyRating] = useState(0);
-  const [totalRatings, setTotalRatings] = useState(0);
+  const [myRating, setMyRating] = useState(homeDataCache?.myRating || 0);
+  const [totalRatings, setTotalRatings] = useState(homeDataCache?.totalRatings || 0);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // Only show the big spinner on the very first load. On repeat visits
+  // we already have cached data to show instantly.
+  const [loading, setLoading] = useState(!homeDataCache);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartModalData, setCartModalData] = useState(null);
   const navigate = useNavigate();
@@ -139,7 +148,7 @@ const Home = () => {
 
     const loadHomeData = async () => {
       try {
-        setLoading(true);
+        if (!homeDataCache) setLoading(true);
         await fetchMyProducts(user.id);
         await fetchMyRating(user.id);
         await fetchFarmerProducts(user.id); // Fetch products posted by other farmers
@@ -223,8 +232,10 @@ const Home = () => {
       .select("*")
       .eq("user_id", userId);
 
-    if (!error) setMyProducts(data);
-    else console.error("Error fetching your products:", error.message);
+    if (!error) {
+      setMyProducts(data);
+      homeDataCache = { ...homeDataCache, myProducts: data };
+    } else console.error("Error fetching your products:", error.message);
   };
 
   const fetchCompletedOrders = async (userId) => {
@@ -234,8 +245,10 @@ const Home = () => {
       .eq("seller_id", userId)
       .eq("status", "completed");
 
-    if (!error) setCompletedOrders(data || []);
-    else console.error("Error fetching completed orders:", error.message);
+    if (!error) {
+      setCompletedOrders(data || []);
+      homeDataCache = { ...homeDataCache, completedOrders: data || [] };
+    } else console.error("Error fetching completed orders:", error.message);
   };
 
   // Fetch products posted by other farmers (with their profile info)
@@ -250,6 +263,7 @@ const Home = () => {
 
       if (error) throw error;
       setFarmerProducts(data || []);
+      homeDataCache = { ...homeDataCache, farmerProducts: data || [] };
     } catch (error) {
       console.error("Error fetching farmer products:", error.message);
     }
@@ -273,13 +287,20 @@ const Home = () => {
         allRatings.push(...buyerRatingsRes.data);
 
       if (allRatings.length > 0) {
-        const total = allRatings.reduce((sum, r) => sum + r.rating, 0);
-        const average = total / allRatings.length;
-        setMyRating(parseFloat(average.toFixed(1)));
+        const average =
+          allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length;
+        const roundedAverage = parseFloat(average.toFixed(1));
+        setMyRating(roundedAverage);
         setTotalRatings(allRatings.length);
+        homeDataCache = {
+          ...homeDataCache,
+          myRating: roundedAverage,
+          totalRatings: allRatings.length,
+        };
       } else {
         setMyRating(0);
         setTotalRatings(0);
+        homeDataCache = { ...homeDataCache, myRating: 0, totalRatings: 0 };
       }
     } catch (error) {
       console.error("Error fetching rating:", error);
@@ -749,16 +770,15 @@ const Home = () => {
                     {filteredFarmerProducts.map((product, index) => (
                       <motion.div
                         key={product.id}
-                        className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-grey/20 hover:shadow-xl transition-all duration-300 group cursor-pointer"
+                        className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-grey/20 hover:shadow-xl transition-all duration-300 group"
                         variants={{
                           hidden: { opacity: 0, y: 20 },
                           show: { opacity: 1, y: 0 },
                         }}
                         whileHover={{ scale: 1.02 }}
-                        onClick={() => setSelectedProduct(product)}
                       >
                         {/* Product Image */}
-                        <div className="relative h-56 overflow-hidden cursor-pointer">
+                        <div className="relative h-56 overflow-hidden">
                           <img
                             src={
                               product.image_url ||

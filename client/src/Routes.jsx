@@ -6,6 +6,7 @@ import { useAuth } from './contexts/authContext';
 import Loader from './components/loader';
 
 const LandingPage    = lazy(() => import('./pages/landingPage'));
+const FAQPage        = lazy(() => import('./pages/faqPage'));
 const Login          = lazy(() => import('./pages/loginPage'));
 const SignUp         = lazy(() => import('./pages/signupPage'));
 const VerifyOtp      = lazy(() => import('./pages/verifyOtpPage'));
@@ -70,6 +71,7 @@ export default function Routes() {
         <Route path="/privacy"        element={<PrivacyPolicy />} />
         <Route path="/terms"          element={<TermsOfService />} />
         <Route path="/download"       element={<DownloadPage />} />
+        <Route path="/faq"             element={<FAQPage />} />
 
         {/* Admin — deliberately NOT wrapped in ProtectedRoute. AdminGate's
             own server-side check (verify_admin_access RPC) already covers

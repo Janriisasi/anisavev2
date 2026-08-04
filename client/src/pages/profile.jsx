@@ -53,18 +53,29 @@ const ProductImage = ({ src, alt }) => {
   );
 };
 
+// Module-level cache: lives outside the component, so it survives this
+// page unmounting when you navigate away and remounting when you come
+// back. Without this, every return trip started from empty state and
+// re-showed the full loading spinner even though we'd just fetched the
+// same profile data moments earlier.
+let profileDataCache = null;
+
 export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [products, setProducts] = useState([]);
+  const [profile, setProfile] = useState(profileDataCache?.profile || null);
+  const [products, setProducts] = useState(profileDataCache?.products || []);
   const [showProductForm, setShowProductForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [avgRating, setAvgRating] = useState(0);
-  const [soldCount, setSoldCount] = useState(0);
-  const [completedOrders, setCompletedOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [avgRating, setAvgRating] = useState(profileDataCache?.avgRating || 0);
+  const [soldCount, setSoldCount] = useState(profileDataCache?.soldCount || 0);
+  const [completedOrders, setCompletedOrders] = useState(
+    profileDataCache?.completedOrders || [],
+  );
+  // Only show the big spinner on the very first load. On repeat visits
+  // we already have cached data to show instantly.
+  const [loading, setLoading] = useState(!profileDataCache);
   const [isEditing, setIsEditing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -90,7 +101,7 @@ export default function Profile() {
 
   const fetchAllUserData = useCallback(async (userId) => {
     try {
-      setLoading(true);
+      if (!profileDataCache) setLoading(true);
       const [
         profileRes,
         productsRes,
@@ -121,8 +132,15 @@ export default function Profile() {
           .eq("status", "completed"),
       ]);
 
-      if (!profileRes.error) setProfile(profileRes.data);
-      if (!productsRes.error) setProducts(productsRes.data || []);
+      const nextProfile = !profileRes.error
+        ? profileRes.data
+        : (profileDataCache?.profile ?? null);
+      if (!profileRes.error) setProfile(nextProfile);
+
+      const nextProducts = !productsRes.error
+        ? productsRes.data || []
+        : (profileDataCache?.products ?? []);
+      if (!productsRes.error) setProducts(nextProducts);
 
       const allRatings = [];
       if (!ratingsRes.error && ratingsRes.data)
@@ -130,16 +148,32 @@ export default function Profile() {
       if (!buyerRatingsRes.error && buyerRatingsRes.data)
         allRatings.push(...buyerRatingsRes.data);
 
-      if (allRatings.length > 0) {
-        const avg =
-          allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length;
-        setAvgRating(avg.toFixed(1));
-      } else {
-        setAvgRating(0);
-      }
-      if (!soldRes.error) setSoldCount(soldRes.data || 0);
-      if (!completedOrdersRes.error)
-        setCompletedOrders(completedOrdersRes.data || []);
+      const nextAvgRating =
+        allRatings.length > 0
+          ? (
+              allRatings.reduce((sum, r) => sum + r.rating, 0) /
+              allRatings.length
+            ).toFixed(1)
+          : 0;
+      setAvgRating(nextAvgRating);
+
+      const nextSoldCount = !soldRes.error
+        ? soldRes.data || 0
+        : (profileDataCache?.soldCount ?? 0);
+      if (!soldRes.error) setSoldCount(nextSoldCount);
+
+      const nextCompletedOrders = !completedOrdersRes.error
+        ? completedOrdersRes.data || []
+        : (profileDataCache?.completedOrders ?? []);
+      if (!completedOrdersRes.error) setCompletedOrders(nextCompletedOrders);
+
+      profileDataCache = {
+        profile: nextProfile,
+        products: nextProducts,
+        avgRating: nextAvgRating,
+        soldCount: nextSoldCount,
+        completedOrders: nextCompletedOrders,
+      };
     } catch (error) {
       console.error("Error fetching user data:", error);
       // Fallback: If profile fetch fails, we still want to show metadata
@@ -148,16 +182,18 @@ export default function Profile() {
           data: { user: currentUser },
         } = await supabase.auth.getUser();
         if (currentUser && currentUser.id === userId) {
-          setProfile(
-            (prev) =>
+          setProfile((prev) => {
+            const fallback =
               prev || {
                 full_name: currentUser.user_metadata?.full_name || "",
                 username:
                   currentUser.user_metadata?.username ||
                   currentUser.email?.split("@")[0] ||
                   "",
-              },
-          );
+              };
+            profileDataCache = { ...profileDataCache, profile: fallback };
+            return fallback;
+          });
         }
       }
       toast.error("Failed to load profile data");
@@ -184,7 +220,10 @@ export default function Profile() {
     supabase
       .rpc("get_seller_sold_count", { p_seller_id: user.id })
       .then(({ data }) => {
-        if (data != null) setSoldCount(data);
+        if (data != null) {
+          setSoldCount(data);
+          profileDataCache = { ...profileDataCache, soldCount: data };
+        }
       });
     supabase
       .from("orders")
@@ -200,7 +239,10 @@ export default function Profile() {
       .eq("seller_id", user.id)
       .eq("status", "completed")
       .then(({ data, error }) => {
-        if (!error && data) setCompletedOrders(data);
+        if (!error && data) {
+          setCompletedOrders(data);
+          profileDataCache = { ...profileDataCache, completedOrders: data };
+        }
       });
   }, [user]);
 
@@ -241,11 +283,13 @@ export default function Profile() {
         },
         (payload) => {
           if (payload.new.user_id !== user.id) return;
-          setProducts((prev) =>
-            prev.map((p) =>
+          setProducts((prev) => {
+            const next = prev.map((p) =>
               p.id === payload.new.id ? { ...p, ...payload.new } : p,
-            ),
-          );
+            );
+            profileDataCache = { ...profileDataCache, products: next };
+            return next;
+          });
         },
       )
       .subscribe();
