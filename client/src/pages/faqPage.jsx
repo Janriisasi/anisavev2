@@ -342,9 +342,9 @@ export default function FaqPage() {
       {/* Footer */}
       <footer className="bg-[#D5E9D6] border-t border-black/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14 lg:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-10">
+          <div className="flex flex-col lg:flex-row lg:justify-between gap-8 lg:gap-12 mb-10">
             {/* Brand col */}
-            <div className="sm:col-span-2 lg:col-span-1">
+            <div className="lg:max-w-xs lg:shrink-0">
               <img
                 className="w-36 h-auto mb-4"
                 src="/images/invertedcolor_logo.webp"
@@ -469,14 +469,14 @@ export default function FaqPage() {
 
         {/* Bottom bar */}
         <div className="bg-[#ECEFF2] border-t border-black/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <p className="text-slate-500 text-sm text-center sm:text-left">
-              © 2025 AniSave. All rights reserved. Proudly made in the
-              Philippines.
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col items-center gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+            <span className="hidden sm:block" aria-hidden="true" />
+            <p className="text-slate-500 text-sm text-center">
+              © 2025 Anisave. All rights reserved.
             </p>
             <button
               onClick={scrollToTop}
-              className="bg-[#024310] hover:bg-[#035815] text-white rounded-full p-2.5 shadow-md transition-all duration-300"
+              className="bg-[#024310] hover:bg-[#035815] text-white rounded-full p-2.5 shadow-md transition-all duration-300 sm:justify-self-end"
               aria-label="Scroll to top"
             >
               <ChevronUp size={18} />

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronUp,
   ChevronDown,
-  ShieldCheck,
   ArrowLeft,
   Facebook,
   Instagram,
@@ -203,37 +202,22 @@ export default function DownloadPage() {
         </nav>
       </header>
 
-      {/* Hero */}
+      {/* Hero + Platform cards + Install guides — one continuous green section,
+          background image supplies both the base color and the wheat artwork */}
       <section
-        className="relative flex items-start justify-center overflow-hidden bg-[#024310] pt-20 pb-12 sm:pt-24 sm:pb-14 lg:pt-28 lg:pb-16"
-        style={{
-          backgroundImage: "url('/images/bg_feat.webp')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6">
-            Take AniSave wherever you farm
-          </h1>
-          <p className="text-white/90 text-sm sm:text-base lg:text-xl leading-relaxed max-w-3xl mx-auto">
-            One app, every device. Get real-time market prices on your phone,
-            laptop, or desktop — online or on the go.
-          </p>
-        </div>
-      </section>
-
-      {/* Platform cards + Install guides (shared background) */}
-      <section
-        className="pt-12 sm:pt-16 lg:pt-20 pb-12 sm:pb-16 lg:pb-20 bg-[#F5F5F5] bg-cover bg-center bg-no-repeat"
+        className="relative overflow-hidden bg-[#024310] bg-cover bg-top bg-no-repeat pt-20 pb-12 sm:pt-24 sm:pb-16 lg:pt-28 lg:pb-20"
         style={{ backgroundImage: "url('/images/dp-bg.jpg')" }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-center gap-2 text-white text-sm sm:text-base font-medium mb-10 sm:mb-12">
-            <ShieldCheck size={18} />
-            Official builds, provided directly by the AniSave team
-          </div>
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center mb-10 sm:mb-12 lg:mb-14">
+          <p className="text-white/80 text-xs sm:text-sm font-bold tracking-[0.15em] uppercase mb-2 sm:mb-3">
+            Cross-platform support
+          </p>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+            Select your Platform
+          </h1>
+        </div>
 
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {platforms.map((platform) => {
               const link = DOWNLOAD_LINKS[platform.id];
@@ -252,23 +236,28 @@ export default function DownloadPage() {
                     </span>
                   )}
 
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#D5E9D6] flex items-center justify-center mb-5 sm:mb-6">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gray-100 flex items-center justify-center mb-4 sm:mb-5">
                     <img
                       src={platform.iconSrc}
                       alt={`${platform.name} icon`}
-                      className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+                      className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
                     />
                   </div>
 
                   <h3 className="font-bold text-lg sm:text-xl text-[#00573C] mb-1">
                     {platform.name}
                   </h3>
-                  <p className="text-[#726767] text-sm mb-1">
+                  <p className="text-[#726767] text-sm mb-2.5">
                     {platform.tagline}
                   </p>
-                  <p className="text-[#9a9a9a] text-xs mb-5 sm:mb-6">
-                    {link.version} &middot; {link.size}
-                  </p>
+                  <div className="flex items-center gap-2 mb-5 sm:mb-6">
+                    <span className="bg-[#024310] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                      {link.version}
+                    </span>
+                    <span className="text-[#9a9a9a] text-xs">
+                      {link.size}
+                    </span>
+                  </div>
 
                   <div className="mt-auto">
                     <DownloadLink href={link.url} external={link.external}>
@@ -284,39 +273,65 @@ export default function DownloadPage() {
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-16 sm:mt-20 lg:mt-24">
+        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 mt-16 sm:mt-20 lg:mt-24">
           <div className="text-center mb-10 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">
-              Need help installing?
+              Need Help Installing?
             </h2>
-            <p className="text-[#ffffff] text-sm sm:text-base">
-              A couple of extra taps are normal the first time — here's exactly
-              what to expect.
+            <p className="text-white/90 text-sm sm:text-base">
+              A couple of extra taps are normal for the first time — here's
+              exactly what to expect when setting up AniSave on your device.
             </p>
           </div>
 
           <div className="space-y-4">
-            {installGuides.map((guide) => (
-              <details
-                key={guide.id}
-                className="group bg-[#F5F5F5] rounded-xl border border-black/5 open:shadow-md transition-shadow"
-              >
-                <summary className="flex items-center justify-between cursor-pointer list-none px-5 sm:px-6 py-4 sm:py-5">
-                  <span className="font-semibold text-[#00573C] text-sm sm:text-base">
-                    {guide.title}
-                  </span>
-                  <ChevronDown
-                    size={18}
-                    className="text-[#00573C] transition-transform duration-300 group-open:rotate-180"
-                  />
-                </summary>
-                <ol className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-2.5 list-decimal list-inside text-[#726767] text-sm leading-relaxed">
-                  {guide.steps.map((step, i) => (
-                    <li key={i}>{step}</li>
-                  ))}
-                </ol>
-              </details>
-            ))}
+            {installGuides.map((guide, index) => {
+              const guideIcon = platforms.find((p) => p.id === guide.id)
+                ?.iconSrc;
+
+              return (
+                <details
+                  key={guide.id}
+                  open={index === 0}
+                  className="group bg-white rounded-xl shadow-sm open:shadow-md transition-shadow"
+                >
+                  <summary className="flex items-center justify-between gap-4 cursor-pointer list-none px-5 sm:px-6 py-4 sm:py-5">
+                    <span className="flex items-center gap-3 sm:gap-4">
+                      <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                        {guideIcon && (
+                          <img
+                            src={guideIcon}
+                            alt=""
+                            className="w-5 h-5 object-contain"
+                          />
+                        )}
+                      </span>
+                      <span className="font-semibold text-[#00573C] text-sm sm:text-base">
+                        {guide.title}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      className="text-[#00573C] shrink-0 transition-transform duration-300 group-open:rotate-180"
+                    />
+                  </summary>
+                  <div className="px-5 sm:px-6 pb-5 sm:pb-6 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
+                    <ol className="flex-1 space-y-2.5 list-decimal list-inside text-[#726767] text-sm leading-relaxed">
+                      {guide.steps.map((step, i) => (
+                        <li key={i}>{step}</li>
+                      ))}
+                    </ol>
+                    {guide.image && (
+                      <img
+                        src={guide.image}
+                        alt={`${guide.title} preview`}
+                        className="w-full sm:w-40 lg:w-48 h-32 sm:h-28 lg:h-32 rounded-lg object-cover shrink-0"
+                      />
+                    )}
+                  </div>
+                </details>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -356,9 +371,9 @@ export default function DownloadPage() {
       {/* Footer */}
       <footer className="bg-[#D5E9D6] border-t border-black/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14 lg:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-10">
+          <div className="flex flex-col lg:flex-row lg:justify-between gap-8 lg:gap-12 mb-10">
             {/* Brand col */}
-            <div className="sm:col-span-2 lg:col-span-1">
+            <div className="lg:max-w-xs lg:shrink-0">
               <img
                 className="w-36 h-auto mb-4"
                 src="/images/invertedcolor_logo.webp"
@@ -392,28 +407,28 @@ export default function DownloadPage() {
                 </a>
               </div>
             </div>
-
             {/* Platform */}
             <div>
               <h5 className="font-bold text-slate-900 mb-4 text-sm tracking-wide uppercase">
                 Platform
               </h5>
               <ul className="space-y-3">
-                {["Market Prices", "Product Directory", "Farmer Profiles"].map(
-                  (item) => (
-                    <li key={item}>
-                      <a
-                        href="/signup"
-                        className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
-                      >
-                        {item}
-                      </a>
-                    </li>
-                  ),
-                )}
+                {[
+                  "Market Prices",
+                  "Product Directory",
+                  "Farmer Profiles",
+                ].map((item) => (
+                  <li key={item}>
+                    <a
+                      href="/signup"
+                      className="text-slate-600 hover:text-[#00573C] transition-colors duration-300 text-sm"
+                    >
+                      {item}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
-
             {/* Company */}
             <div>
               <h5 className="font-bold text-slate-900 mb-4 text-sm tracking-wide uppercase">
@@ -422,7 +437,6 @@ export default function DownloadPage() {
               <ul className="space-y-3">
                 {[
                   { label: "About Us", href: "#about" },
-                  { label: "FAQ", href: "/faq" },
                   { label: "Privacy Policy", href: "/privacy" },
                   { label: "Terms of Service", href: "/terms" },
                 ].map((item) => (
@@ -437,7 +451,6 @@ export default function DownloadPage() {
                 ))}
               </ul>
             </div>
-
             {/* Install */}
             <div>
               <h5 className="font-bold text-slate-900 mb-4 text-sm tracking-wide uppercase">
@@ -480,17 +493,16 @@ export default function DownloadPage() {
             </div>
           </div>
         </div>
-
         {/* Bottom bar */}
         <div className="bg-[#ECEFF2] border-t border-black/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <p className="text-slate-500 text-sm text-center sm:text-left">
-              © 2025 AniSave. All rights reserved. Proudly made in the
-              Philippines.
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col items-center gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+            <span className="hidden sm:block" aria-hidden="true" />
+            <p className="text-slate-500 text-sm text-center">
+              © 2025 Anisave. All rights reserved.
             </p>
             <button
               onClick={scrollToTop}
-              className="bg-[#024310] hover:bg-[#035815] text-white rounded-full p-2.5 shadow-md transition-all duration-300"
+              className="bg-[#024310] hover:bg-[#035815] text-white rounded-full p-2.5 shadow-md transition-all duration-300 sm:justify-self-end"
               aria-label="Scroll to top"
             >
               <ChevronUp size={18} />
