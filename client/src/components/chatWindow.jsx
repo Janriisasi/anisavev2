@@ -856,45 +856,55 @@ export default function ChatWindow({
         try {
           const jsonStr = parts[0].replace("[PRODUCT_CONTEXT:", "");
           const product = JSON.parse(jsonStr);
-          const userMessage = parts.slice(1).join("]\n");
+          const userMessage = parts.slice(1).join("]\n").trim();
 
           return (
-            <div className="flex flex-col gap-2">
-              <div
-                className={`rounded-xl overflow-hidden border ${isOwn ? "bg-green-600 border-green-500" : "bg-gray-50 border-gray-200"} mb-1`}
-              >
-                <div className="flex items-center gap-3 p-2">
-                  {product.image_url && (
-                    <img
-                      src={product.image_url}
-                      alt=""
-                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0 pointer-events-none">
-                    <p
-                      className={`text-[10px] font-bold uppercase tracking-tight ${isOwn ? "text-green-100/80" : "text-gray-500"}`}
-                    >
-                      Product Inquiry
-                    </p>
-                    <p
-                      className={`font-bold text-xs truncate ${isOwn ? "text-white" : "text-gray-800"}`}
-                    >
-                      {product.name}
-                    </p>
-                    <p
-                      className={`text-[11px] font-semibold ${isOwn ? "text-green-100" : "text-green-700"}`}
-                    >
-                      ₱{product.price}/{product.unit || 'kg'}
-                    </p>
+            <div
+              className={`w-full max-w-[260px] rounded-2xl overflow-hidden shadow-sm border ${
+                isOwn
+                  ? "border-green-700/30 rounded-br-sm"
+                  : "border-gray-200 rounded-bl-sm"
+              }`}
+            >
+              {/* Photo with label / name / price overlaid */}
+              <div className="relative h-28 sm:h-32 w-full bg-green-100">
+                {product.image_url ? (
+                  <img
+                    src={product.image_url}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-100 to-green-200">
+                    <ShoppingBag className="w-8 h-8 text-green-400" />
                   </div>
-                </div>
-              </div>
-              {userMessage && (
-                <p className="text-sm break-words whitespace-pre-wrap">
-                  {userMessage}
+                )}
+
+                {/* Legibility gradient */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/5 to-black/60" />
+
+                <span className="absolute top-2 left-3 right-3 text-[10px] font-bold uppercase tracking-wide text-white/85 drop-shadow">
+                  Product Inquiry
+                </span>
+                <p className="absolute top-6 left-3 right-3 font-bold text-white text-sm leading-tight truncate drop-shadow">
+                  {product.name}
                 </p>
-              )}
+                <p className="absolute bottom-2 left-3 font-extrabold text-white text-base leading-tight drop-shadow">
+                  ₱{product.price}/{product.unit || 'kg'}
+                </p>
+              </div>
+
+              {/* Question — the actual text that was sent */}
+              <div
+                className={`px-3 py-2.5 text-sm font-semibold break-words whitespace-pre-wrap ${
+                  isOwn ? "bg-green-700 text-white" : "bg-white text-gray-800"
+                }`}
+              >
+                {userMessage || `Is the ${product.name} still available?`}
+              </div>
             </div>
           );
         } catch (e) {
@@ -1074,7 +1084,8 @@ export default function ChatWindow({
                     {(() => {
                       const isImageMsg =
                         message.content.includes("[IMAGE:") ||
-                        message.content.startsWith("[ORDER_CONFIRM:");
+                        message.content.startsWith("[ORDER_CONFIRM:") ||
+                        message.content.startsWith("[PRODUCT_CONTEXT:");
                       return (
                         <div
                           className={
