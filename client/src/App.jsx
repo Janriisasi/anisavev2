@@ -22,6 +22,11 @@ function AppContent() {
   const navigate = useNavigate();
   const { showTutorial, closeTutorial } = useTutorialContext();
 
+  // Scroll to top on route change to prevent starting at the bottom of pages
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   // Surface OAuth failures (e.g. "an account with this email already
   // exists" from the before-user-created Auth Hook) as a toast.
   //

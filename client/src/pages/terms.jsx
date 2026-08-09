@@ -347,7 +347,7 @@ export default function TermsOfService() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col items-center gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center">
             <span className="hidden sm:block" aria-hidden="true" />
             <p className="text-slate-500 text-sm text-center">
-              © 2025 Anisave. All rights reserved.
+              © 2026 Anisave. All rights reserved.
             </p>
             <button
               onClick={scrollToTop}

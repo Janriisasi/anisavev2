@@ -103,34 +103,44 @@ export default function PrivacyPolicy() {
 
   const sections = [
     {
-      title: "Our Story",
+      title: "1. Introduction",
       content:
-        "AniSave was born from a simple yet powerful idea — to bridge the gap between farmers and buyers through technology. In many parts of the Philippines, local farmers struggle to find direct access to fair markets, often relying on middlemen who take a large portion of their profits. At the same time, buyers find it difficult to source fresh produce directly from trusted farmers.\n\nAniSave was created to change that reality — to give farmers a digital space where they can showcase their products, connect directly with buyers, and stay informed about real-time market prices.\n\nWe believe that empowering farmers with technology can lead to stronger communities, fairer trade, and sustainable livelihoods.",
+        "AniSave is committed to protecting your privacy. This Privacy Policy describes how we collect, use, disclose, and safeguard your personal information when you use our agricultural marketplace platform.",
     },
     {
-      title: "Our Mission",
+      title: "2. Information We Collect",
       content:
-        "To empower Filipino farmers by providing a reliable digital platform that connects them directly with buyers, promotes transparency in pricing, and helps improve the overall flow of agricultural commerce in the country.\n\nWe aim to make agriculture more accessible, fair, and future-ready by using simple, user-friendly technology.",
+        "We collect information that you provide directly to us when you create an account, complete your profile, list products, or communicate with other users:\n\n• Account Information: Name, email address, username, password, and authentication metadata.\n• Profile & Business Information: For farmers, this may include your contact details, farm location, product descriptions, prices, and images. For buyers, this may include feedback and ratings.\n• Communications: Messages, questions, and inquiries sent directly through the platform's contact and chat features.",
     },
     {
-      title: "Our Vision",
+      title: "3. How We Use Your Information",
       content:
-        "To build a digitally connected agricultural ecosystem where every Filipino farmer has equal opportunity to sell their harvest, monitor market trends, and grow their business sustainably. AniSave envisions a future where technology and agriculture work hand in hand to improve the lives of farmers and the quality of local food supply.",
+        "We use the collected information for various purposes, including to:\n\n• Provide, operate, and maintain the AniSave platform and marketplace.\n• Enable direct communication and commerce transactions between farmers and buyers.\n• Display farmer product listings and profiles to potential buyers.\n• Send updates, announcements, system notifications, and security alerts.\n• Monitor, analyze, and improve platform performance, usability, and safety.",
     },
     {
-      title: "What AniSave Does",
+      title: "4. Information Sharing and Visibility",
       content:
-        "AniSave serves as a modern platform that simplifies how farmers and buyers interact:\n\n• Farmers can easily list their products, track market prices, and manage their profiles.\n• Buyers can browse, search, and connect with farmers to purchase fresh produce directly.\n• Both sides benefit from a transparent, efficient, and trustworthy environment.\n\nWith real-time price monitoring, category-based product discovery, and direct contact features, AniSave is transforming how agricultural trade happens in the Philippines.",
+        "AniSave is a public agricultural marketplace. Please be aware of how your information is shared:\n\n• Public Profiles: Farmer profiles, product listings, prices, and public contact information are visible to all platform users and visitors.\n• No Sale of Data: We do not sell, rent, or trade your personal data to third parties for marketing purposes.\n• Legal Requirements: We may disclose your information if required to do so by law or in response to valid requests by public authorities.",
     },
     {
-      title: "Our Objective",
+      title: "5. Data Security & Storage",
       content:
-        "To support and uplift the agricultural sector by:\n\n• Encouraging fair trade between farmers and consumers\n• Enhancing digital literacy among local producers\n• Promoting sustainability and transparency in the supply chain\n• Strengthening the connection between technology and farming",
+        "We employ industry-standard security measures (supported by our database provider, Supabase) to protect the confidentiality and integrity of your data. However, no method of transmission over the Internet or electronic storage is 100% secure, and we cannot guarantee absolute security.",
     },
     {
-      title: "Why AniSave Matters",
+      title: "6. Your Rights & Choices",
       content:
-        "Agriculture is the heart of the Philippines — yet many farmers remain underserved in the digital world. AniSave aims to bridge that divide by being a platform built for farmers, by students who care about their growth. We're not just building an app; we're building a community where innovation meets compassion, helping ensure that every harvest finds its way to the right table.",
+        "You have control over your information:\n\n• Account Information: You can access, review, and update your profile information at any time by logging into your account.\n• Account Deletion: You may delete or deactivate your account. Note that certain cached or public listing info may remain visible in archive forms.",
+    },
+    {
+      title: "7. Changes to this Policy",
+      content:
+        "We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the 'Last Updated' date at the top of the policy.",
+    },
+    {
+      title: "8. Contact Us",
+      content:
+        "If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at anisave.team@gmail.com.",
     },
   ];
 
@@ -182,14 +192,7 @@ export default function PrivacyPolicy() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="rounded-[24px] border border-black/5 bg-white p-6 shadow-lg sm:p-8 lg:p-10">
             <p className="text-[#666] text-base sm:text-lg leading-relaxed mb-10">
-              <span className="text-green-800 font-bold">AniSave</span> is a
-              digital platform dedicated to empowering{" "}
-              <span className="text-green-800 font-bold">Filipino farmers</span>{" "}
-              and connecting them with buyers for{" "}
-              <span className="text-yellow-400 font-bold">
-                fair and transparent{" "}
-              </span>
-              agricultural trade.
+              This Privacy Policy outlines how <span className="text-green-800 font-bold">AniSave</span> collects, uses, and safeguards your personal data. Please read it carefully to understand our commitment to protecting your information in our agricultural marketplace.
             </p>
 
             <div className="space-y-10">
@@ -337,7 +340,7 @@ export default function PrivacyPolicy() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col items-center gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center">
             <span className="hidden sm:block" aria-hidden="true" />
             <p className="text-slate-500 text-sm text-center">
-              © 2025 Anisave. All rights reserved.
+              © 2026 Anisave. All rights reserved.
             </p>
             <button
               onClick={scrollToTop}

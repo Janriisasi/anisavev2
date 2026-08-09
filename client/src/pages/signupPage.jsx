@@ -24,6 +24,7 @@ function SignUp() {
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [slideDirection, setSlideDirection] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Username availability state
   const [usernameStatus, setUsernameStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
@@ -145,6 +146,10 @@ function SignUp() {
         }
         if (!hasUpperCase || !hasLowerCase || !hasNumber) {
           toast.error('Password must contain uppercase, lowercase, and number');
+          return false;
+        }
+        if (!agreedToTerms) {
+          toast.error('You must agree to the Terms and Conditions and Privacy Policy');
           return false;
         }
         return true;
@@ -298,7 +303,7 @@ function SignUp() {
             <div className="relative">
               <input
                 id="password"
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition-all"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={form.password}
@@ -389,7 +394,7 @@ function SignUp() {
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-3">
-          <div className="overflow-hidden">
+          <div className="overflow-hidden p-1.5 -m-1.5">
             <div
               className={`transition-all duration-300 ease-in-out ${
                 slideDirection === 'next'
@@ -436,6 +441,41 @@ function SignUp() {
               </button>
             )}
           </div>
+
+          {/* Terms & Privacy checkbox below the buttons (only on Step 4) */}
+          {currentStep === totalSteps && (
+            <div className="flex items-start justify-center gap-2 mt-4 select-none">
+              <input
+                id="agreeToTerms"
+                type="checkbox"
+                className="mt-1 w-4 h-4 accent-green-800 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+              />
+              <label htmlFor="agreeToTerms" className="text-xs sm:text-sm text-gray-600 cursor-pointer">
+                I agree to the{' '}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-800 hover:text-green-900 font-semibold hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Terms and Conditions
+                </a>{' '}
+                and{' '}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-800 hover:text-green-900 font-semibold hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Privacy Policy
+                </a>.
+              </label>
+            </div>
+          )}
         </form>
 
         {currentStep === 1 && (

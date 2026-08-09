@@ -63,52 +63,61 @@ function OAuthButtons() {
     }
   };
 
+  // Shared outlined style so all three providers read as one consistent
+  // set of buttons instead of three different brand colors.
+  const baseButtonClass =
+    "flex items-center justify-center gap-2 py-2.5 px-4 bg-gray-100 border border-gray-300 hover:bg-gray-200 hover:border-gray-400 text-gray-800 font-medium text-sm sm:text-base rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed";
+
   return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        disabled={!!loadingProvider}
-        onClick={() => handleOAuth("google")}
-        className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {loadingProvider === "google" ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : (
-          <img
-            src="https://www.svgrepo.com/show/475656/google-color.svg"
-            alt="Google"
-            className="w-5 h-5"
-          />
-        )}
-        Continue with Google
-      </button>
+    <div className="space-y-2.5">
+      {/* Facebook + Google side by side */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          disabled={!!loadingProvider}
+          onClick={() => handleOAuth("facebook")}
+          className={baseButtonClass}
+        >
+          {loadingProvider === "facebook" ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <img
+              src="https://www.svgrepo.com/show/475647/facebook-color.svg"
+              alt="Facebook"
+              className="w-5 h-5"
+            />
+          )}
+          Facebook
+        </button>
 
-      <button
-        type="button"
-        disabled={!!loadingProvider}
-        onClick={() => handleOAuth("facebook")}
-        className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-[#1877F2] hover:bg-[#166fe5] text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {loadingProvider === "facebook" ? (
-          <Loader2 className="w-5 h-5 animate-spin text-white" />
-        ) : (
-          <img
-            src="https://www.svgrepo.com/show/475647/facebook-color.svg"
-            alt="Facebook"
-            className="w-5 h-5 brightness-0 invert"
-          />
-        )}
-        Continue with Facebook
-      </button>
+        <button
+          type="button"
+          disabled={!!loadingProvider}
+          onClick={() => handleOAuth("google")}
+          className={baseButtonClass}
+        >
+          {loadingProvider === "google" ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+              className="w-5 h-5"
+            />
+          )}
+          Google
+        </button>
+      </div>
 
+      {/* Microsoft full width below, same style */}
       <button
         type="button"
         disabled={!!loadingProvider}
         onClick={() => handleOAuth("azure")}
-        className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+        className={`w-full ${baseButtonClass}`}
       >
         {loadingProvider === "azure" ? (
-          <Loader2 className="w-5 h-5 animate-spin text-white" />
+          <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
           <img
             src="https://www.svgrepo.com/show/452062/microsoft.svg"
@@ -116,7 +125,7 @@ function OAuthButtons() {
             className="w-5 h-5"
           />
         )}
-        Continue with Microsoft
+        Microsoft
       </button>
     </div>
   );

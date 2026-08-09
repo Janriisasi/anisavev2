@@ -34,7 +34,7 @@ export default function NotFoundPage() {
 
         <h1 style={visuallyHidden}>Page not found</h1>
         <p className="text-sm md:text-base text-gray-600 mb-10 max-w-sm">
-          This page didn't make it to market. If you think this is a mistake, please contact the support team at <a href="https://mail.google.com/" className="font-semibold text-green-800 hover:cursor-pointer">anisave14@gmail.com</a>
+          This page didn't make it to market. If you think this is a mistake, please contact the support team at <a href="https://mail.google.com/mail/?view=cm&fs=1&to=anisave14@gmail.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-green-800 hover:cursor-pointer">anisave14@gmail.com</a>
         </p>
 
         <Link

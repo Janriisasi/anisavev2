@@ -264,12 +264,21 @@ export default function ProductSellersPage() {
           - Mobile: stacked (product card on top, sellers below)
           - Desktop (lg+): side-by-side (product card left, sellers right)
         */}
-        <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+        {/*
+          Height math: 100vh, minus the navbar (--nav-height — a live CSS
+          variable your Navbar component already measures via ResizeObserver
+          and publishes on the root element, see navbar.jsx), minus this
+          page's own vertical chrome above the row: py-6 (48px) + the back
+          button block including its mb-5 margin (~40px) = 88px, rounded up
+          to 96px for a little breathing room. Since --nav-height updates
+          live, this stays correct even if the navbar's height ever changes.
+        */}
+        <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 lg:h-[calc(100vh-var(--nav-height,64px)-96px)]">
           {/* ── LEFT: Product Details Card ── */}
-          <div className="w-full lg:w-[380px] lg:flex-shrink-0 lg:sticky lg:top-6" data-tutorial="product-details-card">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="w-full lg:w-[380px] lg:flex-shrink-0 lg:h-full" data-tutorial="product-details-card">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:h-full lg:flex lg:flex-col">
               {/* Product image */}
-              <div className="bg-white flex items-center justify-center p-8 h-56 sm:h-64 lg:h-72">
+              <div className="bg-white flex items-center justify-center p-8 h-56 sm:h-64 lg:h-72 lg:flex-shrink-0">
                 <img
                   src={
                     productImages[product.name] ||
@@ -284,8 +293,8 @@ export default function ProductSellersPage() {
                 />
               </div>
 
-              {/* Product info */}
-              <div className="p-5">
+              {/* Product info (scrolls internally on the rare chance it's too tall) */}
+              <div className="p-5 lg:overflow-y-auto lg:flex-1">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">
                   {product.name}
                 </h1>
@@ -324,10 +333,13 @@ export default function ProductSellersPage() {
           </div>
 
           {/* ── RIGHT: Available Sellers ── */}
-          <div className="flex-1 min-w-0" data-tutorial="product-sellers-list">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              {/* Sellers header */}
-              <div className="p-4 sm:p-6 border-b border-gray-100">
+          <div
+            className="flex-1 min-w-0 lg:h-full"
+            data-tutorial="product-sellers-list"
+          >
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:flex lg:flex-col lg:h-full">
+              {/* Sellers header (stays fixed, doesn't scroll) */}
+              <div className="p-4 sm:p-6 border-b border-gray-100 lg:flex-shrink-0">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div>
                     <h2 className="text-lg font-bold text-gray-800">
@@ -383,8 +395,8 @@ export default function ProductSellersPage() {
                 </div>
               </div>
 
-              {/* Seller list */}
-              <div className="divide-y divide-gray-100">
+              {/* Seller list (only this part scrolls on desktop) */}
+              <div className="divide-y divide-gray-100 lg:overflow-y-auto lg:flex-1">
                 {sortedSellers.length === 0 ? (
                   <div className="text-center py-12 px-4">
                     <Star className="w-12 h-12 text-gray-200 mx-auto mb-3" />

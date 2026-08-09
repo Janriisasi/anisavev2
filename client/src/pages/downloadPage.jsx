@@ -351,7 +351,7 @@ export default function DownloadPage() {
               size="md"
               className="w-full sm:w-auto sm:min-w-[180px]"
               onClick={() =>
-                (window.location.href = "mailto:anisave14@gmail.com")
+                window.open("https://mail.google.com/mail/?view=cm&fs=1&to=anisave14@gmail.com", "_blank")
               }
             >
               Contact Support
