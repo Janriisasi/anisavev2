@@ -43,7 +43,7 @@ export default function AboutModal({ isOpen, onClose }) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 md:pt-[calc(var(--nav-height,4rem)_+_1.5rem)] z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -53,14 +53,14 @@ export default function AboutModal({ isOpen, onClose }) {
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 flex items-center justify-center p-2 sm:p-4 z-50 pointer-events-none"
+            className="fixed inset-0 flex items-center justify-center p-4 md:pt-[calc(var(--nav-height,4rem)_+_1.5rem)] z-50 pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
             <motion.div
-              className="bg-white rounded-2xl w-full max-w-[95%] sm:max-w-2xl max-h-[95vh] overflow-y-auto shadow-2xl flex flex-col scrollbar-hide pointer-events-auto"
+              className="bg-white rounded-xl sm:rounded-2xl w-full max-w-[95%] sm:max-w-3xl max-h-[78vh] sm:max-h-[85vh] overflow-y-auto shadow-2xl flex flex-col scrollbar-hide pointer-events-auto"
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
