@@ -282,8 +282,14 @@ export default function ChatWindow({
         if (orders) {
           const map = {};
           for (const o of orders) {
-            if (o.status === "approved" || o.status === "declined") {
-              map[o.id] = o.status;
+            // 'completed' is just an 'approved' order the buyer later
+            // confirmed receiving — treat it the same for the card so it
+            // still reads "You approved this order" instead of falling
+            // back to a fresh, actionable Approve/Decline state.
+            if (o.status === "approved" || o.status === "completed") {
+              map[o.id] = "approved";
+            } else if (o.status === "declined" || o.status === "cancelled") {
+              map[o.id] = "declined";
             }
           }
           setActedOrders(map);
@@ -606,40 +612,21 @@ export default function ChatWindow({
     setActedOrders((prev) => ({ ...prev, [orderId]: action }));
     try {
       if (action === "approved") {
-        const { error: updateErr } = await supabase
-          .from("orders")
-          .update({
-            status: "approved",
-            seller_responded_at: new Date().toISOString(),
-          })
-          .eq("id", orderId);
-        if (updateErr) throw updateErr;
+        // Same atomic RPC used by the Profile > Order Requests tab. Single
+        // source of truth so approving from chat can't race — or silently
+        // fail to decrement inventory on — an approval done there, and
+        // vice versa. Only succeeds if the order is still 'confirming'.
+        const { error: approveError } = await supabase.rpc("approve_order", {
+          p_order_id: orderId,
+        });
 
-        if (order.product_id) {
-          const { data: productData, error: productError } = await supabase
-            .from("products")
-            .select("quantity_kg, status")
-            .eq("id", order.product_id)
-            .single();
-
-          if (!productError && productData) {
-            const currentQty = parseFloat(productData.quantity_kg) || 0;
-            const newQuantity = Math.max(0, currentQty - order.quantity_kg);
-            const newStatus =
-              newQuantity === 0 ? "Unavailable" : productData.status;
-
-            const { error: invError } = await supabase
-              .from("products")
-              .update({
-                quantity_kg: newQuantity,
-                status: newStatus,
-              })
-              .eq("id", order.product_id);
-
-            if (invError) console.error("Inventory update error:", invError);
-          } else {
-            console.error("Could not fetch product for inventory update");
+        if (approveError) {
+          if (approveError.message?.includes("already handled")) {
+            toast.error("This order was already handled.");
+            await fetchMessages(); // resync actedOrders with real status
+            return;
           }
+          throw approveError;
         }
 
         await supabase.rpc("create_notification", {
@@ -652,14 +639,25 @@ export default function ChatWindow({
 
         toast.success("Order approved! Inventory updated.");
       } else {
-        const { error: updateErr } = await supabase
+        // Guard: only declines if still 'confirming', so this can't
+        // clobber an order that was already approved/completed elsewhere.
+        const { data: declined, error: updateErr } = await supabase
           .from("orders")
           .update({
             status: "declined",
             seller_responded_at: new Date().toISOString(),
           })
-          .eq("id", orderId);
-        if (updateErr) throw updateErr;
+          .eq("id", orderId)
+          .eq("status", "confirming")
+          .select()
+          .single();
+
+        if (updateErr && updateErr.code !== "PGRST116") throw updateErr;
+        if (!declined) {
+          toast.error("This order was already handled.");
+          await fetchMessages();
+          return;
+        }
 
         await supabase.rpc("create_notification", {
           p_user_id: conversation.otherParticipant.id,

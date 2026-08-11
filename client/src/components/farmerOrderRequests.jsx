@@ -149,42 +149,27 @@ export default function FarmerOrderRequests() {
   const handleApprove = async (order) => {
     setActionLoading(order.id);
     try {
-      // 1. Update order status
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update({
-          status: "approved",
-          seller_responded_at: new Date().toISOString(),
-        })
-        .eq("id", order.id);
-      if (updateError) throw updateError;
-
-      // 2. Decrement inventory and update status if out of stock
-      const { data: productData, error: productError } = await supabase
-        .from('products')
-        .select('quantity_kg, status')
-        .eq('id', order.product_id)
-        .single();
-      
-      if (!productError && productData) {
-        const currentQty = parseFloat(productData.quantity_kg) || 0;
-        const newQuantity = Math.max(0, currentQty - order.quantity_kg);
-        const newStatus = newQuantity === 0 ? 'Unavailable' : productData.status;
-
-        const { error: invError } = await supabase
-          .from('products')
-          .update({
-             quantity_kg: newQuantity,
-             status: newStatus
-          })
-          .eq('id', order.product_id);
-          
-        if (invError) console.error("Inventory update error:", invError);
-      } else {
-        console.error("Could not fetch product for inventory update");
+      // Atomically: (a) flips the order to 'approved', (b) decrements the
+      // product's inventory, adjusting min_order down alongside it so the
+      // products_min_order_check constraint can't silently reject the
+      // update when a sale wipes out (or dips below) the minimum order
+      // size, and (c) only runs if the order is still 'confirming' — so
+      // this can't double-fire if it's also approved from the chat window.
+      // See migration: approve_order() in the DB.
+      const { data: approvedOrder, error: approveError } = await supabase.rpc(
+        "approve_order",
+        { p_order_id: order.id },
+      );
+      if (approveError) {
+        if (approveError.message?.includes("already handled")) {
+          toast.error("This order was already handled.");
+          fetchOrders();
+          return;
+        }
+        throw approveError;
       }
 
-      // 3. Notify the buyer
+      // Notify the buyer
       await supabase.rpc("create_notification", {
         p_user_id: order.buyer_id,
         p_type: "order_approved",
@@ -235,14 +220,27 @@ export default function FarmerOrderRequests() {
   const handleDecline = async (order, reason) => {
     setActionLoading(order.id);
     try {
-      await supabase
+      // Guard: only declines if still 'confirming', so it can't clobber
+      // an order that was already approved/declined/completed elsewhere.
+      const { data: declined, error: declineError } = await supabase
         .from("orders")
         .update({
           status: "declined",
           decline_reason: reason || null,
           seller_responded_at: new Date().toISOString(),
         })
-        .eq("id", order.id);
+        .eq("id", order.id)
+        .eq("status", "confirming")
+        .select()
+        .single();
+
+      if (declineError && declineError.code !== "PGRST116") throw declineError;
+      if (!declined) {
+        toast.error("This order was already handled.");
+        setDeclineModal(null);
+        fetchOrders();
+        return;
+      }
 
       await supabase.rpc("create_notification", {
         p_user_id: order.buyer_id,

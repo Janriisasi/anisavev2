@@ -46,7 +46,7 @@ const Home = () => {
   const [cartModalData, setCartModalData] = useState(null);
   const navigate = useNavigate();
   const contentRef = useRef(null);
-  const { isInCart } = useCart();
+  const { isInCart, ensureCartLoaded } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,6 +56,18 @@ const Home = () => {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Cart data is lazy-loaded in cartContext, so a fresh session doesn't
+  // pay for a cart fetch until something needs it. Homepage never asked
+  // for it, so isInCart() only ever returned real answers after some
+  // *other* action happened to load the cart (e.g. adding a different
+  // item, which triggers a fetch as a side effect). That's why, on a
+  // fresh refresh, items already in the cart still showed "Add to Cart"
+  // until you added something else. Explicitly ensuring it's loaded on
+  // mount (same as cartPage.jsx already does) fixes that.
+  useEffect(() => {
+    ensureCartLoaded?.();
+  }, [ensureCartLoaded]);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -389,6 +401,20 @@ const Home = () => {
   });
 
   const filteredFarmerProducts = farmerProducts.filter((p) => {
+    // Buyers should never see sold-out / unavailable listings here — the
+    // seller-profile page already filters on .eq('status','Available'),
+    // but Browse Products was fetching every other farmer's product with
+    // no status/stock check at all, so 0kg "Unavailable" items still
+    // showed up (with whatever stale quantity_kg they last had before
+    // going out of stock). Checking it client-side (rather than only at
+    // fetch time) also means the card correctly disappears/reappears
+    // live as the realtime UPDATE subscription above flips a product's
+    // status, without needing a refetch.
+    const isAvailable =
+      (p.status || "Available").toLowerCase() === "available" &&
+      Number(p.quantity_kg) > 0;
+    if (!isAvailable) return false;
+
     const q = farmerSearch.toLowerCase();
     const matchesProduct = p.name.toLowerCase().includes(q);
     const matchesFarmer =

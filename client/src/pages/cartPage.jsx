@@ -129,12 +129,24 @@ export default function CartPage() {
   const handleOrderReceived = async (order) => {
     setActionLoading(order.id);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: "completed" })
-        .eq("id", order.id);
+      // Guard enforced in the DB (not just here client-side): only
+      // completes if still 'approved'. Without this, a stale re-approval
+      // (e.g. clicking Approve again from the chat card) can flip a
+      // completed order back to 'approved' and let this button reappear —
+      // this makes a second "Order Received" a no-op instead of
+      // re-completing and re-notifying the farmer.
+      const { data, error } = await supabase.rpc("mark_order_received", {
+        p_order_id: order.id,
+      });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes("not currently approved")) {
+          toast.error("This order has already been marked received.");
+          fetchOrders();
+          return;
+        }
+        throw error;
+      }
 
       // Notify the farmer that the buyer received the order
       await supabase.rpc("create_notification", {
