@@ -520,10 +520,10 @@ export default function FarmerProfile() {
                               ? "Already in cart (update)"
                               : "Add to cart"
                           }
-                          className={`px-3 py-2 rounded-lg flex items-center justify-center transition-all border ${
-                            isInCart(product.id)
-                              ? "bg-yellow-100 border-yellow-300 text-yellow-700 hover:bg-yellow-200"
-                              : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700"
+                          className={`px-3 py-2.5 rounded-xl flex items-center justify-center transition-all border ${
+                                isInCart(product.id)
+                                  ? "bg-yellow-400 border-yellow-500 text-white hover:bg-yellow-500"
+                                  : "bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
                           }`}
                         >
                           <ShoppingCart className="w-4 h-4" />

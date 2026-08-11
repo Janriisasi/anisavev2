@@ -415,7 +415,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <motion.div 
-                className="space-y-2 sm:space-y-4"
+                className="space-y-2 sm:space-y-4 flex flex-col h-full"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
@@ -423,7 +423,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-700">
                   Product Image <span className="text-red-500">*</span>
                 </h3>
-                <div className={`border-2 border-dashed rounded-lg p-2 sm:p-4 text-center h-36 sm:h-64 ${
+                <div className={`border-2 border-dashed rounded-lg p-2 sm:p-4 text-center flex-1 min-h-[144px] sm:min-h-[256px] ${
                   errors.image ? 'border-red-500 bg-red-50' : 'border-gray-300'
                 }`}>
                   <input

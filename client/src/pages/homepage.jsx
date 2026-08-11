@@ -842,10 +842,10 @@ const Home = () => {
                               }}
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-300 text-sm font-medium ${
+                              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-300 text-sm font-medium border ${
                                 isInCart(product.id)
-                                  ? "bg-yellow-100 border border-yellow-300 text-yellow-700 hover:bg-yellow-200"
-                                  : "bg-green-800 text-white hover:bg-green-700"
+                                  ? "bg-yellow-400 border-yellow-500 text-white hover:bg-yellow-500"
+                                  : "bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
                               }`}
                             >
                               <ShoppingCart className="w-4 h-4" />

@@ -11,7 +11,6 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import SellerDetailsPopup from "../components/sellerDetailsPopup";
-import StartChatButton from "../components/startChatButton";
 import AddToCartModal from "../components/addToCartModal";
 import { useAuth } from "../contexts/authContext";
 import { useCart } from "../contexts/cartContext";
@@ -28,6 +27,8 @@ export default function ProductSellersPage() {
   const [sortOrder, setSortOrder] = useState("lowest");
   const [sortOpen, setSortOpen] = useState(false);
   const sortRef = useRef(null);
+  const leftCardRef = useRef(null);
+  const [sellersPanelHeight, setSellersPanelHeight] = useState(null);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const { isInCart } = useCart();
@@ -189,6 +190,37 @@ export default function ProductSellersPage() {
     };
   }, [productName]);
 
+  // Mirror the left product card's height onto the sellers panel so the
+  // two columns line up (desktop only — mobile stacks naturally and
+  // shouldn't be pinned to a pixel height). Measuring the card directly
+  // (instead of hardcoding a number) keeps this correct regardless of
+  // how long the product name/description ends up being.
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+
+    const syncHeight = () => {
+      if (mql.matches && leftCardRef.current) {
+        setSellersPanelHeight(leftCardRef.current.offsetHeight);
+      } else {
+        setSellersPanelHeight(null);
+      }
+    };
+
+    syncHeight();
+
+    const resizeObserver = new ResizeObserver(syncHeight);
+    if (leftCardRef.current) resizeObserver.observe(leftCardRef.current);
+
+    mql.addEventListener("change", syncHeight);
+    window.addEventListener("resize", syncHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      mql.removeEventListener("change", syncHeight);
+      window.removeEventListener("resize", syncHeight);
+    };
+  }, [loading, product]);
+
   const handleClosePopup = () => setSelectedSeller(null);
 
   const sortedSellers = [...sellers].sort((a, b) =>
@@ -275,8 +307,8 @@ export default function ProductSellersPage() {
         */}
         <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 lg:h-[calc(100vh-var(--nav-height,64px)-96px)]">
           {/* ── LEFT: Product Details Card ── */}
-          <div className="w-full lg:w-[380px] lg:flex-shrink-0 lg:h-full" data-tutorial="product-details-card">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:h-full lg:flex lg:flex-col">
+          <div ref={leftCardRef} className="w-full lg:w-[380px] lg:flex-shrink-0 lg:self-start" data-tutorial="product-details-card">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Product image */}
               <div className="bg-white flex items-center justify-center p-8 h-56 sm:h-64 lg:h-72 lg:flex-shrink-0">
                 <img
@@ -293,8 +325,8 @@ export default function ProductSellersPage() {
                 />
               </div>
 
-              {/* Product info (scrolls internally on the rare chance it's too tall) */}
-              <div className="p-5 lg:overflow-y-auto lg:flex-1">
+              {/* Product info */}
+              <div className="p-5">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">
                   {product.name}
                 </h1>
@@ -335,6 +367,11 @@ export default function ProductSellersPage() {
           {/* ── RIGHT: Available Sellers ── */}
           <div
             className="flex-1 min-w-0 lg:h-full"
+            style={
+              sellersPanelHeight
+                ? { height: `${sellersPanelHeight}px` }
+                : undefined
+            }
             data-tutorial="product-sellers-list"
           >
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:flex lg:flex-col lg:h-full">
@@ -496,10 +533,14 @@ export default function ProductSellersPage() {
                         {/* Action buttons */}
                         {seller.user_id !== currentUser?.id ? (
                           <div className="flex gap-2">
+                            <button
+                              onClick={() => setSelectedSeller(seller)}
+                              className="flex-1 bg-[#1a5c2a] text-white py-2.5 px-3 rounded-xl hover:bg-[#154d23] transition-colors font-semibold text-sm"
+                            >
+                              View Details
+                            </button>
                             <motion.button
                               onClick={() => openCartModal(seller)}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
                               title={
                                 inCart
                                   ? "Already in cart (update)"
@@ -507,32 +548,12 @@ export default function ProductSellersPage() {
                               }
                               className={`px-3 py-2.5 rounded-xl flex items-center justify-center transition-all border ${
                                 inCart
-                                  ? "bg-yellow-100 border-yellow-300 text-yellow-700 hover:bg-yellow-200"
-                                  : "bg-gray-100 border-gray-200 text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-[#1a5c2a]"
+                                  ? "bg-yellow-400 border-yellow-500 text-white hover:bg-yellow-500"
+                                  : "bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
                               }`}
                             >
                               <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
                             </motion.button>
-                            <StartChatButton
-                              recipientId={seller.profiles.id}
-                              recipientName={seller.profiles.full_name}
-                              productContext={{
-                                id: seller.id,
-                                name: product.name,
-                                price: seller.price,
-                                image_url:
-                                  seller.image_url || product.image_url,
-                                quantity_kg: seller.quantity_kg,
-                                unit: seller.unit || 'kg',
-                              }}
-                              className="flex-1 !rounded-xl !py-2.5 !text-sm"
-                            />
-                            <button
-                              onClick={() => setSelectedSeller(seller)}
-                              className="flex-1 bg-[#1a5c2a] text-white py-2.5 px-3 rounded-xl hover:bg-[#154d23] transition-colors font-semibold text-sm"
-                            >
-                              View Details
-                            </button>
                           </div>
                         ) : (
                           <div className="py-2.5 px-3 text-center text-gray-500 bg-gray-100 rounded-xl text-sm">
