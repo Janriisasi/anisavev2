@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +15,17 @@ export default function CartButton({
   const { user } = useAuth();
   const { cartCount, ensureCartLoaded } = useCart();
   const navigate = useNavigate();
+
+  // Without this, cartCount stays at its default (0/empty) until something
+  // else happens to trigger ensureCartLoaded — previously that only
+  // happened when actually clicking through to /cart, or (after the last
+  // fix) visiting the homepage. On a cold reload landing anywhere else,
+  // the badge would sit empty even with real items in the cart, until you
+  // opened the cart page once. Loading it as soon as we know who the user
+  // is means the badge is correct everywhere, immediately.
+  useEffect(() => {
+    if (user) ensureCartLoaded?.();
+  }, [user, ensureCartLoaded]);
 
   const handleNavigate = async () => {
     await ensureCartLoaded?.();

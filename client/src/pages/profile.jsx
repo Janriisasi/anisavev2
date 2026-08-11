@@ -23,6 +23,7 @@ import {
   LayoutGrid,
   Users,
   Info,
+  MoreVertical,
 } from "lucide-react";
 
 const loadedImageCache = new Set();
@@ -79,6 +80,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const [zeroStockWarning, setZeroStockWarning] = useState(null);
   const location = useLocation();
   const [activeSection, setActiveSection] = useState(
@@ -249,6 +251,14 @@ export default function Profile() {
   useEffect(() => {
     fetchOrderStats();
   }, [fetchOrderStats]);
+
+  // Close the product card's edit/delete menu when clicking anywhere else
+  useEffect(() => {
+    if (openMenuId === null) return;
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [openMenuId]);
 
   // Realtime: update order stats when an order changes
   useEffect(() => {
@@ -910,19 +920,47 @@ export default function Profile() {
                         src={product.image_url}
                         alt={product.name}
                       />
-                      <div className="absolute top-2 right-2 flex gap-1">
+                      <div className="absolute top-2 right-2">
                         <button
-                          onClick={() => setEditingProduct(product)}
-                          className="bg-white/90 backdrop-blur-sm text-blue-500 hover:text-blue-600 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(
+                              openMenuId === product.id ? null : product.id,
+                            );
+                          }}
+                          className="bg-white/90 backdrop-blur-sm text-gray-600 hover:text-gray-800 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200"
                         >
-                          <Edit3 className="w-4 h-4" />
+                          <MoreVertical className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => setDeleteConfirm(product)}
-                          className="bg-white/90 backdrop-blur-sm text-red-500 hover:text-red-600 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+
+                        {openMenuId === product.id && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute top-10 right-0 w-44 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-10"
+                          >
+                            <button
+                              onClick={() => {
+                                setEditingProduct(product);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-3 text-blue-500 hover:bg-blue-50 transition-colors text-sm font-medium"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                              Edit Product
+                            </button>
+                            <div className="h-px bg-gray-100" />
+                            <button
+                              onClick={() => {
+                                setDeleteConfirm(product);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-3 text-red-500 hover:bg-red-50 transition-colors text-sm font-medium"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete Product
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="p-4">

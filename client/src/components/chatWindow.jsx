@@ -704,7 +704,7 @@ export default function ChatWindow({
             >
               {/* Product header */}
               <div
-                className={`flex items-center gap-3 p-3 ${isOwn ? "bg-green-600" : "bg-gray-50"}`}
+                className={`flex items-center gap-3 p-3 ${isOwn ? "bg-green-700" : "bg-gray-50"}`}
               >
                 {order.image_url && (
                   <img
@@ -728,7 +728,7 @@ export default function ChatWindow({
                     {order.product_name}
                   </p>
                   <div
-                    className={`flex gap-3 mt-1 text-xs ${isOwn ? "text-green-100" : "text-gray-600"}`}
+                    className={`flex gap-3 mt-1 text-xs ${isOwn ? "text-white" : "text-gray-600"}`}
                   >
                     <span>{order.quantity_kg} {order.unit || 'kg'}</span>
                     <span>·</span>
@@ -739,10 +739,10 @@ export default function ChatWindow({
 
               {/* Total row */}
               <div
-                className={`flex items-center justify-between px-3 py-2 border-t ${isOwn ? "bg-green-700/50 border-green-500/30" : "bg-white border-gray-100"}`}
+                className={`flex items-center justify-between px-3 py-2 border-t ${isOwn ? "bg-green-600 border-green-500/30" : "bg-white border-gray-100"}`}
               >
                 <span
-                  className={`text-xs font-medium ${isOwn ? "text-green-100" : "text-gray-500"}`}
+                  className={`text-xs font-medium ${isOwn ? "text-white" : "text-gray-500"}`}
                 >
                   Estimated Total
                 </span>
@@ -800,7 +800,7 @@ export default function ChatWindow({
               {/* Buyer sees status + rate button */}
               {isOwn && (
                 <div
-                  className={`px-3 pb-2 pt-1 ${isOwn ? "bg-green-700/40" : "bg-white"}`}
+                  className={`px-3 pb-2 pt-1 ${isOwn ? "bg-green-500" : "bg-white"}`}
                 >
                   {alreadyActed ? (
                     <div className="flex flex-col gap-1.5">
@@ -834,7 +834,7 @@ export default function ChatWindow({
                       )}
                     </div>
                   ) : (
-                    <p className="text-center text-[10px] text-green-100/80">
+                    <p className="text-center text-[10px] text-white">
                       Waiting for farmer to respond…
                     </p>
                   )}

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import supabase from "../lib/supabase";
 import DeleteConfirmationModal from "../components/deleteConfirmation";
 import { useUser } from "../hooks/useUser";
-import { Copy, Star, Trash2, User, Eye, MoreVertical } from "lucide-react";
+import { Copy, Star, Trash2, User, Eye, MoreVertical, Phone } from "lucide-react";
 import toast from "react-hot-toast";
 
 // Module-level cache: lives outside the component, so it survives this
@@ -353,19 +353,6 @@ export default function SavedContacts() {
                             View Profile
                           </button>
 
-                          {contact.farmer.contact_number && (
-                            <button
-                              onClick={() => {
-                                copyToClipboard(contact.farmer.contact_number);
-                                setOpenMenuId(null);
-                              }}
-                              className="flex items-center gap-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 transition-colors text-sm border-b border-gray-100"
-                            >
-                              <Copy className="w-4 h-4" />
-                              Copy Number
-                            </button>
-                          )}
-
                           <button
                             onClick={() => {
                               setDeleteConfirm(contact);
@@ -421,18 +408,31 @@ export default function SavedContacts() {
                         )}
 
                         {/* phone number */}
-                        {contact.farmer.contact_number && (
-                          <p className="text-gray-500 text-sm">
-                            {contact.farmer.contact_number}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-1.5 text-gray-500 text-sm">
+                          <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>
+                            {contact.farmer.contact_number ||
+                              "No contact number provided"}
+                          </span>
+                          {contact.farmer.contact_number && (
+                            <button
+                              onClick={() =>
+                                copyToClipboard(contact.farmer.contact_number)
+                              }
+                              className="text-blue-500 hover:text-blue-600 transition-colors flex-shrink-0"
+                              title="Copy contact number"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
                     {/* buttons */}
                     <div className="mt-4 sm:pt-4 sm:border-t sm:border-gray-100">
                       {/* Desktop buttons - hidden on mobile */}
-                      <div className="hidden sm:flex items-center gap-7 w-full">
+                      <div className="hidden sm:flex items-center w-full">
                         <button
                           onClick={() => viewFarmerProfile(contact.farmer.id)}
                           className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-800 rounded-lg hover:bg-green-100 transition-colors text-sm whitespace-nowrap"
@@ -441,21 +441,9 @@ export default function SavedContacts() {
                           <Eye className="w-4 h-4" />
                           View Profile
                         </button>
-                        {contact.farmer.contact_number && (
-                          <button
-                            onClick={() =>
-                              copyToClipboard(contact.farmer.contact_number)
-                            }
-                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-                            title="Copy contact number"
-                          >
-                            <Copy className="w-4 h-4" />
-                            Copy
-                          </button>
-                        )}
                         <button
                           onClick={() => setDeleteConfirm(contact)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
+                          className="ml-auto flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
                           title="Remove contact"
                         >
                           <Trash2 className="w-4 h-4" />

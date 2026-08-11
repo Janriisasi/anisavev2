@@ -82,6 +82,17 @@ export default function NotificationButton({
     onOpen?.(val);
   };
 
+  // Without this, unreadCount stays at its default until something else
+  // triggers ensureNotificationsLoaded — previously that only happened
+  // when opening the dropdown (desktop) or landing on /notifications
+  // (mobile). On a cold reload elsewhere, the bell would show no badge at
+  // all until you opened the panel once, even with real unread
+  // notifications waiting. Loading it as soon as we know who the user is
+  // means the badge is correct everywhere, immediately.
+  useEffect(() => {
+    if (user) ensureNotificationsLoaded?.();
+  }, [user, ensureNotificationsLoaded]);
+
   // Close popup on route change
   useEffect(() => {
     setOpenState(false);
