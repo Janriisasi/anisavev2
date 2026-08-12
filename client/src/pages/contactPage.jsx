@@ -141,9 +141,13 @@ export default function SavedContacts() {
   }, [user, fetchContacts]);
 
   const copyToClipboard = async (text, type = "Contact number") => {
+    // Fixed id => react-hot-toast updates the existing toast instead of
+    // stacking a new one on every click. Spam-clicking just refreshes
+    // this one toast rather than flooding the screen.
+    const toastId = "copy-to-clipboard";
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${type} copied to clipboard!`);
+      toast.success(`${type} copied to clipboard!`, { id: toastId });
     } catch (error) {
       const textArea = document.createElement("textarea");
       textArea.value = text;
@@ -151,7 +155,7 @@ export default function SavedContacts() {
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      toast.success(`${type} copied to clipboard!`);
+      toast.success(`${type} copied to clipboard!`, { id: toastId });
     }
   };
 

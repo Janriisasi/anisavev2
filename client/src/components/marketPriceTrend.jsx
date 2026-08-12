@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart,
@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp, TrendingDown, Minus, LineChart } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, LineChart, ChevronDown } from "lucide-react";
 import { useMarketPrices } from "../contexts/marketPricesContext";
 import { usePriceTrend } from "../hooks/usePriceTrend";
 
@@ -26,11 +26,76 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
+// Same interaction/visual language as the CustomDropdown in ProductFormModal —
+// button + rotating chevron + animated menu with green hover/selected states —
+// just sized to fit the compact toolbar here instead of a full form field.
+function TrendDropdown({ value, options, onSelect, isOpen, setIsOpen, dropdownRef, minWidth }) {
+  const display = (opt) => (opt === "HerbsAndSpices" ? "Herbs & Spices" : opt);
+
+  return (
+    <div className={`relative ${minWidth || ""}`} ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between gap-2 text-sm bg-gray-50 border rounded-lg px-3 py-1.5 text-gray-700 transition-all duration-200 ${
+          isOpen
+            ? "border-green-500 ring-2 ring-green-200"
+            : "border-gray-200 hover:border-green-400"
+        }`}
+      >
+        <span className="truncate">{value ? display(value) : ""}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      <div
+        className={`absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg transition-all duration-200 origin-top ${
+          isOpen
+            ? "opacity-100 scale-100 translate-y-0"
+            : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+        }`}
+      >
+        <div className="max-h-52 sm:max-h-60 overflow-y-auto py-1">
+          {options.map((option, index) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                onSelect(option);
+                setIsOpen(false);
+              }}
+              className={`w-full px-4 py-2 text-left text-sm hover:bg-green-50 hover:text-green-700 transition-colors duration-150 ${
+                option === value
+                  ? "bg-green-100 text-green-700 font-medium"
+                  : "text-gray-900"
+              }`}
+              style={{
+                animationDelay: `${index * 20}ms`,
+                animation: isOpen ? "slideInDown 200ms ease-out forwards" : "",
+              }}
+            >
+              {display(option)}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const MarketPriceTrend = () => {
   const { prices, loading: pricesLoading } = useMarketPrices();
   const [category, setCategory] = useState(null);
   const [product, setProduct] = useState(null);
   const [rangeDays, setRangeDays] = useState(30);
+
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
+  const categoryRef = useRef(null);
+  const productRef = useRef(null);
 
   const categories = useMemo(() => Object.keys(prices || {}), [prices]);
   const productsInCategory = useMemo(
@@ -50,6 +115,21 @@ const MarketPriceTrend = () => {
       setProduct(productsInCategory[0]);
     }
   }, [productsInCategory, product]);
+
+  // Close the dropdowns when clicking outside of them
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setCategoryOpen(false);
+      }
+      if (productRef.current && !productRef.current.contains(event.target)) {
+        setProductOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // The live, realtime-updated price for whatever product is selected —
   // used only to tell usePriceTrend "the price just changed, refetch".
@@ -97,32 +177,28 @@ const MarketPriceTrend = () => {
 
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={category || ""}
-            onChange={(e) => {
-              setCategory(e.target.value);
+          <TrendDropdown
+            value={category}
+            options={categories}
+            onSelect={(c) => {
+              setCategory(c);
               setProduct(null);
             }}
-            className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600/40"
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c === "HerbsAndSpices" ? "Herbs & Spices" : c}
-              </option>
-            ))}
-          </select>
+            isOpen={categoryOpen}
+            setIsOpen={setCategoryOpen}
+            dropdownRef={categoryRef}
+            minWidth="min-w-[130px]"
+          />
 
-          <select
-            value={product || ""}
-            onChange={(e) => setProduct(e.target.value)}
-            className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 min-w-[140px]"
-          >
-            {productsInCategory.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
+          <TrendDropdown
+            value={product}
+            options={productsInCategory}
+            onSelect={setProduct}
+            isOpen={productOpen}
+            setIsOpen={setProductOpen}
+            dropdownRef={productRef}
+            minWidth="min-w-[140px]"
+          />
 
           <div className="flex bg-gray-50 border border-gray-200 rounded-lg p-0.5">
             {[14, 30].map((d) => (
