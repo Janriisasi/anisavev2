@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import { Facebook, Instagram, Linkedin, ChevronUp } from "lucide-react";
+import { ChevronUp } from "lucide-react";
 
 // Lazy load TrueFocus component
 const TrueFocus = lazy(() => import("../components/trueFocus.jsx"));
@@ -644,29 +644,6 @@ export default function LandingPage() {
                   Modernizing Filipino agriculture through data, community, and
                   technology. Empowering the hands that feed the nation.
                 </p>
-                <div className="flex items-center gap-4">
-                  <a
-                    href="https://facebook.com"
-                    aria-label="Facebook"
-                    className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                  >
-                    <Facebook size={20} />
-                  </a>
-                  <a
-                    href="https://instagram.com"
-                    aria-label="Instagram"
-                    className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                  >
-                    <Instagram size={20} />
-                  </a>
-                  <a
-                    href="https://linkedin.com"
-                    aria-label="LinkedIn"
-                    className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                  >
-                    <Linkedin size={20} />
-                  </a>
-                </div>
               </div>
 
               {/* Platform */}

@@ -3,9 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronUp,
   ArrowLeft,
-  Facebook,
-  Instagram,
-  Linkedin,
 } from "lucide-react";
 
 // const SmoothScroll = ({ children }) => {
@@ -231,29 +228,6 @@ export default function TermsOfService() {
                 Modernizing Filipino agriculture through data, community, and
                 technology. Empowering the hands that feed the nation.
               </p>
-              <div className="flex items-center gap-4">
-                <a
-                  href="https://facebook.com"
-                  aria-label="Facebook"
-                  className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                >
-                  <Facebook size={20} />
-                </a>
-                <a
-                  href="https://instagram.com"
-                  aria-label="Instagram"
-                  className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                >
-                  <Instagram size={20} />
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  aria-label="LinkedIn"
-                  className="text-slate-500 hover:text-[#00573C] transition-colors duration-300 transform hover:scale-110"
-                >
-                  <Linkedin size={20} />
-                </a>
-              </div>
             </div>
 
             <div>
