@@ -47,7 +47,7 @@ function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const sendingToast = toast.loading("Checking credentials...");
+    const sendingToast = toast.loading("Checking credentials...", { id: "login-submit" });
 
     // Turn the guard ON before triggering any Supabase auth call.
     // This stops AuthContext from reacting to the SIGNED_IN event that
@@ -66,12 +66,12 @@ function Login() {
 
       if (error) {
         toast.dismiss(sendingToast);
-        toast.error(error.message);
+        toast.error(error.message, { id: "login-submit" });
         return;
       }
 
       toast.dismiss(sendingToast);
-      toast.success("Code sent! Check your email.");
+      toast.success("Code sent! Check your email.", { id: "login-submit" });
 
       // Navigate to OTP screen. Guard stays ON until verifyOtpPage
       // explicitly releases it after a SUCCESSFUL verification —
@@ -83,7 +83,7 @@ function Login() {
       });
     } catch (error) {
       toast.dismiss(sendingToast);
-      toast.error("An unexpected error occurred");
+      toast.error("An unexpected error occurred", { id: "login-submit" });
       console.error("Login error:", error);
       releaseAuthState(); // release on unexpected failure so app isn't stuck
     } finally {

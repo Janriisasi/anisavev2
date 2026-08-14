@@ -103,53 +103,53 @@ function SignUp() {
     switch (currentStep) {
       case 1:
         if (!form.full_name.trim()) {
-          toast.error('Please enter your full name');
+          toast.error('Please enter your full name', { id: 'signup-validation' });
           return false;
         }
         return true;
       case 2:
         if (!form.username.trim()) {
-          toast.error('Please enter a username');
+          toast.error('Please enter a username', { id: 'signup-validation' });
           return false;
         }
         if (form.username.trim().length < 3) {
-          toast.error('Username must be at least 3 characters');
+          toast.error('Username must be at least 3 characters', { id: 'signup-validation' });
           return false;
         }
         if (usernameStatus === 'checking') {
-          toast.error('Please wait while we check username availability');
+          toast.error('Please wait while we check username availability', { id: 'signup-validation' });
           return false;
         }
         if (usernameStatus === 'taken') {
-          toast.error('That username is already taken');
+          toast.error('That username is already taken', { id: 'signup-validation' });
           return false;
         }
         return true;
       case 3:
         if (!form.email.trim()) {
-          toast.error('Please enter your email');
+          toast.error('Please enter your email', { id: 'signup-validation' });
           return false;
         }
         if (!/\S+@\S+\.\S+/.test(form.email)) {
-          toast.error('Please enter a valid email address');
+          toast.error('Please enter a valid email address', { id: 'signup-validation' });
           return false;
         }
         return true;
       case 4:
         if (!form.password) {
-          toast.error('Please enter a password');
+          toast.error('Please enter a password', { id: 'signup-validation' });
           return false;
         }
         if (!hasMinLength) {
-          toast.error('Password must be at least 6 characters');
+          toast.error('Password must be at least 6 characters', { id: 'signup-validation' });
           return false;
         }
         if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-          toast.error('Password must contain uppercase, lowercase, and number');
+          toast.error('Password must contain uppercase, lowercase, and number', { id: 'signup-validation' });
           return false;
         }
         if (!agreedToTerms) {
-          toast.error('You must agree to the Terms and Conditions and Privacy Policy');
+          toast.error('You must agree to the Terms and Conditions and Privacy Policy', { id: 'signup-validation' });
           return false;
         }
         return true;
@@ -197,10 +197,10 @@ function SignUp() {
         throw new Error(error.message);
       }
 
-      toast.success('Account created!');
+      toast.success('Account created!', { id: 'signup-submit' });
       navigate('/login');
     } catch (err) {
-      toast.error(err.message || 'Sign up failed.');
+      toast.error(err.message || 'Sign up failed.', { id: 'signup-submit' });
     } finally {
       setLoading(false);
     }

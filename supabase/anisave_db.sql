@@ -2519,3 +2519,610 @@ $$;
 -- this must only be callable by the Edge Functions (service_role).
 REVOKE ALL ON FUNCTION public.check_rate_limit(TEXT, TEXT, INT, INT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.check_rate_limit(TEXT, TEXT, INT, INT) TO service_role;
+
+
+-- Make sure the handle_new_user function includes the timestamp columns
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (
+    id, 
+    full_name, 
+    username, 
+    email, 
+    avatar_url,
+    created_at, 
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+    NEW.created_at,
+    NEW.updated_at
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Recreate the trigger just in case
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  INSERT INTO public.profiles (
+    id, 
+    full_name, 
+    username, 
+    email, 
+    avatar_url,
+    created_at, 
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(
+      NEW.raw_user_meta_data->>'username',
+      split_part(NEW.email, '@', 1) || '_' || substr(NEW.id::text, 1, 6)
+    ),
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+    NEW.created_at,
+    NEW.updated_at
+  );
+  RETURN NEW;
+END;
+$$;
+
+-- Recreate the trigger just in case
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  BEGIN
+    INSERT INTO public.profiles (
+      id, full_name, username, email, avatar_url, created_at, updated_at
+    )
+    VALUES (
+      NEW.id,
+      COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+      COALESCE(
+        NEW.raw_user_meta_data->>'username',
+        split_part(NEW.email, '@', 1) || '_' || substr(NEW.id::text, 1, 6)
+      ),
+      NEW.email,
+      COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+      NEW.created_at,
+      NEW.updated_at
+    )
+    ON CONFLICT (id) DO NOTHING;
+  EXCEPTION WHEN OTHERS THEN
+    -- A profile-creation hiccup should never block someone from logging in.
+    -- This logs the real reason to Postgres logs instead of hard-failing.
+    RAISE WARNING 'handle_new_user: failed to create profile for %: %', NEW.id, SQLERRM;
+  END;
+
+  RETURN NEW;
+END;
+$$;
+
+
+
+-- 1. Update the trigger to include the missing columns
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  BEGIN
+    INSERT INTO public.profiles (
+      id, full_name, username, email, avatar_url, address, contact_number, created_at, updated_at
+    )
+    VALUES (
+      NEW.id,
+      COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+      COALESCE(
+        NEW.raw_user_meta_data->>'username',
+        split_part(NEW.email, '@', 1) || '_' || substr(NEW.id::text, 1, 6)
+      ),
+      NEW.email,
+      COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+      '',
+      '',
+      NEW.created_at,
+      NEW.updated_at
+    )
+    ON CONFLICT (id) DO NOTHING;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'handle_new_user: failed to create profile for %: %', NEW.id, SQLERRM;
+  END;
+  RETURN NEW;
+END;
+$$;
+
+-- 2. Backfill a profile for any existing account that's missing one
+-- (covers your current stuck Google account, and any others from earlier testing)
+INSERT INTO public.profiles (id, full_name, username, email, avatar_url, address, contact_number, created_at, updated_at)
+SELECT
+  u.id,
+  COALESCE(u.raw_user_meta_data->>'full_name', ''),
+  COALESCE(u.raw_user_meta_data->>'username', split_part(u.email, '@', 1) || '_' || substr(u.id::text, 1, 6)),
+  u.email,
+  COALESCE(u.raw_user_meta_data->>'avatar_url', ''),
+  '',
+  '',
+  u.created_at,
+  u.updated_at
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.id = u.id
+WHERE p.id IS NULL;
+
+
+
+
+-- 1. Update the trigger to match your actual columns
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  BEGIN
+    INSERT INTO public.profiles (
+      id, full_name, username, avatar_url, address, contact_number, created_at, updated_at
+    )
+    VALUES (
+      NEW.id,
+      COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+      COALESCE(
+        NEW.raw_user_meta_data->>'username',
+        split_part(NEW.email, '@', 1) || '_' || substr(NEW.id::text, 1, 6)
+      ),
+      COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+      '',
+      '',
+      NEW.created_at,
+      NEW.updated_at
+    )
+    ON CONFLICT (id) DO NOTHING;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'handle_new_user: failed to create profile for %: %', NEW.id, SQLERRM;
+  END;
+  RETURN NEW;
+END;
+$$;
+
+-- 2. Backfill any account missing a profile row
+INSERT INTO public.profiles (id, full_name, username, avatar_url, address, contact_number, created_at, updated_at)
+SELECT
+  u.id,
+  COALESCE(u.raw_user_meta_data->>'full_name', ''),
+  COALESCE(u.raw_user_meta_data->>'username', split_part(u.email, '@', 1) || '_' || substr(u.id::text, 1, 6)),
+  COALESCE(u.raw_user_meta_data->>'avatar_url', ''),
+  '',
+  '',
+  u.created_at,
+  u.updated_at
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.id = u.id
+WHERE p.id IS NULL;
+
+ALTER TABLE public.admin_audit_log
+  DROP CONSTRAINT admin_audit_log_admin_id_fkey,
+  ADD CONSTRAINT admin_audit_log_admin_id_fkey
+    FOREIGN KEY (admin_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+ALTER TABLE public.admin_access_log
+  DROP CONSTRAINT admin_access_log_user_id_fkey,
+  ADD CONSTRAINT admin_access_log_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+	
+	
+	
+--to delete a specific user
+DELETE FROM public.admin_access_log WHERE user_id = 'user-uuid-here';
+DELETE FROM public.admin_audit_log WHERE admin_id = 'user-uuid-here';
+DELETE FROM auth.users WHERE id = 'user-uuid-here';
+
+ALTER TABLE public.admin_audit_log
+  DROP CONSTRAINT admin_audit_log_admin_id_fkey,
+  ADD CONSTRAINT admin_audit_log_admin_id_fkey
+    FOREIGN KEY (admin_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+ALTER TABLE public.admin_access_log
+  DROP CONSTRAINT admin_access_log_user_id_fkey,
+  ADD CONSTRAINT admin_access_log_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+
+
+
+SELECT id, email FROM auth.users WHERE email = 'ellajugz20@gmail.com';
+INSERT INTO public.admin_roles (user_id)
+VALUES ('b31df3d4-775b-4d05-b5f0-8b4c51281ece')
+ON CONFLICT DO NOTHING;
+
+
+
+
+
+
+
+
+create or replace function public.hook_block_duplicate_email(event jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  new_email text := lower(event->'user'->>'email');
+  existing record;
+begin
+  if new_email is null then
+    return '{}'::jsonb;
+  end if;
+
+  select raw_app_meta_data->>'provider' as provider
+  into existing
+  from auth.users
+  where lower(email) = new_email
+  limit 1;
+
+  if found then
+    return jsonb_build_object(
+      'error', jsonb_build_object(
+        'http_code', 409,
+        'message', 'An account with this email already exists. Please continue with ' ||
+                   coalesce(existing.provider, 'your original sign-in method') || ' instead.'
+      )
+    );
+  end if;
+
+  return '{}'::jsonb;
+end;
+$$;
+
+grant execute on function public.hook_block_duplicate_email to supabase_auth_admin;
+revoke execute on function public.hook_block_duplicate_email from authenticated, anon, public;
+
+
+
+
+
+
+
+
+
+
+
+
+alter table public.profiles
+  add column if not exists profile_completed boolean not null default true;
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  begin
+    insert into public.profiles (
+      id, full_name, username, avatar_url, address, contact_number,
+      created_at, updated_at, profile_completed
+    )
+    values (
+      new.id,
+      coalesce(new.raw_user_meta_data->>'full_name', ''),
+      coalesce(
+        new.raw_user_meta_data->>'username',
+        split_part(new.email, '@', 1) || '_' || substr(new.id::text, 1, 6)
+      ),
+      coalesce(new.raw_user_meta_data->>'avatar_url', ''),
+      '',
+      '',
+      new.created_at,
+      new.updated_at,
+      -- true only when the signup explicitly supplied a username —
+      -- your password signup form always does; no OAuth provider ever does
+      (new.raw_user_meta_data->>'username') is not null
+    )
+    on conflict (id) do nothing;
+  exception when others then
+    raise warning 'handle_new_user: failed to create profile for %: %', new.id, sqlerrm;
+  end;
+  return new;
+end;
+$$;
+
+DO $$
+DECLARE
+  target_user_id uuid := '9d93c8ab-db3e-4981-a29d-fda81c73801b'; -- <-- change this UUID for whoever you're deleting
+BEGIN
+  -- Legacy 'contacts' table (may not exist anymore, safe to skip if not)
+  BEGIN
+    DELETE FROM public.contacts WHERE user_id = target_user_id;
+  EXCEPTION WHEN undefined_table THEN
+    NULL;
+  END;
+
+  -- Cart items (as buyer, seller, or product owner)
+  DELETE FROM public.cart_items
+  WHERE buyer_id = target_user_id
+     OR seller_id = target_user_id
+     OR product_id IN (SELECT id FROM public.products WHERE user_id = target_user_id);
+
+  -- Orders (as buyer, seller, or product owner)
+  DELETE FROM public.orders
+  WHERE buyer_id = target_user_id
+     OR seller_id = target_user_id
+     OR product_id IN (SELECT id FROM public.products WHERE user_id = target_user_id);
+
+  -- Notifications
+  DELETE FROM public.notifications WHERE user_id = target_user_id;
+
+  -- Typing indicators
+  DELETE FROM public.typing_indicators WHERE user_id = target_user_id;
+
+  -- Messages (as sender or recipient)
+  DELETE FROM public.messages
+  WHERE sender_id = target_user_id OR recipient_id = target_user_id;
+
+  -- Conversations (as either participant)
+  DELETE FROM public.conversations
+  WHERE participant_1 = target_user_id OR participant_2 = target_user_id;
+
+  -- Presence
+  DELETE FROM public.user_presence WHERE user_id = target_user_id;
+
+  -- Ratings (given or received)
+  DELETE FROM public.ratings
+  WHERE user_id = target_user_id OR farmer_id = target_user_id;
+
+  -- Buyer ratings (given or received)
+  DELETE FROM public.buyer_ratings
+  WHERE farmer_id = target_user_id OR buyer_id = target_user_id;
+
+  -- Saved contacts (as buyer or farmer)
+  DELETE FROM public.saved_contacts
+  WHERE buyer_id = target_user_id OR farmer_id = target_user_id;
+
+  -- Products owned by this user (must go before deleting the profile)
+  DELETE FROM public.products WHERE user_id = target_user_id;
+
+  -- Admin logs (only matters if this user was ever an admin)
+  DELETE FROM public.admin_access_log WHERE user_id = target_user_id;
+  DELETE FROM public.admin_audit_log WHERE admin_id = target_user_id;
+  DELETE FROM public.admin_roles WHERE user_id = target_user_id;
+
+  -- Profile
+  DELETE FROM public.profiles WHERE id = target_user_id;
+
+  -- Finally, the actual auth user
+  DELETE FROM auth.users WHERE id = target_user_id;
+
+  RAISE NOTICE 'User % and all related data deleted.', target_user_id;
+END $$;
+
+
+
+
+
+
+-- ============================================================
+-- Migration: Product detail fields
+-- (Harvest Date, Unit, Location, Minimum Order, Negotiable)
+-- Run this in Supabase Dashboard -> SQL Editor -> Run.
+-- ============================================================
+
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS harvest_date date,
+  ADD COLUMN IF NOT EXISTS unit text NOT NULL DEFAULT 'kg',
+  ADD COLUMN IF NOT EXISTS location text,
+  ADD COLUMN IF NOT EXISTS min_order decimal,
+  ADD COLUMN IF NOT EXISTS negotiable boolean NOT NULL DEFAULT false;
+
+-- Keep "unit" restricted to a known set so the frontend dropdown
+-- and the database can't drift apart.
+ALTER TABLE public.products
+  DROP CONSTRAINT IF EXISTS products_unit_check;
+
+ALTER TABLE public.products
+  ADD CONSTRAINT products_unit_check
+  CHECK (unit IN ('kg', 'sack', 'bundle', 'piece', 'tray', 'crate'));
+
+-- min_order must make sense relative to the listed quantity when set.
+ALTER TABLE public.products
+  DROP CONSTRAINT IF EXISTS products_min_order_check;
+
+ALTER TABLE public.products
+  ADD CONSTRAINT products_min_order_check
+  CHECK (min_order IS NULL OR (min_order > 0 AND min_order <= quantity_kg));
+
+-- Existing rows: everything currently listed was implicitly "per kg",
+-- so backfill unit explicitly (the column default already covers new
+-- rows, this just makes old rows consistent/explicit too).
+UPDATE public.products SET unit = 'kg' WHERE unit IS NULL;
+
+-- Notes:
+-- • quantity_kg / price_per_kg column NAMES are left as-is everywhere
+--   (products, cart_items, orders) since orders.total_amount is a
+--   GENERATED column keyed off quantity_kg * price_per_kg, and renaming
+--   would ripple into several RPCs. They just mean "quantity/price in
+--   whatever `unit` says" now, not necessarily kilograms.
+-- • cart_items / orders don't need a schema change: the existing
+--   `product_snapshot` JSONB column can simply carry a `unit` key
+--   captured at add-to-cart time, the same way it already carries
+--   name/image_url/category. See addToCartModal.jsx notes.
+
+
+-- ============================================================
+-- Add the 6 new products to the LIVE market_prices table
+-- (this is what marketPricesContext.jsx actually reads —
+-- productPrices.json alone won't reach the form dropdown)
+-- Run this in Supabase Dashboard -> SQL Editor -> Run.
+-- ============================================================
+
+INSERT INTO market_prices (category, name, price) VALUES
+  ('Vegetables','Cauliflower',195.50),
+  ('Vegetables','Chayote (Sayote)',45.00),
+  ('Vegetables','Habichuelas (Baguio Beans)',110.75),
+  ('Vegetables','Celery',165.00),
+  ('Grains','Mungbean',95.40),
+  ('HerbsAndSpices','White Onion',135.60)
+ON CONFLICT (category, name) DO NOTHING;
+
+-- Sanity check: confirm all 6 rows landed
+SELECT category, name, price FROM market_prices
+WHERE name IN ('Cauliflower', 'Chayote (Sayote)', 'Habichuelas (Baguio Beans)', 'Celery', 'Mungbean', 'White Onion')
+ORDER BY category, name;
+
+-- ============================================================
+-- MIGRATION: Atomic order approval / completion
+--
+-- Fixes three bugs reported in production:
+--
+-- 1. Approving an order that consumed a product's ENTIRE stock (or
+--    dropped it below the product's min_order) silently failed to
+--    update `products`, because the UPDATE violated
+--    products_min_order_check (min_order <= quantity_kg). The old
+--    client code only console.error'd this and moved on — the order
+--    still flipped to 'approved', so nobody noticed the inventory
+--    never actually decremented.
+--
+-- 2. There were two independent places that could approve an order
+--    (Profile > Order Requests tab, and the chat window's order
+--    card), with no guard against acting on an order that had
+--    already moved past 'confirming'. Approving twice could
+--    re-decrement inventory and flip a 'completed' order back to
+--    'approved'.
+--
+-- 3. Because of (2), a buyer could end up seeing "Order Received"
+--    again after already marking an order received, since a stale
+--    re-approval from chat reset the order's status back to
+--    'approved'.
+--
+-- This migration adds two SECURITY DEFINER RPCs that make the
+-- status transition + inventory decrement atomic and idempotent,
+-- guarded by the order's *current* status rather than trusting
+-- client-side state. Run this in the Supabase SQL editor.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.approve_order(p_order_id UUID)
+RETURNS orders AS $$
+DECLARE
+  v_order   orders;
+  v_product products;
+  v_new_qty       DECIMAL;
+  v_new_min_order DECIMAL;
+  v_new_status    TEXT;
+BEGIN
+  -- Lock the order row so two simultaneous approvals (one from the
+  -- Order Requests tab, one from chat) can't both pass the status
+  -- check before either commits. Only proceeds if it's still
+  -- awaiting review and the caller is actually the seller.
+  SELECT * INTO v_order
+  FROM orders
+  WHERE id = p_order_id
+    AND seller_id = auth.uid()
+    AND status = 'confirming'
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Order not found, not yours, or already handled';
+  END IF;
+
+  IF v_order.product_id IS NOT NULL THEN
+    SELECT * INTO v_product
+    FROM products
+    WHERE id = v_order.product_id
+    FOR UPDATE;
+
+    IF FOUND THEN
+      v_new_qty := GREATEST(0, v_product.quantity_kg - v_order.quantity_kg);
+
+      -- products_min_order_check requires min_order <= quantity_kg.
+      -- If this sale eats into (or wipes out) the minimum order size,
+      -- bring min_order down with it instead of leaving a stale value
+      -- that would make the UPDATE below fail the constraint.
+      v_new_min_order := v_product.min_order;
+      IF v_new_min_order IS NOT NULL AND v_new_min_order > v_new_qty THEN
+        v_new_min_order := NULLIF(v_new_qty, 0);
+      END IF;
+
+      v_new_status := CASE
+        WHEN v_new_qty = 0 THEN 'Unavailable'
+        ELSE v_product.status
+      END;
+
+      UPDATE products
+      SET quantity_kg = v_new_qty,
+          min_order    = v_new_min_order,
+          status       = v_new_status
+      WHERE id = v_product.id;
+    END IF;
+  END IF;
+
+  UPDATE orders
+  SET status = 'approved',
+      seller_responded_at = NOW()
+  WHERE id = p_order_id
+  RETURNING * INTO v_order;
+
+  RETURN v_order;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.approve_order(UUID) TO authenticated;
+
+
+-- Optional but recommended companion: move "Order Received" behind
+-- the same kind of guard at the DB level too (the client now also
+-- guards this with .eq('status','approved'), this is defense in depth).
+CREATE OR REPLACE FUNCTION public.mark_order_received(p_order_id UUID)
+RETURNS orders AS $$
+DECLARE
+  v_order orders;
+BEGIN
+  UPDATE orders
+  SET status = 'completed'
+  WHERE id = p_order_id
+    AND buyer_id = auth.uid()
+    AND status = 'approved'
+  RETURNING * INTO v_order;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Order not found, not yours, or not currently approved';
+  END IF;
+
+  RETURN v_order;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.mark_order_received(UUID) TO authenticated;

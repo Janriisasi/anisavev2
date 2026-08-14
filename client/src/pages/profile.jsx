@@ -414,11 +414,12 @@ export default function Profile() {
       }));
       setIsEditing(false);
       setTempAvatarUrl(null);
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated successfully!", { id: "profile-update" });
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error(
         `Failed to update profile: ${error.message || "Unknown error"}`,
+        { id: "profile-update" },
       );
     }
   };
@@ -458,10 +459,10 @@ export default function Profile() {
       setProducts((prev) =>
         prev.map((p) => (p.id === productId ? { ...p, status: newStatus } : p)),
       );
-      toast.success(`Product marked as ${newStatus}`);
+      toast.success(`Product marked as ${newStatus}`, { id: "toggle-product-status" });
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Failed to update product status");
+      toast.error("Failed to update product status", { id: "toggle-product-status" });
     }
   };
 

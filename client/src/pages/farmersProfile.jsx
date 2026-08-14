@@ -220,9 +220,9 @@ export default function FarmerProfile() {
     if (farmer?.contact_number) {
       try {
         await navigator.clipboard.writeText(farmer.contact_number);
-        toast.success("Contact number copied to clipboard!");
+        toast.success("Contact number copied to clipboard!", { id: "copy-contact-number" });
       } catch (error) {
-        toast.error("Failed to copy contact number");
+        toast.error("Failed to copy contact number", { id: "copy-contact-number" });
       }
     }
   };
