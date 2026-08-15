@@ -2,16 +2,11 @@
 // AniSave — App Download Links
 // =============================================================================
 // Single source of truth for the /download page. Update this file every time
-// you ship a new build. See the setup instructions for how to upload files to
-// Supabase Storage and get the exact URL to paste below.
-//
-// IMPORTANT: replace SUPABASE_URL with your actual project URL (the same one
-// you use in supabase.jsx), and make sure the bucket name matches exactly
-// what you create in the Supabase dashboard.
+// you ship a new build.
 // =============================================================================
 
-const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co"; // <-- replace me
-const BUCKET = "app-downloads"; // <-- must match your Supabase Storage bucket name
+const SUPABASE_URL = "https://mdtagnihuqecnikuccsg.supabase.co";
+const BUCKET = "app-downloads";
 
 // Builds a Supabase Storage public URL that FORCES an automatic file download
 // (instead of opening the file in a new browser tab). The `?download=` query
@@ -21,30 +16,35 @@ const buildDownloadUrl = (path, filename) =>
 
 export const DOWNLOAD_LINKS = {
   android: {
-    // path = where the file lives INSIDE the bucket, e.g. "android/AniSave.apk"
-    url: buildDownloadUrl("android/AniSave.apk", "AniSave.apk"),
-    version: "v1.0.0",
-    size: "~24 MB",
+    url: buildDownloadUrl(
+      "android/app-arm64-release.apk",
+      "AniSave.apk"
+    ),
+    version: "v0.1.0",
+    size: "18.3 MB",
     external: false,
   },
   windows: {
-    url: buildDownloadUrl("windows/AniSave-Setup.msi", "AniSave-Setup.msi"),
-    version: "v1.0.0",
-    size: "~68 MB",
+    url: buildDownloadUrl(
+      "windows/AniSave_0.1.0_x64-setup.exe",
+      "AniSave_0.1.0_x64-setup.exe"
+    ),
+    version: "v0.1.0",
+    size: "13.4 MB",
     external: false,
   },
   mac: {
+    // TODO: upload the .dmg, then update this path/filename
     url: buildDownloadUrl("mac/AniSave.dmg", "AniSave.dmg"),
-    version: "v1.0.0",
-    size: "~72 MB",
+    version: "v0.1.0",
+    size: "TBD",
     external: false,
   },
   ios: {
-    // Apple does not allow direct-file "sideloading" the way Android/Windows/
-    // Mac do. Point this at your TestFlight public link (or your App Store
-    // URL once AniSave is published) instead of a raw .ipa file.
+    // Apple requires TestFlight or the App Store — point this at your
+    // TestFlight public link once you have one.
     url: "https://testflight.apple.com/join/REPLACE_WITH_YOUR_CODE",
-    version: "v1.0.0",
+    version: "v0.1.0",
     size: "Via TestFlight",
     external: true,
   },
