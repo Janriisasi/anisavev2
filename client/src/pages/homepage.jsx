@@ -859,25 +859,38 @@ const Home = () => {
                             </div>
                           )}
 
-                          {/* Action button */}
-                          <div className="pt-1">
+                          {/* Action buttons */}
+                          <div className="pt-1 flex gap-2">
+                            <motion.button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedProduct(product);
+                              }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className="flex-1 bg-[#1a5c2a] text-white py-2.5 px-3 rounded-xl hover:bg-[#154d23] transition-colors font-semibold text-sm"
+                            >
+                              View Details
+                            </motion.button>
                             <motion.button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 openCartModal(product);
                               }}
+                              title={
+                                isInCart(product.id)
+                                  ? "Already in cart (update)"
+                                  : "Add to cart"
+                              }
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all duration-300 text-sm font-medium border ${
+                              className={`px-3 py-2.5 rounded-xl flex items-center justify-center transition-all border ${
                                 isInCart(product.id)
                                   ? "bg-yellow-400 border-yellow-500 text-white hover:bg-yellow-500"
                                   : "bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
                               }`}
                             >
-                              <ShoppingCart className="w-4 h-4" />
-                              {isInCart(product.id)
-                                ? "Update Cart"
-                                : "Add to Cart"}
+                              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
                             </motion.button>
                           </div>
                         </div>

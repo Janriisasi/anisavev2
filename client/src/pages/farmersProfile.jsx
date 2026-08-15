@@ -160,14 +160,20 @@ export default function FarmerProfile() {
   };
 
   const handleSaveContact = async () => {
+    // Fixed id shared by every toast in this handler — spam-clicking
+    // "Save Contact" now just refreshes one toast instead of stacking
+    // a new one per click.
+    const toastId = "save-contact";
+
     if (!user) {
-      toast.error("Please login to save contacts");
+      toast.error("Please login to save contacts", { id: toastId });
       return;
     }
 
     if (!farmer.contact_number || !farmer.address) {
       toast.error(
         "Cannot save contact. This user has not provided contact information.",
+        { id: toastId },
       );
       return;
     }
@@ -185,7 +191,7 @@ export default function FarmerProfile() {
         if (error) throw error;
 
         setIsContactSaved(false);
-        toast.success("Contact removed from saved contacts");
+        toast.success("Contact removed from saved contacts", { id: toastId });
       } else {
         // ✅ Store contact_number + address snapshot so contactPage can read
         //    them without querying other users' private profile rows
@@ -198,19 +204,19 @@ export default function FarmerProfile() {
 
         if (error) {
           if (error.code === "23505") {
-            toast.info("Contact already saved");
+            toast.info("Contact already saved", { id: toastId });
             setIsContactSaved(true);
           } else {
             throw error;
           }
         } else {
           setIsContactSaved(true);
-          toast.success("Contact saved successfully!");
+          toast.success("Contact saved successfully!", { id: toastId });
         }
       }
     } catch (error) {
       console.error("Error saving contact:", error);
-      toast.error("Failed to save contact");
+      toast.error("Failed to save contact", { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -331,9 +337,34 @@ export default function FarmerProfile() {
               />
             </div>
 
-            <div className="flex-1 w-full">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                <div className="w-full sm:w-auto text-center md:text-left">
+            <div className="flex-1 w-full relative">
+              {user && user.id !== farmer.id && (
+                <div className="hidden sm:flex absolute top-0 right-0 items-center gap-2">
+                  <StartChatButton
+                    recipientId={id}
+                    recipientName={farmer.full_name}
+                    variant="small"
+                    className="!rounded-xl !px-4 !py-2 !text-sm"
+                  />
+                  <button
+                    onClick={handleSaveContact}
+                    disabled={saving}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                      isContactSaved
+                        ? "bg-red-500 text-white hover:bg-red-600"
+                        : "bg-blue-500 text-white hover:bg-blue-600"
+                    } disabled:opacity-50`}
+                  >
+                    {saving
+                      ? "Processing..."
+                      : isContactSaved
+                        ? "Remove Contact"
+                        : "Save Contact"}
+                  </button>
+                </div>
+              )}
+              <div className="mb-4">
+                <div className="w-full sm:w-auto text-center md:text-left sm:pr-72">
                   <h1 className="text-3xl font-bold text-gray-800 break-words max-w-full">
                     {farmer.full_name || farmer.username}
                   </h1>
@@ -341,31 +372,6 @@ export default function FarmerProfile() {
                     <p className="text-gray-600">@{farmer.username}</p>
                   )}
                 </div>
-
-                {user && user.id !== farmer.id && (
-                  <div className="hidden sm:flex flex-col gap-2 w-full sm:w-auto">
-                    <StartChatButton
-                      recipientId={id}
-                      recipientName={farmer.full_name}
-                      className="w-full !rounded-xl"
-                    />
-                    <button
-                      onClick={handleSaveContact}
-                      disabled={saving}
-                      className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 w-full ${
-                        isContactSaved
-                          ? "bg-red-500 text-white hover:bg-red-600"
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                      } disabled:opacity-50`}
-                    >
-                      {saving
-                        ? "Processing..."
-                        : isContactSaved
-                          ? "Remove Contact"
-                          : "Save Contact"}
-                    </button>
-                  </div>
-                )}
               </div>
 
               <div className="w-full">

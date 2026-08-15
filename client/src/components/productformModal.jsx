@@ -226,23 +226,27 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Fixed id shared by every toast in this handler — selecting/
+      // reselecting an image repeatedly updates one toast instead of
+      // stacking a new one each time.
+      const toastId = 'product-image';
+
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image must be less than 5MB');
+        toast.error('Image must be less than 5MB', { id: toastId });
         return;
       }
       
       try {
-        const loadingToast = toast.loading('Uploading image...');
+        toast.loading('Uploading image...', { id: toastId });
         const compressedFile = await compressImage(file);
         
-        toast.dismiss(loadingToast);
-        toast.success(`Image Uploaded!`);
+        toast.success(`Image Uploaded!`, { id: toastId });
         
         setImageFile(compressedFile);
         setImagePreview(URL.createObjectURL(compressedFile));
         setErrors(prev => ({ ...prev, image: '' }));
       } catch (error) {
-        toast.error('Failed to upload. Please try again.');
+        toast.error('Failed to upload. Please try again.', { id: toastId });
         console.error('Compression error:', error);
       }
     }
@@ -282,9 +286,13 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Fixed id shared by every toast in this handler — spam-clicking
+    // "Add Product" now just refreshes one toast instead of stacking
+    // a new one per click.
+    const toastId = 'product-form-submit';
 
     if (!validateForm()) {
-      toast.error('Please fill in all required fields correctly');
+      toast.error('Please fill in all required fields correctly', { id: toastId });
       return;
     }
 
@@ -320,7 +328,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
           .eq('id', existingProduct.id);
 
         if (error) throw error;
-        toast.success('Product updated successfully!');
+        toast.success('Product updated successfully!', { id: toastId });
       } else {
         const { error } = await supabase
           .from('products')
@@ -343,7 +351,7 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
           ]);
 
         if (error) throw error;
-        toast.success('Product added successfully!');
+        toast.success('Product added successfully!', { id: toastId });
       }
 
       onSuccess();
@@ -352,7 +360,8 @@ export default function ProductFormModal({ onClose, onSuccess, existingProduct, 
       toast.error(
         error.message.includes('upload') 
           ? 'Failed to upload image. Please try again.' 
-          : (existingProduct ? 'Failed to update product' : 'Failed to add product')
+          : (existingProduct ? 'Failed to update product' : 'Failed to add product'),
+        { id: toastId }
       );
     } finally {
       setLoading(false);
