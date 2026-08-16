@@ -12,6 +12,8 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useNotifications } from '../contexts/notificationContext';
 import { useAuth } from '../hooks/useAuth';
+import usePullToRefresh from '../hooks/usePullToRefresh';
+import PullToRefreshIndicator from '../components/pullToRefreshIndicator';
 
 // ─── Helpers (shared with NotificationButton) ────────────────────────────────
 
@@ -57,6 +59,7 @@ export default function NotificationsPage() {
     markAsRead,
     markAllAsRead,
     ensureNotificationsLoaded,
+    fetchNotifications,
   } = useNotifications();
 
   // Lazy-load notifications if not yet fetched
@@ -64,6 +67,13 @@ export default function NotificationsPage() {
     ensureNotificationsLoaded?.();
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [ensureNotificationsLoaded]);
+
+  // Unlike ensureNotificationsLoaded (a lazy, load-once loader),
+  // fetchNotifications always hits the network — exactly what a pull
+  // gesture should do.
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: fetchNotifications,
+  });
 
   if (!user) return null;
 
@@ -82,6 +92,11 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col bg-white min-h-screen">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
       {/* Header */}
       <div className="grid grid-cols-3 items-center border-b border-gray-100 bg-white px-4 py-4 flex-shrink-0">
         <div />

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import supabase from '../lib/supabase.jsx';
 
 const MarketPricesContext = createContext(null);
@@ -20,23 +20,26 @@ export function MarketPricesProvider({ children }) {
   const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(true);
 
+  // Pulled out of the effect and wrapped in useCallback so pages (e.g.
+  // pull-to-refresh on Categories) can trigger the exact same fetch on
+  // demand, not just once on mount.
+  const fetchPrices = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('market_prices')
+      .select('category, name, price')
+      .order('category')
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching market prices:', error);
+    } else {
+      setPrices(rowsToNested(data || []));
+    }
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     // 1. Initial fetch
-    const fetchPrices = async () => {
-      const { data, error } = await supabase
-        .from('market_prices')
-        .select('category, name, price')
-        .order('category')
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching market prices:', error);
-      } else {
-        setPrices(rowsToNested(data || []));
-      }
-      setLoading(false);
-    };
-
     fetchPrices();
 
     // 2. Real-time subscription — when admin updates a price, all clients update instantly
@@ -73,10 +76,10 @@ export function MarketPricesProvider({ children }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchPrices]);
 
   return (
-    <MarketPricesContext.Provider value={{ prices, loading }}>
+    <MarketPricesContext.Provider value={{ prices, loading, fetchPrices }}>
       {children}
     </MarketPricesContext.Provider>
   );

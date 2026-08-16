@@ -25,6 +25,8 @@ import {
   Info,
   MoreVertical,
 } from "lucide-react";
+import usePullToRefresh from "../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
 const loadedImageCache = new Set();
 
@@ -251,6 +253,10 @@ export default function Profile() {
   useEffect(() => {
     fetchOrderStats();
   }, [fetchOrderStats]);
+
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: () => user && fetchAllUserData(user.id),
+  });
 
   // Close the product card's edit/delete menu when clicking anywhere else
   useEffect(() => {
@@ -507,6 +513,11 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb]">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-center items-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import supabase from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/authContext";
@@ -18,6 +18,8 @@ import {
 import SellerDetailsPopup from "../components/sellerDetailsPopup";
 import AiAdvisor from "../components/aiAdvisor";
 import MarketPriceTrend from "../components/marketPriceTrend";
+import usePullToRefresh from "../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
 // Module-level cache: lives outside the component, so it survives the
 // Home page unmounting when you navigate away and remounting when you
@@ -147,6 +149,24 @@ const Home = () => {
   const categoryOrder = ["Vegetables", "Fruits", "Grains", "HerbsAndSpices"];
   const categoryLabels = { HerbsAndSpices: "Herbs & Spices" };
 
+  // Extracted into its own callback (rather than declared inline inside the
+  // effect below) so pull-to-refresh can re-trigger the exact same load,
+  // not just on first mount.
+  const loadHomeData = useCallback(async () => {
+    if (!user) return;
+    try {
+      if (!homeDataCache) setLoading(true);
+      await fetchMyProducts(user.id);
+      await fetchMyRating(user.id);
+      await fetchFarmerProducts(user.id); // Fetch products posted by other farmers
+      await fetchCompletedOrders(user.id);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     // No auth check here on purpose — ProtectedRoute already guarantees
     // `user` is a real, verified session by the time Homepage renders.
@@ -156,24 +176,12 @@ const Home = () => {
     // window where that independent check could resolve null before the
     // session had fully landed — racing against AuthContext and kicking
     // people back to landing a moment after they'd already been let in.
-    if (!user) return;
-
-    const loadHomeData = async () => {
-      try {
-        if (!homeDataCache) setLoading(true);
-        await fetchMyProducts(user.id);
-        await fetchMyRating(user.id);
-        await fetchFarmerProducts(user.id); // Fetch products posted by other farmers
-        await fetchCompletedOrders(user.id);
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadHomeData();
-  }, [user]);
+  }, [loadHomeData]);
+
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: loadHomeData,
+  });
 
   // Real-time listener for product updates (inventory changes)
   useEffect(() => {
@@ -435,6 +443,11 @@ const Home = () => {
       transition={{ duration: 0.5 }}
     >
       <div className="min-h-screen bg-[#f9fafb] p-6">
+        <PullToRefreshIndicator
+          pullDistance={pullDistance}
+          refreshing={refreshing}
+          threshold={threshold}
+        />
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Title */}
           <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">

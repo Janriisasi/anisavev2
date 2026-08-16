@@ -24,6 +24,8 @@ import { useCart } from "../contexts/cartContext";
 import OrderConfirmModal from "../components/transactionConfirmModal";
 import PostTransactionRatingModal from "../components/postTransactionRatingModal";
 import toast from "react-hot-toast";
+import usePullToRefresh from "../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
 const STATUS_CONFIG = {
   pending: {
@@ -212,6 +214,12 @@ export default function CartPage() {
     if (activeTab !== "cart") fetchOrders();
   }, [activeTab, fetchOrders]);
 
+  // Pulling down refreshes whichever tab is currently showing — the cart
+  // itself, or the order history list.
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: () => (activeTab === "cart" ? fetchCart?.() : fetchOrders()),
+  });
+
   // Realtime for orders
   useEffect(() => {
     if (!user) return;
@@ -336,6 +344,11 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] flex flex-col">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
       {/* Page header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-center md:justify-start gap-3">

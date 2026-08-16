@@ -16,6 +16,8 @@ import { useAuth } from "../contexts/authContext";
 import { useCart } from "../contexts/cartContext";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import usePullToRefresh from "../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
 export default function ProductSellersPage() {
   const { productName } = useParams();
@@ -140,6 +142,10 @@ export default function ProductSellersPage() {
     }
     setLoading(false);
   };
+
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: generateProductAndSellers,
+  });
 
   useEffect(() => {
     const fetchSellers = async () => {
@@ -280,6 +286,11 @@ export default function ProductSellersPage() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb]">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
       <div className="px-4">
       <div className="max-w-7xl mx-auto py-6">
         {/* Back button */}

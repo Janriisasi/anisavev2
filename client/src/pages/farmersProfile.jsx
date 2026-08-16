@@ -17,6 +17,8 @@ import toast from "react-hot-toast";
 import { useCart } from "../contexts/cartContext";
 import { motion } from "framer-motion";
 import AddToCartModal from "../components/addToCartModal";
+import usePullToRefresh from "../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
 // Module-level cache, keyed by farmer id since this page shows a
 // different farmer each time. It lives outside the component, so it
@@ -142,6 +144,10 @@ export default function FarmerProfile() {
       setLoading(false);
     }
   };
+
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: fetchFarmerData,
+  });
 
   const checkIfContactSaved = async () => {
     try {
@@ -313,6 +319,11 @@ export default function FarmerProfile() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] p-6">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
       <div className="max-w-7xl mx-auto">
         <button
           onClick={handleBackNavigation}

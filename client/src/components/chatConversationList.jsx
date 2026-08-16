@@ -4,6 +4,8 @@ import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabase";
 import { useAuth } from "../contexts/authContext";
+import usePullToRefresh from "../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "./pullToRefreshIndicator";
 
 const STALE_THRESHOLD_MS = 2 * 60 * 1000; // must match usePresence.js
 
@@ -19,11 +21,18 @@ export default function ChatConversationList({
   conversations,
   loading,
   onSelectConversation,
+  onRefresh,
 }) {
   const { user } = useAuth();
   const [presenceMap, setPresenceMap] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
   const typingTimeoutsRef = useRef({});
+  const scrollRef = useRef(null);
+
+  const { pullDistance, refreshing } = usePullToRefresh({
+    onRefresh,
+    scrollRef,
+  });
 
   useEffect(() => {
     if (conversations.length === 0) return;
@@ -155,11 +164,17 @@ export default function ChatConversationList({
   }
 
   return (
-    <div
-      className="h-full w-full divide-y divide-gray-100 overflow-y-scroll overscroll-contain"
-      style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
-    >
-      <div className="min-h-full w-full">
+    <>
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+      />
+      <div
+        ref={scrollRef}
+        className="h-full w-full divide-y divide-gray-100 overflow-y-scroll overscroll-contain"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+      >
+        <div className="min-h-full w-full">
         {conversations.map((conversation, index) => {
           const otherUser = conversation.otherParticipant;
           const lastMessage = conversation.lastMessage;
@@ -273,5 +288,6 @@ export default function ChatConversationList({
         })}
       </div>
     </div>
+    </>
   );
 }

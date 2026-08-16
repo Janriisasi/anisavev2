@@ -5,6 +5,8 @@ import DeleteConfirmationModal from "../components/deleteConfirmation";
 import { useUser } from "../hooks/useUser";
 import { Copy, Star, Trash2, User, Eye, MoreVertical, Phone } from "lucide-react";
 import toast from "react-hot-toast";
+import usePullToRefresh from "../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
 // Module-level cache: lives outside the component, so it survives this
 // page unmounting when you navigate away and remounting when you come
@@ -95,6 +97,10 @@ export default function SavedContacts() {
       fetchContacts();
     }
   }, [user, fetchContacts]);
+
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: fetchContacts,
+  });
 
   // Real-time: Supabase subscription for saved_contacts changes
   useEffect(() => {
@@ -273,6 +279,11 @@ export default function SavedContacts() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] p-6">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
       <div className="max-w-7xl mx-auto">
         <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
           Saved Contacts

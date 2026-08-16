@@ -29,6 +29,7 @@ export default function ChatPage() {
     setSelectedConversation,
     handleConversationSelect,
     handleBackToList,
+    fetchConversations,
   } = useChat({ isActive: true });
 
   // ── Apply route state on first mount (from "Message Seller") ────────────────
@@ -114,6 +115,7 @@ export default function ChatPage() {
                 conversations={filteredConversations}
                 loading={loading}
                 onSelectConversation={handleConversationSelect}
+                onRefresh={fetchConversations}
               />
             </div>
           </motion.div>

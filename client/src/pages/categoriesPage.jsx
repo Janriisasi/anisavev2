@@ -5,6 +5,8 @@ import ProductCard from "../components/productCard";
 import StartChatButton from "../components/startChatButton";
 import { useMarketPrices } from "../contexts/marketPricesContext";
 import { ArrowLeft, ChevronUp } from "lucide-react";
+import usePullToRefresh from "../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
 export default function CategoriesPage() {
   const { name } = useParams();
@@ -16,7 +18,14 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const { prices } = useMarketPrices();
+  const { prices, fetchPrices } = useMarketPrices();
+
+  // Products are derived from market prices context (see the effect
+  // below), so refreshing here means refetching prices — that effect
+  // then regenerates `products` automatically once `prices` updates.
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: fetchPrices,
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -453,6 +462,11 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] p-6">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        refreshing={refreshing}
+        threshold={threshold}
+      />
       <div className="max-w-7xl mx-auto">
         {name ? (
           <div className="mb-6">
