@@ -72,8 +72,7 @@ export default function ChatPage() {
       className="fixed inset-x-0 z-[55] flex flex-col bg-white overflow-hidden"
       style={{
         top: "var(--nav-height, 4rem)",
-        height:
-          "calc(100dvh - var(--nav-height, 4rem) - var(--tabbar-height, 4rem))",
+        bottom: "var(--tabbar-height, 4rem)",
       }}
     >
       <AnimatePresence mode="wait">

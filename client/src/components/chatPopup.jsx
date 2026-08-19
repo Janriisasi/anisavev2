@@ -155,8 +155,7 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
           md:bottom-0 md:right-4 md:rounded-t-2xl md:w-96 md:max-w-[400px] md:z-[9999]
           max-md:inset-0 max-md:rounded-none max-md:w-full max-md:z-[50] max-md:pb-[4rem] max-md:pt-[calc(env(safe-area-inset-top)+4rem)]"
         style={{ 
-          maxHeight: window.innerWidth < 768 ? '100vh' : '600px',
-          height: window.innerWidth < 768 ? '100vh' : '80vh'
+          ...(window.innerWidth >= 768 ? { maxHeight: '600px', height: '80vh' } : {})
         }}
       >
         {!selectedConversation ? (
