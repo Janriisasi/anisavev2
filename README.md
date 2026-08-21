@@ -162,11 +162,12 @@ graph TD
 
 <div align="center">
 
-### Frontend Architecture
+### Frontend Architecture & Desktop
 [![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![React Router](https://img.shields.io/badge/React_Router-CA4245?style=flat-square&logo=react-router&logoColor=white)](https://reactrouter.com/)
+[![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app/)
 
 ### Backend & Database
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
@@ -187,30 +188,33 @@ graph TD
 
 ```
 ANISAVE2.0/
-├── 📁 client/
-│   └── 📁 public/
-│       └── 🖼️ images/
-├── 📁 src/
-│   ├── 🧩 components/      # Reusable UI components
-│   ├── 🎯 contexts/        # React Context providers
-│   ├── 📊 data/            # Static data and constants
-│   ├── 🪝 hooks/           # Custom React hooks
-│   ├── 📚 lib/             # Utility functions & configs
-│   ├── 📄 pages/           # Page components
-│   ├── 🎨 App.css          # Global styles
-│   ├── ⚛️ App.jsx          # Main App component
-│   ├── 🎨 index.css        # Base styles
-│   ├── 🚀 main.jsx         # App entry point
-│   └── 🛣️ Routes.jsx       # Route definitions
-├── ⚙️ .env                 # Environment variables
-├── 🚫 .gitignore           # Git ignore rules
-├── 📋 eslint.config.js     # ESLint configuration
-├── 🌐 index.html           # HTML entry point
-├── 📦 package.json         # Dependencies
-├── 🎨 postcss.config.js    # PostCSS configuration
-├── 📖 README.md            # This file
-├── 🎨 tailwind.config.js   # Tailwind configuration
-└── ⚡ vite.config.js       # Vite configuration
+├── 📁 client/                # Main React + Vite + Tauri Application
+│   ├── 📁 public/
+│   │   └── 🖼️ images/
+│   ├── 📁 src/               # React Source Code
+│   │   ├── 🧩 components/    # Reusable UI components
+│   │   ├── 🎯 contexts/      # React Context providers
+│   │   ├── 📊 data/          # Static data and constants
+│   │   ├── 🪝 hooks/         # Custom React hooks
+│   │   ├── 📚 lib/           # Utility functions & configs
+│   │   ├── 📄 pages/         # Page components
+│   │   ├── 🎨 App.css        # Global styles
+│   │   ├── ⚛️ App.jsx        # Main App component
+│   │   ├── 🎨 index.css      # Base styles
+│   │   ├── 🚀 main.jsx       # App entry point
+│   │   └── 🛣️ Routes.jsx     # Route definitions
+│   ├── 📁 src-tauri/         # Tauri Rust Backend (Desktop App)
+│   ├── ⚙️ .env               # Environment variables
+│   ├── 📋 eslint.config.js   # ESLint configuration
+│   ├── 🌐 index.html         # HTML entry point
+│   ├── 📦 package.json       # Dependencies
+│   ├── 🎨 postcss.config.js  # PostCSS configuration
+│   ├── 🎨 tailwind.config.js # Tailwind configuration
+│   └── ⚡ vite.config.js     # Vite configuration
+├── 📁 supabase/              # Supabase Configuration & Migrations
+├── 🚫 .gitignore             # Git ignore rules
+├── 📄 SITEMAP.md             # Sitemap documentation
+└── 📖 README.md              # This file
 ```
 
 ---

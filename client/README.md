@@ -81,11 +81,12 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 
 <div align="center">
 
-| Frontend | Backend & Database | Deployment |
-|----------|-------------------|------------|
+| Frontend & Desktop | Backend & Database | Deployment |
+|-------------------|-------------------|------------|
 | ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat&logo=supabase&logoColor=white) | ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white) |
 | ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white) | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=flat&logo=postgresql&logoColor=white) | |
 | ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white) | ![Auth](https://img.shields.io/badge/Authentication-3ECF8E?style=flat&logo=supabase&logoColor=white) | |
+| ![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=flat&logo=tauri&logoColor=white) | | |
 
 </div>
 
@@ -94,25 +95,25 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 ## 📁 Project Structure
 
 ```
-
-ANISAVE2.0/
-├── .vscode/
-├── client/
-├── node_modules/
+client/
 ├── public/
 │   └── images/
 ├── src/
 │   ├── components/
+│   ├── config/
 │   ├── contexts/
 │   ├── data/
 │   ├── hooks/
 │   ├── lib/
 │   ├── pages/
+│   ├── services/
+│   ├── utils/
 │   ├── App.css
 │   ├── App.jsx
 │   ├── index.css
 │   ├── main.jsx
 │   └── Routes.jsx
+├── src-tauri/
 ├── .env
 ├── .gitignore
 ├── eslint.config.js
@@ -122,8 +123,8 @@ ANISAVE2.0/
 ├── postcss.config.js
 ├── README.md
 ├── tailwind.config.js
+├── vercel.json
 └── vite.config.js
-
 ```
 
 ---
@@ -180,6 +181,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
+| `npm run tauri` | Run Tauri Desktop app locally |
 | `npm run lint` | Run ESLint |
 | `npm run lint:fix` | Fix ESLint errors |
 | `npm test` | Run test suite |
