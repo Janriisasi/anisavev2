@@ -38,7 +38,7 @@ AniSave is a cutting-edge agricultural marketplace that revolutionizes how farme
 <br>Real-time market data ensures transparent pricing
 </td>
 <td align="center" width="25%">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Handshake.png" width="60" />
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Hand%20gestures/Handshake.png" width="60" />
 <br><b>Community</b>
 <br>Foster relationships between producers and consumers
 </td>
