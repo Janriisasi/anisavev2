@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   AreaChart,
   Area,
@@ -9,7 +9,14 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp, TrendingDown, Minus, LineChart, ChevronDown } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  LineChart,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useMarketPrices } from "../contexts/marketPricesContext";
 import { usePriceTrend } from "../hooks/usePriceTrend";
 
@@ -29,7 +36,15 @@ function CustomTooltip({ active, payload }) {
 // Same interaction/visual language as the CustomDropdown in ProductFormModal —
 // button + rotating chevron + animated menu with green hover/selected states —
 // just sized to fit the compact toolbar here instead of a full form field.
-function TrendDropdown({ value, options, onSelect, isOpen, setIsOpen, dropdownRef, minWidth }) {
+function TrendDropdown({
+  value,
+  options,
+  onSelect,
+  isOpen,
+  setIsOpen,
+  dropdownRef,
+  minWidth,
+}) {
   const display = (opt) => (opt === "HerbsAndSpices" ? "Herbs & Spices" : opt);
 
   return (
@@ -94,6 +109,7 @@ const MarketPriceTrend = () => {
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [productOpen, setProductOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const categoryRef = useRef(null);
   const productRef = useRef(null);
 
@@ -111,7 +127,10 @@ const MarketPriceTrend = () => {
   }, [categories, category]);
 
   useEffect(() => {
-    if (productsInCategory.length > 0 && !productsInCategory.includes(product)) {
+    if (
+      productsInCategory.length > 0 &&
+      !productsInCategory.includes(product)
+    ) {
       setProduct(productsInCategory[0]);
     }
   }, [productsInCategory, product]);
@@ -133,11 +152,16 @@ const MarketPriceTrend = () => {
 
   // The live, realtime-updated price for whatever product is selected —
   // used only to tell usePriceTrend "the price just changed, refetch".
-  const rawLivePrice = category && product ? prices?.[category]?.[product] : undefined;
+  const rawLivePrice =
+    category && product ? prices?.[category]?.[product] : undefined;
   const livePrice =
     typeof rawLivePrice === "object" ? rawLivePrice?.price : rawLivePrice;
 
-  const { series, loading: trendLoading } = usePriceTrend(product, rangeDays, livePrice);
+  const { series, loading: trendLoading } = usePriceTrend(
+    product,
+    rangeDays,
+    livePrice,
+  );
 
   const { currentPrice, percentChange } = useMemo(() => {
     const valid = series.filter((p) => p.price !== null);
@@ -156,139 +180,164 @@ const MarketPriceTrend = () => {
 
   return (
     <motion.div
-      className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-sm border mb-8"
+      data-tutorial="market-info"
+      className="bg-white/80 backdrop-blur-sm rounded-2xl border mb-8 overflow-hidden shadow-sm"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.45 }}
     >
-      {/* Header row */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <LineChart className="w-5 h-5 text-green-700 shrink-0" />
-          <div>
-            <h3 className="text-base sm:text-lg font-bold text-gray-800">
-              Market Price History
-            </h3>
-            <p className="text-xs text-gray-500">
-              {rangeDays}-day price history, based on Department of Agriculture data
-            </p>
+      <div className={`px-4 pt-4 sm:px-6 sm:pt-6 bg-white ${isExpanded ? 'pb-4' : 'pb-4 sm:pb-6'} rounded-t-2xl`}>
+        {/* Header row */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <LineChart className="w-5 h-5 text-green-700 shrink-0" />
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-gray-800 leading-tight">
+                Market Price History
+              </h3>
+              <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
+                {rangeDays}-day price history, based on Department of Agriculture data
+              </p>
+            </div>
           </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          <TrendDropdown
-            value={category}
-            options={categories}
-            onSelect={(c) => {
-              setCategory(c);
-              setProduct(null);
-            }}
-            isOpen={categoryOpen}
-            setIsOpen={setCategoryOpen}
-            dropdownRef={categoryRef}
-            minWidth="min-w-[130px]"
-          />
-
-          <TrendDropdown
-            value={product}
-            options={productsInCategory}
-            onSelect={setProduct}
-            isOpen={productOpen}
-            setIsOpen={setProductOpen}
-            dropdownRef={productRef}
-            minWidth="min-w-[140px]"
-          />
-
-          <div className="flex bg-gray-50 border border-gray-200 rounded-lg p-0.5">
-            {[14, 30].map((d) => (
-              <button
-                key={d}
-                onClick={() => setRangeDays(d)}
-                className={`text-xs font-medium px-2.5 py-1 rounded-md transition-colors ${
-                  rangeDays === d
-                    ? "bg-green-800 text-white"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                {d}D
-              </button>
-            ))}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <motion.button
+              onClick={() => setIsExpanded((p) => !p)}
+              className="w-8 h-8 rounded-xl bg-green-700 hover:bg-green-800 text-white flex items-center justify-center transition-all duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </motion.button>
           </div>
         </div>
       </div>
 
-      {/* Current price + change badge */}
-      {!isLoading && currentPrice !== null && (
-        <div className="flex items-baseline gap-3 mb-2">
-          <span className="text-2xl sm:text-3xl font-bold text-gray-800">
-            ₱{currentPrice.toFixed(2)}
-            <span className="text-sm font-normal text-gray-400">/kg</span>
-          </span>
-          <span
-            className={`flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full ${
-              trendUp
-                ? "text-green-700 bg-green-50"
-                : trendDown
-                  ? "text-red-600 bg-red-50"
-                  : "text-gray-500 bg-gray-50"
-            }`}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white px-4 sm:px-6 pb-4 sm:pb-6"
           >
-            {trendUp && <TrendingUp className="w-3.5 h-3.5" />}
-            {trendDown && <TrendingDown className="w-3.5 h-3.5" />}
-            {!trendUp && !trendDown && <Minus className="w-3.5 h-3.5" />}
-            {percentChange !== null ? `${Math.abs(percentChange).toFixed(1)}%` : "—"}
-          </span>
-          <span className="text-xs text-gray-400">over last {rangeDays} days</span>
-        </div>
-      )}
+            {/* Controls */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <TrendDropdown
+                value={category}
+                options={categories}
+                onSelect={(c) => {
+                  setCategory(c);
+                  setProduct(null);
+                }}
+                isOpen={categoryOpen}
+                setIsOpen={setCategoryOpen}
+                dropdownRef={categoryRef}
+                minWidth="min-w-[130px]"
+              />
 
-      {/* Chart */}
-      <div className="h-56 sm:h-64 -ml-2">
-        {isLoading ? (
-          <div className="h-full w-full animate-pulse bg-gray-100 rounded-xl" />
-        ) : series.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-sm text-gray-400">
-            No price history available yet for this product.
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={series} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="priceTrendFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#166534" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#166534" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 11, fill: "#9ca3af" }}
-                interval={rangeDays === 30 ? 4 : 1}
-                axisLine={false}
-                tickLine={false}
+              <TrendDropdown
+                value={product}
+                options={productsInCategory}
+                onSelect={setProduct}
+                isOpen={productOpen}
+                setIsOpen={setProductOpen}
+                dropdownRef={productRef}
+                minWidth="min-w-[140px]"
               />
-              <YAxis
-                tick={{ fontSize: 11, fill: "#9ca3af" }}
-                tickFormatter={(v) => `₱${v}`}
-                width={48}
-                axisLine={false}
-                tickLine={false}
-                domain={["auto", "auto"]}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="price"
-                stroke="#166534"
-                strokeWidth={2}
-                fill="url(#priceTrendFill)"
-                connectNulls
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+
+              <div className="flex bg-gray-50 border border-gray-200 rounded-lg p-0.5">
+                {[14, 30].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setRangeDays(d)}
+                    className={`text-xs font-medium px-2.5 py-1 rounded-md transition-colors ${
+                      rangeDays === d
+                        ? "bg-green-800 text-white"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {d}D
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Current price + change badge */}
+            {!isLoading && currentPrice !== null && (
+              <div className="flex items-baseline gap-3 mb-2">
+                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
+                  ₱{currentPrice.toFixed(2)}
+                  <span className="text-sm font-normal text-gray-400">/kg</span>
+                </span>
+                <span
+                  className={`flex items-center gap-1 text-sm font-semibold px-2 py-0.5 rounded-full ${
+                    trendUp
+                      ? "text-green-700 bg-green-50"
+                      : trendDown
+                        ? "text-red-600 bg-red-50"
+                        : "text-gray-500 bg-gray-50"
+                  }`}
+                >
+                  {trendUp && <TrendingUp className="w-3.5 h-3.5" />}
+                  {trendDown && <TrendingDown className="w-3.5 h-3.5" />}
+                  {!trendUp && !trendDown && <Minus className="w-3.5 h-3.5" />}
+                  {percentChange !== null ? `${Math.abs(percentChange).toFixed(1)}%` : "—"}
+                </span>
+                <span className="text-xs text-gray-400">over last {rangeDays} days</span>
+              </div>
+            )}
+
+            {/* Chart */}
+            <div className="h-56 sm:h-64 -ml-2">
+              {isLoading ? (
+                <div className="h-full w-full animate-pulse bg-gray-100 rounded-xl" />
+              ) : series.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                  No price history available yet for this product.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={series} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="priceTrendFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#166534" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="#166534" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11, fill: "#9ca3af" }}
+                      interval={rangeDays === 30 ? 4 : 1}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#9ca3af" }}
+                      tickFormatter={(v) => `₱${v}`}
+                      width={48}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={["auto", "auto"]}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="price"
+                      stroke="#166534"
+                      strokeWidth={2}
+                      fill="url(#priceTrendFill)"
+                      connectNulls
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </motion.div>
   );
 };

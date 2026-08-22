@@ -15,6 +15,8 @@ import {
   Loader2,
   MessageSquare,
   Send,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { formatDistanceToNow, format } from "date-fns";
@@ -101,6 +103,87 @@ function EmptyState({ icon, title, description, action }) {
   );
 }
 
+function CartItemQuantityControl({ item, unit, updateQuantity }) {
+  const isDiscreteUnit = ['piece', 'sack', 'tray', 'crate'].includes(unit);
+  const step = isDiscreteUnit ? 1 : 0.5;
+  const minQty = item.product_snapshot?.min_order ? Number(item.product_snapshot.min_order) : step;
+  const maxQty = item.products?.quantity_kg || 999;
+  
+  const [quantityInput, setQuantityInput] = useState(String(item.quantity_kg));
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    setQuantityInput(String(item.quantity_kg));
+  }, [item.quantity_kg]);
+
+  const handleApply = async (num) => {
+    if (num === item.quantity_kg) return;
+    setIsUpdating(true);
+    await updateQuantity(item.id, num);
+    setIsUpdating(false);
+  };
+
+  const adjustQuantity = (delta) => {
+    const current = parseFloat(quantityInput) || 0;
+    const next = Math.min(maxQty, Math.max(minQty, Number((current + delta).toFixed(1))));
+    setQuantityInput(String(next));
+    handleApply(next);
+  };
+
+  const handleTyping = (e) => {
+    const val = e.target.value;
+    if (val !== '' && !/^\d*\.?\d*$/.test(val)) return;
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > maxQty) {
+      toast.error(`Only ${maxQty} ${unit} available`);
+      return;
+    }
+    setQuantityInput(val);
+  };
+
+  const handleBlur = () => {
+    const num = parseFloat(quantityInput);
+    let next = num;
+    if (isNaN(num) || num < minQty) {
+      next = minQty;
+    } else if (num > maxQty) {
+      next = maxQty;
+    }
+    setQuantityInput(String(next));
+    handleApply(next);
+  };
+
+  return (
+    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm mt-0.5">
+      <button
+        onClick={() => adjustQuantity(-step)}
+        disabled={isUpdating}
+        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+      >
+        <Minus className="w-3 h-3" />
+      </button>
+      <div className="w-px h-4 bg-gray-200" />
+      <input
+        type="text"
+        inputMode="decimal"
+        value={quantityInput}
+        onChange={handleTyping}
+        onBlur={handleBlur}
+        disabled={isUpdating}
+        className="w-10 text-center text-xs font-bold text-gray-800 focus:outline-none disabled:bg-gray-50"
+      />
+      <div className="w-px h-4 bg-gray-200" />
+      <button
+        onClick={() => adjustQuantity(step)}
+        disabled={isUpdating}
+        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+      >
+        <Plus className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
 export default function CartPage() {
   const { user } = useAuth();
   const {
@@ -109,6 +192,7 @@ export default function CartPage() {
     removeFromCart,
     fetchCart,
     ensureCartLoaded,
+    updateQuantity,
   } = useCart();
   const navigate = useNavigate();
 
@@ -409,7 +493,7 @@ export default function CartPage() {
               transition={{ duration: 0.2 }}
               className="flex-1 flex flex-col"
             >
-              {cartLoading ? (
+              {cartLoading && cartItems.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center py-20">
                   <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
                 </div>
@@ -500,12 +584,15 @@ export default function CartPage() {
                                       {snap.category}
                                     </p>
                                     <div className="flex items-center gap-3 mt-1.5">
-                                      <span className="text-sm text-green-700 font-bold">
-                                        ₱{item.price_at_add}/{unit}
-                                      </span>
-                                      <span className="text-sm text-gray-500">
-                                        {item.quantity_kg} {unit}
-                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm text-green-700 font-bold">
+                                          ₱{item.price_at_add}/{unit}
+                                        </span>
+                                        <div className="flex items-center gap-1.5 ml-1">
+                                          <CartItemQuantityControl item={item} unit={unit} updateQuantity={updateQuantity} />
+                                          <span className="text-xs text-gray-500">{unit}</span>
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                   <div className="flex flex-col items-end gap-2">

@@ -257,6 +257,7 @@ export default function Navbar() {
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.8, opacity: 0 }}
                       onClick={() => setIsDesktopSearchOpen(true)}
+                      data-tutorial="desktop-search-btn"
                       className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-green-700 transition-colors"
                       title="Search"
                     >

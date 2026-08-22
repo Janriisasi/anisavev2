@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabase";
 import { useAuth } from "../contexts/authContext";
+import { useNavigate } from "react-router-dom";
 import usePullToRefresh from "../hooks/usePullToRefresh";
 import PullToRefreshIndicator from "./pullToRefreshIndicator";
 
@@ -24,6 +25,7 @@ export default function ChatConversationList({
   onRefresh,
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [presenceMap, setPresenceMap] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
   const typingTimeoutsRef = useRef({});
@@ -210,9 +212,15 @@ export default function ChatConversationList({
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-semibold text-gray-900 truncate text-sm">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/farmer/${otherUser?.id}`);
+                    }}
+                    className="font-semibold text-gray-900 truncate text-sm hover:text-green-700 transition-colors text-left"
+                  >
                     {otherUser?.full_name || otherUser?.username}
-                  </h4>
+                  </button>
                   {lastMessage && (
                     <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
                       {formatDistanceToNow(new Date(lastMessage.created_at), {

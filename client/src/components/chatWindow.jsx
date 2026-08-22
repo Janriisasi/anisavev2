@@ -19,6 +19,7 @@ import { formatDistanceToNow } from "date-fns";
 import supabase from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import DeleteConfirmationModal from "./deleteConfirmation";
 import PostTransactionRatingModal from "./postTransactionRatingModal";
 
@@ -39,6 +40,7 @@ export default function ChatWindow({
   productContext = null,
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -971,9 +973,12 @@ export default function ChatWindow({
         </div>
 
         <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-gray-800 truncate text-sm">
+          <button
+            onClick={() => navigate(`/farmer/${otherUser?.id}`)}
+            className="font-bold text-gray-800 truncate text-sm hover:text-green-700 transition-colors text-left block max-w-full"
+          >
             {otherUser?.full_name || otherUser?.username}
-          </h4>
+          </button>
           <p className="text-[10px] font-medium">
             {isOnline ? (
               <span className="text-green-600 flex items-center gap-1">

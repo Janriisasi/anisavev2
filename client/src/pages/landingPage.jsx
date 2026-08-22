@@ -580,7 +580,6 @@ export default function LandingPage() {
                 description="Guarantees stable pricing for cooperatives, working closely with buyers."
                 width={1920}
                 height={948}
-                isHighlighted={true}
               />
             </div>
           </div>
