@@ -19,6 +19,7 @@ function rowsToNested(rows) {
 export function MarketPricesProvider({ children }) {
   const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   // Pulled out of the effect and wrapped in useCallback so pages (e.g.
   // pull-to-refresh on Categories) can trigger the exact same fetch on
@@ -38,9 +39,23 @@ export function MarketPricesProvider({ children }) {
     setLoading(false);
   }, []);
 
+  // Single "Last updated: <date>" for the whole Market Price History card.
+  // Reads market_price_history (the trigger-driven source of truth for every
+  // real price change) rather than market_prices.updated_at, so it stays
+  // accurate no matter what the admin update code path does or doesn't touch.
+  const fetchLastUpdated = useCallback(async () => {
+    const { data, error } = await supabase.rpc('get_last_price_update');
+    if (error) {
+      console.error('Error fetching last price update:', error);
+    } else {
+      setLastUpdated(data ? new Date(data) : null);
+    }
+  }, []);
+
   useEffect(() => {
     // 1. Initial fetch
     fetchPrices();
+    fetchLastUpdated();
 
     // 2. Real-time subscription — when admin updates a price, all clients update instantly
     const channel = supabase
@@ -58,6 +73,10 @@ export function MarketPricesProvider({ children }) {
                 [name]: parseFloat(price),
               },
             }));
+            // Only a real price change writes a market_price_history row (see
+            // the trigger), so re-fetching here always reflects the true
+            // date — a no-op edit that doesn't change price won't bump it.
+            fetchLastUpdated();
           } else if (payload.eventType === 'DELETE') {
             const { category, name } = payload.old;
             setPrices((prev) => {
@@ -76,10 +95,10 @@ export function MarketPricesProvider({ children }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchPrices]);
+  }, [fetchPrices, fetchLastUpdated]);
 
   return (
-    <MarketPricesContext.Provider value={{ prices, loading, fetchPrices }}>
+    <MarketPricesContext.Provider value={{ prices, loading, fetchPrices, lastUpdated }}>
       {children}
     </MarketPricesContext.Provider>
   );

@@ -33,6 +33,18 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
+// "Last updated: <date>" — reads the timestamp fetched via
+// get_last_price_update() (see marketPricesContext.jsx). Returns null when
+// there's no history yet so the caller can skip rendering entirely.
+function formatLastUpdated(date) {
+  if (!date) return null;
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 // Same interaction/visual language as the CustomDropdown in ProductFormModal —
 // button + rotating chevron + animated menu with green hover/selected states —
 // just sized to fit the compact toolbar here instead of a full form field.
@@ -102,7 +114,7 @@ function TrendDropdown({
 }
 
 const MarketPriceTrend = () => {
-  const { prices, loading: pricesLoading } = useMarketPrices();
+  const { prices, loading: pricesLoading, lastUpdated } = useMarketPrices();
   const [category, setCategory] = useState(null);
   const [product, setProduct] = useState(null);
   const [rangeDays, setRangeDays] = useState(30);
@@ -198,6 +210,11 @@ const MarketPriceTrend = () => {
               <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
                 {rangeDays}-day price history, based on Department of Agriculture data
               </p>
+              {lastUpdated && (
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">
+                  Last updated: {formatLastUpdated(lastUpdated)}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
