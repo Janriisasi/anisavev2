@@ -16,9 +16,14 @@ import {
   LineChart,
   ChevronDown,
   ChevronUp,
+  AlertTriangle,
 } from "lucide-react";
 import { useMarketPrices } from "../contexts/marketPricesContext";
 import { usePriceTrend } from "../hooks/usePriceTrend";
+
+// How long the baseline prices can go without a real admin update before
+// the UI flags them as potentially outdated.
+const STALE_THRESHOLD_DAYS = 7;
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -125,6 +130,22 @@ const MarketPriceTrend = () => {
   const categoryRef = useRef(null);
   const productRef = useRef(null);
 
+  // Ticks every 5 min so staleness can flip to "true" on its own while the
+  // tab stays open, without needing a refresh or a new price event.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const daysSinceUpdate = useMemo(() => {
+    if (!lastUpdated) return null;
+    return Math.floor((now - lastUpdated.getTime()) / (24 * 60 * 60 * 1000));
+  }, [lastUpdated, now]);
+
+  const isStale =
+    daysSinceUpdate !== null && daysSinceUpdate >= STALE_THRESHOLD_DAYS;
+
   const categories = useMemo(() => Object.keys(prices || {}), [prices]);
   const productsInCategory = useMemo(
     () => (category ? Object.keys(prices[category] || {}) : []),
@@ -211,8 +232,14 @@ const MarketPriceTrend = () => {
                 {rangeDays}-day price history, based on Department of Agriculture data
               </p>
               {lastUpdated && (
-                <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">
+                <p
+                  className={`text-[10px] sm:text-xs mt-0.5 flex items-center gap-1 ${
+                    isStale ? "text-amber-600 font-medium" : "text-gray-400"
+                  }`}
+                >
+                  {isStale && <AlertTriangle className="w-3 h-3 shrink-0" />}
                   Last updated: {formatLastUpdated(lastUpdated)}
+                  {isStale && ` (${daysSinceUpdate}d ago)`}
                 </p>
               )}
             </div>
@@ -239,6 +266,19 @@ const MarketPriceTrend = () => {
             transition={{ duration: 0.3 }}
             className="bg-white px-4 sm:px-6 pb-4 sm:pb-6"
           >
+            {/* Data Freshness disclaimer */}
+            {isStale && (
+              <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-3 py-2 mb-4">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed">
+                  <span className="font-semibold">Data Freshness Notice:</span>{" "}
+                  These prices haven't been refreshed in{" "}
+                  {daysSinceUpdate} days. Figures shown may not reflect
+                  current market rates.
+                </p>
+              </div>
+            )}
+
             {/* Controls */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <TrendDropdown
