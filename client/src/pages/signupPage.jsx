@@ -158,26 +158,40 @@ function SignUp() {
     }
   };
 
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [currentStep]);
+
   const handleNext = () => {
+    if (slideDirection) return;
     if (validateCurrentStep()) {
       setSlideDirection('next');
       setTimeout(() => {
-        setCurrentStep(currentStep + 1);
+        setCurrentStep((prev) => prev + 1);
         setSlideDirection('');
       }, 300);
     }
   };
 
   const handlePrevious = () => {
+    if (slideDirection) return;
     setSlideDirection('prev');
     setTimeout(() => {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
       setSlideDirection('');
     }, 300);
   };
 
   const handleSignUp = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (loading) return;
     if (!validateCurrentStep()) return;
 
     setLoading(true);
@@ -206,6 +220,15 @@ function SignUp() {
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (currentStep < totalSteps) {
+      handleNext();
+    } else {
+      handleSignUp(e);
+    }
+  };
+
   // Username status indicator
   const UsernameStatusIcon = () => {
     if (!form.username.trim() || form.username.trim().length < 3) return null;
@@ -225,6 +248,7 @@ function SignUp() {
             </label>
             <div className="relative">
               <input
+                ref={inputRef}
                 id="full_name"
                 className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-12 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
                 name="full_name"
@@ -248,6 +272,7 @@ function SignUp() {
             </label>
             <div className="relative">
               <input
+                ref={inputRef}
                 id="username"
                 className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-20 text-base sm:text-lg border-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 transition-all ${
                   usernameStatus === 'taken'
@@ -283,6 +308,7 @@ function SignUp() {
               What's your email?
             </label>
             <input
+              ref={inputRef}
               id="email"
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
               type="email"
@@ -302,6 +328,7 @@ function SignUp() {
             </label>
             <div className="relative">
               <input
+                ref={inputRef}
                 id="password"
                 className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 text-base sm:text-lg border-2 border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
                 type={showPassword ? 'text' : 'password'}
@@ -393,7 +420,7 @@ function SignUp() {
           </div>
         </div>
 
-        <form onSubmit={handleSignUp} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div className="overflow-hidden p-1.5 -m-1.5">
             <div
               className={`transition-all duration-300 ease-in-out ${

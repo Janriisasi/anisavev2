@@ -23,12 +23,26 @@ export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      // 1. Get or create conversation with the seller
+      // 1. Re-check product availability
+      const { data: latestProduct, error: prodErr } = await supabase
+        .from('products')
+        .select('quantity_kg, status')
+        .eq('id', cartItem.product_id)
+        .single();
+        
+      if (prodErr || !latestProduct || latestProduct.status !== 'Available' || latestProduct.quantity_kg < cartItem.quantity_kg) {
+        toast.error('Sorry, this product is no longer available in the requested quantity.');
+        onSuccess?.(); // Trigger cart refresh
+        onClose();
+        return;
+      }
+
+      // 2. Get or create conversation with the seller
       const { data: conversationId, error: convError } = await supabase
         .rpc('get_or_create_conversation', { other_user_id: seller.id });
       if (convError) throw convError;
 
-      // 2. Create the order record
+      // 3. Create the order record
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({

@@ -3126,3 +3126,21 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 GRANT EXECUTE ON FUNCTION public.mark_order_received(UUID) TO authenticated;
+
+CREATE INDEX IF NOT EXISTS idx_market_price_history_recorded
+  ON market_price_history (recorded_at DESC);
+
+CREATE OR REPLACE FUNCTION public.get_last_price_update()
+RETURNS TIMESTAMPTZ
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT recorded_at
+  FROM market_price_history
+  ORDER BY recorded_at DESC
+  LIMIT 1;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_last_price_update() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_last_price_update() TO anon;

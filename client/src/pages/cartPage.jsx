@@ -411,17 +411,30 @@ export default function CartPage() {
    * "Send Request" button + secondary chat option.
    */
   const renderItemActions = (item) => {
+    const availableQty = item.products?.quantity_kg || 0;
+    const isAvailable = item.products?.status === 'Available' && availableQty >= item.quantity_kg;
+    const isSoldOut = item.products?.status !== 'Available' || availableQty <= 0;
+
     return (
-      <div className="space-y-2">
-        {/* Primary: Send Request */}
-        <motion.button
-          onClick={() => setConfirmItem(item)}
-          whileTap={{ scale: 0.97 }}
-          className="w-full flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
-        >
-          <Send className="w-4 h-4" />
-          Send Order Request
-        </motion.button>
+      <div className="space-y-2 mt-2">
+        {isSoldOut ? (
+          <div className="w-full text-center text-red-600 font-bold bg-red-50 py-2.5 rounded-xl text-sm border border-red-100 uppercase tracking-wide">
+            Sold Out
+          </div>
+        ) : !isAvailable ? (
+          <div className="w-full text-center text-amber-600 font-bold bg-amber-50 py-2.5 rounded-xl text-sm border border-amber-100">
+            Not enough stock (Only {availableQty} left)
+          </div>
+        ) : (
+          <motion.button
+            onClick={() => setConfirmItem(item)}
+            whileTap={{ scale: 0.97 }}
+            className="w-full flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+          >
+            <Send className="w-4 h-4" />
+            Send Order Request
+          </motion.button>
+        )}
       </div>
     );
   };
