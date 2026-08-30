@@ -390,6 +390,11 @@ const Home = () => {
       price: product.price,
       quantity_kg: product.quantity_kg,
       user_id: product.user_id,
+      unit: product.unit || 'kg',
+      harvest_date: product.harvest_date,
+      location: product.location,
+      min_order: product.min_order,
+      negotiable: product.negotiable,
     };
     setCartModalData({ product: productData, seller: product.profiles });
   };
@@ -843,7 +848,7 @@ const Home = () => {
                               </h3>
                             </div>
                             <p className="text-green-800 font-bold text-base ml-2 mt-4 whitespace-nowrap">
-                              ₱{product.price}/kg
+                              ₱{product.price}/{product.unit || 'kg'}
                             </p>
                           </div>
 

@@ -31,7 +31,7 @@ export default function AddToCartModal({ product, seller, onClose }) {
 
     const num = parseFloat(val);
     if (!isNaN(num) && num > maxQty) {
-      toast.error(`Only ${maxQty} ${unit} available`);
+      toast.error(`Only ${maxQty} ${unit} available`, { id: 'max-order-warning' });
       return; // reject the keystroke, field stays at its last valid value
     }
 
@@ -42,8 +42,10 @@ export default function AddToCartModal({ product, seller, onClose }) {
   const handleQuantityBlur = () => {
     const num = parseFloat(quantityInput);
     if (isNaN(num) || num < minQty) {
+      toast.error(`Minimum order is ${minQty} ${unit}`, { id: 'min-order-warning' });
       setQuantityInput(String(minQty));
     } else if (num > maxQty) {
+      toast.error(`Only ${maxQty} ${unit} available`, { id: 'max-order-warning' });
       setQuantityInput(String(maxQty));
     } else {
       setQuantityInput(String(num));
@@ -52,6 +54,16 @@ export default function AddToCartModal({ product, seller, onClose }) {
 
   const adjustQuantity = (delta) => {
     const current = parseFloat(quantityInput) || 0;
+    if (delta < 0 && (current <= minQty || Number((current + delta).toFixed(1)) < minQty)) {
+      toast.error(`Minimum order is ${minQty} ${unit}`, { id: 'min-order-warning' });
+      setQuantityInput(String(minQty));
+      return;
+    }
+    if (delta > 0 && (current >= maxQty || Number((current + delta).toFixed(1)) > maxQty)) {
+      toast.error(`Only ${maxQty} ${unit} available`, { id: 'max-order-warning' });
+      setQuantityInput(String(maxQty));
+      return;
+    }
     const next = Math.min(maxQty, Math.max(minQty, Number((current + delta).toFixed(1))));
     setQuantityInput(String(next));
   };

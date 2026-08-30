@@ -106,7 +106,9 @@ function EmptyState({ icon, title, description, action }) {
 function CartItemQuantityControl({ item, unit, updateQuantity }) {
   const isDiscreteUnit = ['piece', 'sack', 'tray', 'crate'].includes(unit);
   const step = isDiscreteUnit ? 1 : 0.5;
-  const minQty = item.product_snapshot?.min_order ? Number(item.product_snapshot.min_order) : step;
+  const minQty = item.product_snapshot?.min_order
+    ? Number(item.product_snapshot.min_order)
+    : (item.products?.min_order ? Number(item.products.min_order) : step);
   const maxQty = item.products?.quantity_kg || 999;
   
   const [quantityInput, setQuantityInput] = useState(String(item.quantity_kg));
@@ -125,6 +127,18 @@ function CartItemQuantityControl({ item, unit, updateQuantity }) {
 
   const adjustQuantity = (delta) => {
     const current = parseFloat(quantityInput) || 0;
+    if (delta < 0 && (current <= minQty || Number((current + delta).toFixed(1)) < minQty)) {
+      toast.error(`Minimum order is ${minQty} ${unit}`, { id: `min-order-${item.id}` });
+      setQuantityInput(String(minQty));
+      handleApply(minQty);
+      return;
+    }
+    if (delta > 0 && (current >= maxQty || Number((current + delta).toFixed(1)) > maxQty)) {
+      toast.error(`Only ${maxQty} ${unit} available`, { id: `max-order-${item.id}` });
+      setQuantityInput(String(maxQty));
+      handleApply(maxQty);
+      return;
+    }
     const next = Math.min(maxQty, Math.max(minQty, Number((current + delta).toFixed(1))));
     setQuantityInput(String(next));
     handleApply(next);
@@ -135,7 +149,7 @@ function CartItemQuantityControl({ item, unit, updateQuantity }) {
     if (val !== '' && !/^\d*\.?\d*$/.test(val)) return;
     const num = parseFloat(val);
     if (!isNaN(num) && num > maxQty) {
-      toast.error(`Only ${maxQty} ${unit} available`);
+      toast.error(`Only ${maxQty} ${unit} available`, { id: `max-order-${item.id}` });
       return;
     }
     setQuantityInput(val);
@@ -145,8 +159,10 @@ function CartItemQuantityControl({ item, unit, updateQuantity }) {
     const num = parseFloat(quantityInput);
     let next = num;
     if (isNaN(num) || num < minQty) {
+      toast.error(`Minimum order is ${minQty} ${unit}`, { id: `min-order-${item.id}` });
       next = minQty;
     } else if (num > maxQty) {
+      toast.error(`Only ${maxQty} ${unit} available`, { id: `max-order-${item.id}` });
       next = maxQty;
     }
     setQuantityInput(String(next));
@@ -539,10 +555,13 @@ export default function CartPage() {
               ) : (
                 <div className="space-y-6">
                   {Object.values(cartBySeller).map(({ seller, items }) => {
-                    const groupTotal = items.reduce(
-                      (s, i) => s + i.quantity_kg * i.price_at_add,
-                      0,
-                    );
+                    const groupTotal = items.reduce((s, i) => {
+                      const availableQty = i.products?.quantity_kg || 0;
+                      const isSoldOut =
+                        i.products?.status !== "Available" || availableQty <= 0;
+                      if (isSoldOut) return s;
+                      return s + i.quantity_kg * i.price_at_add;
+                    }, 0);
                     return (
                       <motion.div
                         key={seller?.id}
