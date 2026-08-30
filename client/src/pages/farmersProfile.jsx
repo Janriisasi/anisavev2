@@ -41,7 +41,11 @@ export default function FarmerProfile() {
   // Only show the full skeleton on a farmer we've never loaded before.
   const [loading, setLoading] = useState(!cached);
   const [cartModalData, setCartModalData] = useState(null);
-  const { isInCart } = useCart();
+  const { isInCart, ensureCartLoaded } = useCart();
+
+  useEffect(() => {
+    ensureCartLoaded?.();
+  }, [ensureCartLoaded]);
 
   useEffect(() => {
     fetchFarmerData();

@@ -33,8 +33,12 @@ export default function ProductSellersPage() {
   const [sellersPanelHeight, setSellersPanelHeight] = useState(null);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const { isInCart } = useCart();
+  const { isInCart, ensureCartLoaded } = useCart();
   const { prices } = useMarketPrices();
+
+  useEffect(() => {
+    ensureCartLoaded?.();
+  }, [ensureCartLoaded]);
 
   const productImages = {
     Eggplant: "/images/eggplant.webp",

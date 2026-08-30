@@ -1,21 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus } from 'lucide-react';
 import { useCart } from '../contexts/cartContext';
 import toast from 'react-hot-toast';
 
 export default function AddToCartModal({ product, seller, onClose }) {
-  const { addToCart, isInCart } = useCart();
+  const { addToCart, isInCart, cartItems, ensureCartLoaded } = useCart();
   const unit = product?.unit || 'kg';
   // Discrete units (things you can't sell a fraction of) step by whole
   // numbers; kg/bundle can still be sold in half-units.
   const isDiscreteUnit = ['piece', 'sack', 'tray', 'crate'].includes(unit);
   const step = isDiscreteUnit ? 1 : 0.5;
   const minQty = product?.min_order ? Number(product.min_order) : step;
+
+  const existingCartItem = cartItems?.find(
+    (item) => item.product_id === product?.id
+  );
+  const initialQty =
+    existingCartItem?.quantity_kg !== undefined && existingCartItem?.quantity_kg !== null
+      ? existingCartItem.quantity_kg
+      : minQty;
+
   // Kept as a string while the person is typing so the field can be
   // cleared/edited normally instead of snapping back on every keystroke.
-  const [quantityInput, setQuantityInput] = useState(String(minQty));
+  const [quantityInput, setQuantityInput] = useState(String(initialQty));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    ensureCartLoaded?.();
+  }, [ensureCartLoaded]);
+
+  useEffect(() => {
+    if (existingCartItem?.quantity_kg !== undefined && existingCartItem?.quantity_kg !== null) {
+      setQuantityInput(String(existingCartItem.quantity_kg));
+    }
+  }, [existingCartItem?.quantity_kg]);
 
   const maxQty = product?.quantity_kg || 999;
   const alreadyInCart = isInCart(product?.id);
@@ -80,7 +99,7 @@ export default function AddToCartModal({ product, seller, onClose }) {
     if (error) {
       toast.error('Failed to add to cart');
     } else {
-      toast.success(`${product.name} added to cart!`);
+      toast.success(alreadyInCart ? `${product.name} updated in cart!` : `${product.name} added to cart!`);
       onClose();
     }
   };

@@ -140,6 +140,9 @@ export function CartProvider({ children }) {
   const isInCart = (productId) =>
     cartItems.some((item) => item.product_id === productId);
 
+  const getCartItem = (productId) =>
+    cartItems.find((item) => item.product_id === productId);
+
   return (
     <CartContext.Provider
       value={{
@@ -152,6 +155,7 @@ export function CartProvider({ children }) {
         removeFromCart,
         updateQuantity,
         isInCart,
+        getCartItem,
       }}
     >
       {children}
