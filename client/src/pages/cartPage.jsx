@@ -212,6 +212,18 @@ export default function CartPage() {
     ensureCartLoaded?.();
   }, [ensureCartLoaded]);
 
+  const goToSellerProfile = (sellerId) => {
+    if (sellerId) {
+      navigate(`/farmer/${sellerId}`);
+    }
+  };
+
+  const goToProductSellers = (productName) => {
+    if (productName) {
+      navigate(`/product/${encodeURIComponent(productName)}/sellers`);
+    }
+  };
+
   const handleOrderReceived = async (order) => {
     setActionLoading(order.id);
     try {
@@ -540,21 +552,26 @@ export default function CartPage() {
                       >
                         {/* Seller header */}
                         <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b border-gray-100">
-                          <img
-                            src={
-                              seller?.avatar_url ||
-                              `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`
-                            }
-                            alt=""
-                            className="w-9 h-9 rounded-full object-cover border-2 border-green-100"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-800 text-sm truncate">
-                              {seller?.full_name || seller?.username}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              @{seller?.username}
-                            </p>
+                          <div
+                            onClick={() => goToSellerProfile(seller?.id)}
+                            className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group"
+                          >
+                            <img
+                              src={
+                                seller?.avatar_url ||
+                                `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`
+                              }
+                              alt=""
+                              className="w-9 h-9 rounded-full object-cover border-2 border-green-100 group-hover:border-green-300 transition-colors"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-800 text-sm truncate group-hover:text-green-700 transition-colors">
+                                {seller?.full_name || seller?.username}
+                              </p>
+                              <p className="text-xs text-gray-500 group-hover:text-green-600 transition-colors">
+                                @{seller?.username}
+                              </p>
+                            </div>
                           </div>
                           <button
                             onClick={() => openChat(seller, items[0])}
@@ -570,6 +587,7 @@ export default function CartPage() {
                           {items.map((item) => {
                             const snap = item.product_snapshot || {};
                             const unit = snap.unit || item.products?.unit || 'kg';
+                            const prodName = snap.name || item.products?.name;
                             const itemTotal = (
                               item.quantity_kg * item.price_at_add
                             ).toFixed(2);
@@ -583,15 +601,19 @@ export default function CartPage() {
                                       item.products?.image_url ||
                                       "/placeholder.jpg"
                                     }
-                                    alt={snap.name || item.products?.name}
-                                    className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
+                                    alt={prodName}
+                                    onClick={() => goToProductSellers(prodName)}
+                                    className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                                     onError={(e) => {
                                       e.target.src = "/placeholder.jpg";
                                     }}
                                   />
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-gray-800 truncate">
-                                      {snap.name || item.products?.name}
+                                    <p
+                                      onClick={() => goToProductSellers(prodName)}
+                                      className="font-semibold text-gray-800 truncate cursor-pointer hover:text-green-700 transition-colors"
+                                    >
+                                      {prodName}
                                     </p>
                                     <p className="text-xs text-gray-500">
                                       {snap.category}
@@ -702,8 +724,9 @@ export default function CartPage() {
                           <div className="flex items-start gap-3">
                             <img
                               src={snap.image_url || "/placeholder.jpg"}
-                              alt={snap.name}
-                              className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
+                              alt={snap.name || order.product?.name}
+                              onClick={() => goToProductSellers(snap.name || order.product?.name)}
+                              className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                               onError={(e) => {
                                 e.target.src = "/placeholder.jpg";
                               }}
@@ -711,8 +734,11 @@ export default function CartPage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <p className="font-bold text-gray-800">
-                                    {snap.name}
+                                  <p
+                                    onClick={() => goToProductSellers(snap.name || order.product?.name)}
+                                    className="font-bold text-gray-800 cursor-pointer hover:text-green-700 transition-colors"
+                                  >
+                                    {snap.name || order.product?.name}
                                   </p>
                                   <p className="text-xs text-gray-500">
                                     {snap.category}
@@ -734,16 +760,21 @@ export default function CartPage() {
 
                           {/* Seller + timestamp */}
                           <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <div
+                              onClick={() => goToSellerProfile(seller?.id || order.seller_id)}
+                              className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer hover:text-green-700 transition-colors group"
+                            >
                               <img
                                 src={
                                   seller?.avatar_url ||
                                   `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`
                                 }
                                 alt=""
-                                className="w-5 h-5 rounded-full"
+                                className="w-5 h-5 rounded-full object-cover group-hover:opacity-85 transition-opacity"
                               />
-                              {seller?.full_name || seller?.username}
+                              <span className="group-hover:underline">
+                                {seller?.full_name || seller?.username}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-gray-400">
@@ -820,8 +851,9 @@ export default function CartPage() {
                           <div className="flex items-start gap-3">
                             <img
                               src={snap.image_url || "/placeholder.jpg"}
-                              alt={snap.name}
-                              className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
+                              alt={snap.name || order.product?.name}
+                              onClick={() => goToProductSellers(snap.name || order.product?.name)}
+                              className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                               onError={(e) => {
                                 e.target.src = "/placeholder.jpg";
                               }}
@@ -829,8 +861,11 @@ export default function CartPage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <p className="font-bold text-gray-800">
-                                    {snap.name}
+                                  <p
+                                    onClick={() => goToProductSellers(snap.name || order.product?.name)}
+                                    className="font-bold text-gray-800 cursor-pointer hover:text-green-700 transition-colors"
+                                  >
+                                    {snap.name || order.product?.name}
                                   </p>
                                   <p className="text-xs text-gray-500">
                                     {snap.category}
@@ -858,16 +893,21 @@ export default function CartPage() {
                           </div>
 
                           <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <div
+                              onClick={() => goToSellerProfile(seller?.id || order.seller_id)}
+                              className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer hover:text-green-700 transition-colors group"
+                            >
                               <img
                                 src={
                                   seller?.avatar_url ||
                                   `https://api.dicebear.com/9.x/dylan/svg?seed=${seller?.username}`
                                 }
                                 alt=""
-                                className="w-5 h-5 rounded-full"
+                                className="w-5 h-5 rounded-full object-cover group-hover:opacity-85 transition-opacity"
                               />
-                              {seller?.full_name || seller?.username}
+                              <span className="group-hover:underline">
+                                {seller?.full_name || seller?.username}
+                              </span>
                             </div>
                             <div className="flex items-center gap-3">
                               <span className="text-xs text-gray-400">
