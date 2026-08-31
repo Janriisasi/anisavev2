@@ -393,7 +393,7 @@ const T = {
   },
   hil: {
     label: "Hiligaynon",
-    skip: "Laktawan",
+    skip: "Tapuson",
     next: "Sunod",
     back: "Balik",
     finish: "Tapuson",
@@ -770,8 +770,20 @@ function cardPos(rect) {
 // Voice: Rachel (21m00Tcm4TlvDq8ikWAM) — clear, neutral, multilingual.
 
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
-const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID;
+const ELEVENLABS_VOICE_ID =
+  import.meta.env.VITE_ELEVENLABS_VOICE_ID || "agHbWXl8DJ2fQZVqV1w4";
 const ELEVENLABS_MODEL = "eleven_multilingual_v2";
+
+function cleanTextForSpeech(text) {
+  if (!text) return "";
+  return text
+    .replace(
+      /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,
+      "",
+    )
+    .replace(/^["'\s]+|["'\s]+$/g, "")
+    .trim();
+}
 
 function useTTS() {
   const [speaking, setSpeaking] = useState(false);
@@ -788,20 +800,37 @@ function useTTS() {
       URL.revokeObjectURL(objectURL.current);
       objectURL.current = null;
     }
+    if (window.speechSynthesis?.speaking) {
+      window.speechSynthesis.cancel();
+    }
     setSpeaking(false);
+  }, []);
+
+  const fallbackSpeak = useCallback((cleanText) => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(cleanText);
+      utt.onend = () => setSpeaking(false);
+      utt.onerror = () => setSpeaking(false);
+      setSpeaking(true);
+      window.speechSynthesis.speak(utt);
+    } else {
+      setSpeaking(false);
+    }
   }, []);
 
   const speak = useCallback(
     async (text) => {
       stop();
+      const cleanText = cleanTextForSpeech(text);
+      if (!cleanText) return;
 
       // Fallback to browser TTS if API key is missing
       if (!ELEVENLABS_API_KEY) {
         console.warn(
           "VITE_ELEVENLABS_API_KEY not set — falling back to browser TTS",
         );
-        const utt = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis?.speak(utt);
+        fallbackSpeak(cleanText);
         return;
       }
 
@@ -816,7 +845,7 @@ function useTTS() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              text,
+              text: cleanText,
               model_id: ELEVENLABS_MODEL,
               voice_settings: { stability: 0.5, similarity_boost: 0.75 },
             }),
@@ -825,7 +854,8 @@ function useTTS() {
 
         if (!res.ok) {
           console.error("ElevenLabs TTS error:", res.status, await res.text());
-          setSpeaking(false);
+          // Fall back gracefully if ElevenLabs quota is exceeded or voice fails
+          fallbackSpeak(cleanText);
           return;
         }
 
@@ -835,15 +865,27 @@ function useTTS() {
 
         const audio = new Audio(url);
         audioRef.current = audio;
-        audio.onended = () => setSpeaking(false);
-        audio.onerror = () => setSpeaking(false);
-        audio.play();
+        audio.onended = () => {
+          setSpeaking(false);
+          if (objectURL.current) {
+            URL.revokeObjectURL(objectURL.current);
+            objectURL.current = null;
+          }
+        };
+        audio.onerror = () => {
+          setSpeaking(false);
+          fallbackSpeak(cleanText);
+        };
+        audio.play().catch((playErr) => {
+          console.warn("Audio playback error:", playErr);
+          fallbackSpeak(cleanText);
+        });
       } catch (err) {
-        console.error("ElevenLabs TTS error:", err);
-        setSpeaking(false);
+        console.error("ElevenLabs TTS network error:", err);
+        fallbackSpeak(cleanText);
       }
     },
-    [stop],
+    [stop, fallbackSpeak],
   );
 
   // Clean up when Card unmounts (step change / overlay close)
@@ -921,46 +963,40 @@ function Card({
         <div className="flex items-center justify-between mb-3">
           <LangPicker lang={lang} onChange={onLang} />
           <div className="flex items-center gap-2">
-            {/* TTS speaker button — uses free built-in Web Speech API */}
-            {window.speechSynthesis && (
-              <button
-                onClick={() =>
-                  speaking
-                    ? stop()
-                    : speak(
-                        `${step.title}. ${step.description.replace(/^"|"$/g, "")}`,
-                      )
-                }
-                title={speaking ? "Stop" : "Read aloud"}
-                className={`p-1.5 rounded-full transition-colors ${speaking ? "bg-green-100 text-green-700" : "hover:bg-gray-100 text-gray-400 hover:text-gray-600"}`}
-              >
-                {speaking ? (
-                  /* animated speaker wave */
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-4 h-4"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
-                    <path
-                      d="M18.5 12a6.5 6.5 0 0 0-3.5-5.8v2.2a4.5 4.5 0 0 1 0 7.2v2.2a6.5 6.5 0 0 0 3.5-5.8z"
-                      opacity=".5"
-                    />
-                  </svg>
-                ) : (
-                  /* muted speaker */
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-4 h-4"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
-                  </svg>
-                )}
-              </button>
-            )}
+            {/* TTS speaker button */}
+            <button
+              onClick={() =>
+                speaking ? stop() : speak(`${step.title}. ${step.description}`)
+              }
+              title={speaking ? "Stop" : "Read aloud"}
+              className={`p-1.5 rounded-full transition-colors ${speaking ? "bg-green-100 text-green-700" : "hover:bg-gray-100 text-gray-400 hover:text-gray-600"}`}
+            >
+              {speaking ? (
+                /* animated speaker wave */
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
+                  <path
+                    d="M18.5 12a6.5 6.5 0 0 0-3.5-5.8v2.2a4.5 4.5 0 0 1 0 7.2v2.2a6.5 6.5 0 0 0 3.5-5.8z"
+                    opacity=".5"
+                  />
+                </svg>
+              ) : (
+                /* muted speaker */
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
+                </svg>
+              )}
+            </button>
             <span className="text-xs sm:text-sm text-gray-400 font-medium">
               {t.stepOf(idx + 1, total)}
             </span>
