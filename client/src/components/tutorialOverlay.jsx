@@ -296,7 +296,7 @@ const T = {
         id: "market-history",
         title: "Market Price History",
         description:
-          '"Suriin ang 30-araw na kasaysayan ng presyo sa merkado batay sa datos ng Department of Agriculture. Nakakatulong ito upang masubaybayan ang mga trend at masiguro ang patas na presyo."',
+          '"Suriin ang 14 hanggang 30 araw na kasaysayan ng presyo sa merkado batay sa datos ng Department of Agriculture. Nakakatulong ito upang masubaybayan ang mga trend at masiguro ang patas na presyo."',
         route: "/homepage",
         target: "market-info",
       },
@@ -402,9 +402,9 @@ const T = {
     steps: [
       {
         id: "welcome",
-        title: "🌾 Maayon nga Pag-abot sa AniSave!",
+        title: "🌾 Malipayon nga Pag-abot sa AniSave!",
         description:
-          "Ang maabiabihon nga pagtudlo na ini magagabay sa imo sa kada bahin sang AniSave — ang imo direkta nga koneksyon sa mga sariwa nga produkto halin sa lokal nga mga mangunguma.",
+          "Ang maabiabihon nga pagtudlo nga ini magagabay sa imo sa kada bahin sang AniSave — ang imo direkta nga koneksyon sa mga sariwa nga produkto halin sa lokal nga mga mangunguma.",
         route: null,
         target: null,
       },
@@ -412,7 +412,7 @@ const T = {
         id: "navbar",
         title: "Navigation Bar",
         description:
-          '"Ang berde nga bar sa ibabaw amo ang imo panguna nga navigation. Gamiton ini para maglukso sa Home, Categories, Contacts, kag imo Profile bisan kasan-o."',
+          '"Ang berde nga bar sa ibabaw amo ang imo una nga navigation. Gamiton ini para makakadto ka sa Home, Categories, Contacts, kag imo Profile."',
         route: "/homepage",
         target: "navbar",
       },
@@ -420,7 +420,7 @@ const T = {
         id: "navbar-search",
         title: "Pangitaon ang mga Mangunguma",
         description:
-          '"Gamiton ang search bar para pangitaon ang mga mangunguma paagi sa ngalan o username. I-tap ang ila profile para makita kung ano nga mga produkto ang ila ginabaligya."',
+          '"Gamiton ang search bar para pangitaon ang mga mangunguma paagi sa ngalan ukon ila username. I-tap ang ila profile para makita kung ano nga mga produkto ang ila ginabaligya."',
         route: "/homepage",
         target: "navbar-search",
       },
@@ -428,7 +428,7 @@ const T = {
         id: "navbar-notifications",
         title: "Mga Abiso",
         description:
-          '"Ang bell icon nagapakita sang imo mga alerto — maabisuhan ka kung gin-aprubahan o gintanggihan sang mangunguma ang imo order."',
+          '"Ang bell icon nagapakita sang imo mga alerto — maabisuhan ka kung gin-aprubahan o wala pa sang mangunguma ang imo order."',
         route: "/homepage",
         target: "navbar-notifications",
       },
@@ -436,15 +436,15 @@ const T = {
         id: "navbar-cart",
         title: "Imo Cart",
         description:
-          '"Ang cart nagabutang sang imo mga pending kag approved nga order. I-tap ini bisan kasan-o para surion o pamahalaan ang imo mga pagbakal."',
+          '"Ang cart nagabutang sang imo mga pending kag aprubado nga order. I-tap ini bisan kasan-o para makita ukon pamahalaan ang imo mga pagbakal."',
         route: "/homepage",
         target: "navbar-cart",
       },
       {
         id: "navbar-chat",
-        title: "Mga Mensahe",
+        title: "Mga Chat",
         description:
-          '"Mag-chat direkta sa mga mangunguma para magpamangkot, makig-negotiate, o mag-coordinate sang imo delivery — tanan sa real time."',
+          '"Mag-chat direkta sa mga mangunguma ukon manugbakal para magpamangkot, makipagnegosyar, ukon mag-coordinate sang delivery — tanan direkta."',
         route: "/homepage",
         target: "navbar-chat",
       },
@@ -452,7 +452,7 @@ const T = {
         id: "dashboard-stats",
         title: "Imo Dashboard",
         description:
-          '"Ang apat ka card nagabuod sang imo aktibidad: Pinaka-mabenta nga produkto, Buod sang Benta, Imo Rating (average nga kasiyahan sang customer sa 5), kag total nga bilang sang Produkto."',
+          '"Ang apat ka card nagapakita sang imo mga aktibidad: Pinaka-mabenta nga produkto, Imo benta, Imo Rating (average nga kasiyahan sang customer sa 5), kag total nga bilin sang imo produkto."',
         route: "/homepage",
         target: "dashboard-stats",
       },
@@ -460,7 +460,7 @@ const T = {
         id: "product-cards",
         title: "I-browse ang mga Produkto",
         description:
-          "\"Mag-scroll paidalom para makita ang tanan nga available nga pananom halin sa lokal nga mga mangunguma. Ang kada card nagapakita sang larawan, kategorya, ngalan, presyo kada kg, kag 'View Sellers' nga pindutan.\"",
+          "\"Mag-scroll paidalom para makita ang tanan nga available nga pananom halin sa lokal nga mga mangunguma. Ang kada card nagapakita sang larawan, kategorya, ngalan, presyo kada kilo ukon sinako, kag 'View Sellers' nga pindutan.\"",
         route: "/homepage",
         target: "product-cards",
       },
@@ -476,7 +476,7 @@ const T = {
         id: "market-history",
         title: "Market Price History",
         description:
-          '"Suriin ang 30-adlaw nga kasaysayan sang presyo sa merkado base sa datos sang Department of Agriculture. Makabulig ini para masubaybayan ang mga trend kag masiguro ang patas nga presyo."',
+          '"Makit-an mo diri ang presyo sa merkado sang mga produkto base sa datos sang Department of Agriculture. Makabulig ini para mabantayan ang mga presyo kag masiguro ang patas nga presyo."',
         route: "/homepage",
         target: "market-info",
       },
@@ -484,7 +484,7 @@ const T = {
         id: "categories-intro",
         title: "Pahina sang Categories",
         description:
-          '"Ang Categories page nagapahanugot sa imo nga mag-browse sang tanan nga pananom ayon sa klase: Gulay, Prutas, Bugas, kag Pampalasa. I-tap ang bisan ano nga pananom para makita kung sin-o ang nagabaligya."',
+          '"Ang Categories page nagapahanugot sa imo nga mag-browse sang tanan nga pananom nga naayon sa klase: Gulay, Prutas, Bugas, kag Pampalasa. I-tap ang bisan ano nga pananom para makita kung sin-o ang nagabaligya."',
         route: "/categories",
         target: "categories-grid",
       },
@@ -517,7 +517,7 @@ const T = {
         id: "farmer-products",
         title: "Mga Produkto sang Mangunguma",
         description:
-          '"Mag-scroll paidalom para makita ang tanan nga produkto nga ginabaligya sang mangunguma nga ini. Pwede mo ini idugang sa imo cart halin diri."',
+          '"Mag-scroll paidalom para makita ang tanan nga produkto nga ginabaligya sang mangunguma nga ini. Pwede mo ini idugang sa imo cart mismo."',
         route: "DYNAMIC_FARMER",
         target: "farmer-products-section",
       },
@@ -525,7 +525,7 @@ const T = {
         id: "contacts-intro",
         title: "Mga Na-save nga Contacts",
         description:
-          '"Ang imo Contacts page nagasave sang tanan nga mga mangunguma nga ginkontak mo. Madali nga makita ang ila impormasyon, tan-awon ang ila profile, o i-rate sila pagkatapos sang transaksyon."',
+          '"Ang imo Contacts page nagasave sang tanan nga mga mangunguma nga gin-save mo. Madali nga makita ang ila impormasyon, tan-awon ang ila profile, o i-rate sila pagkatapos sang transaksyon."',
         route: "/contacts",
         target: "contacts-list",
       },
@@ -541,7 +541,7 @@ const T = {
         id: "profile-info",
         title: "Imo Profile",
         description:
-          '"I-update ang imo ngalan, avatar, adres, kag contact number diri. Makikita sang mga buyer kag mangunguma ang imo pampubliko nga profile kung makipag-ugnayan ka sa ila."',
+          '"I-update ang imo ngalan, avatar, address, kag contact number diri. Makikita sang mga buyer kag mangunguma ang imo pampubliko nga profile kung makipag-ugnayan ka sa ila."',
         route: "/profile",
         target: "profile-info",
       },
@@ -549,7 +549,7 @@ const T = {
         id: "profile-products",
         title: "Pamahalaan ang Imo mga Produkto",
         description:
-          '"Bilang mangunguma, diri mo ilista, ie-edit, kag tanggalon ang imo mga pananom. I-tap ang + button para magdugang sang bag-o nga produkto nga may larawan, presyo, kag dami."',
+          '"Bilang mangunguma, diri mo ilista, ie-edit, kag tanggalon ang imo mga pananom. I-tap ang + button para magdugang sang bag-o nga produkto nga may larawan, presyo, kag stock."',
         route: "/profile",
         target: "profile-products",
       },
@@ -557,7 +557,7 @@ const T = {
         id: "profile-orders",
         title: "Mga Order Request",
         description:
-          '"Ang mga buyer nagapadala sang mga order request diri. Maaprubahan o matanggihan mo ang kada request, kag makipag-communicate sa mga buyer antes kumpirmahan."',
+          '"Ang mga buyer nagapadala sang mga order request diri. Maaprubahan ukon indi mo ang kada request, kag makipag-communicate sa mga buyer antes kumpirmahon ila order."',
         route: "/profile",
         target: "profile-orders",
       },
@@ -565,7 +565,7 @@ const T = {
         id: "done",
         title: "Handa ka na! 🎉",
         description:
-          "Nahibal-an mo na karon ang tanan nga kinahanglan mo para magsugod sa AniSave. Magsugod sang pag-browse sang mga sariwa nga lokal nga produkto, kumonekta sa mga mangunguma, kag mag-enjoy sang mga patas nga presyo!",
+          "Nahibal-an mo na karon ang tanan nga kinahanglan mo para magsugod sa AniSave. Magsugod sang pag-browse sang mga sariwa nga lokal nga produkto, magkonekta sa mga mangunguma kag manugbakal, kag mag-enjoy sang patas nga presyo!",
         route: "/homepage",
         target: null,
       },
