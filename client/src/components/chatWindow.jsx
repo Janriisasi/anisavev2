@@ -605,7 +605,7 @@ export default function ChatWindow({
   // ─── Order approve / decline from chat ───────────────────────────────────────
   const [orderActionLoading, setOrderActionLoading] = useState(null);
   const [actedOrders, setActedOrders] = useState({});
-  const [ratingPrompt, setRatingPrompt] = useState(null); // { farmerId, farmerName, farmerAvatar, orderSnapshot }
+  const [ratingPrompt, setRatingPrompt] = useState(null); // { farmerId, farmerName, farmerAvatar, orderId, orderSnapshot }
 
   const handleOrderAction = async (order, action) => {
     const orderId = order.order_id;
@@ -821,6 +821,7 @@ export default function ChatWindow({
                               farmerName:
                                 otherUser.full_name || otherUser.username,
                               farmerAvatar: otherUser.avatar_url || null,
+                              orderId: order.order_id,
                               orderSnapshot: {
                                 name: order.product_name,
                                 quantity_kg: order.quantity_kg,
@@ -1352,6 +1353,7 @@ export default function ChatWindow({
         targetId={ratingPrompt?.farmerId}
         targetName={ratingPrompt?.farmerName}
         targetAvatar={ratingPrompt?.farmerAvatar}
+        orderId={ratingPrompt?.orderId}
         orderSnapshot={ratingPrompt?.orderSnapshot}
       />
     </div>

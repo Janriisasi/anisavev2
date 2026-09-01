@@ -220,7 +220,7 @@ export default function CartPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [confirmItem, setConfirmItem] = useState(null);
   const [removingId, setRemovingId] = useState(null);
-  const [ratingModal, setRatingModal] = useState(null);
+  const [ratingModal, setRatingModal] = useState(null); // { farmerId, farmerName, farmerAvatar, orderId, orderSnapshot }
   const [actionLoading, setActionLoading] = useState(null);
 
   // Load cart data when page mounts
@@ -283,6 +283,7 @@ export default function CartPage() {
         farmerId: order.seller_id,
         farmerName: order.seller?.full_name || order.seller?.username,
         farmerAvatar: order.seller?.avatar_url || null,
+        orderId: order.id,
         orderSnapshot: {
           name: order.product_snapshot?.name,
           quantity_kg: order.quantity_kg,
@@ -981,6 +982,7 @@ export default function CartPage() {
         targetId={ratingModal?.farmerId}
         targetName={ratingModal?.farmerName}
         targetAvatar={ratingModal?.farmerAvatar}
+        orderId={ratingModal?.orderId}
         orderSnapshot={ratingModal?.orderSnapshot}
       />
     </div>

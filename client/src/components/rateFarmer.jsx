@@ -4,11 +4,13 @@ import { useUser } from '../hooks/useUser';
 import { Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = true }) {
+export default function RateFarmer({ farmerId, orderId = null, onRatingSubmitted, standalone = true }) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
+  const [review, setReview] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [hasRated, setHasRated] = useState(false);
+  const [existingRatingId, setExistingRatingId] = useState(null);
   const [existingRating, setExistingRating] = useState(0);
   const { user } = useUser();
 
@@ -16,7 +18,8 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
     if (user && farmerId) {
       checkExistingRating();
     }
-  }, [user, farmerId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, farmerId, orderId]);
 
   const checkExistingRating = async () => {
     try {
@@ -32,12 +35,18 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
         return;
       }
 
-      const { data, error } = await supabase
+      // Scope the lookup to this specific order when we have one. Without
+      // an orderId (the standalone "Rate this farmer" profile widget) we
+      // fall back to the general, order-less review.
+      let query = supabase
         .from('ratings')
-        .select('rating')
+        .select('id, rating, review')
         .eq('user_id', profileData.id)
-        .eq('farmer_id', farmerId)
-        .limit(1);
+        .eq('farmer_id', farmerId);
+
+      query = orderId ? query.eq('order_id', orderId) : query.is('order_id', null);
+
+      const { data, error } = await query.limit(1);
 
       if (error) {
         console.error('Error checking existing rating:', error);
@@ -47,8 +56,16 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
       const existing = data?.[0];
       if (existing) {
         setHasRated(true);
+        setExistingRatingId(existing.id);
         setExistingRating(existing.rating);
         setRating(existing.rating);
+        setReview(existing.review || '');
+      } else {
+        setHasRated(false);
+        setExistingRatingId(null);
+        setExistingRating(0);
+        setRating(0);
+        setReview('');
       }
     } catch (error) {
       console.error('Error checking existing rating:', error);
@@ -95,16 +112,18 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
         return;
       }
 
-      if (hasRated) {
-        //updates existing rating
+      const trimmedReview = review.trim() || null;
+
+      if (hasRated && existingRatingId) {
+        //updates this specific rating (this order's, or the general one)
         const { error } = await supabase
           .from('ratings')
           .update({ 
             rating,
+            review: trimmedReview,
             updated_at: new Date().toISOString()
           })
-          .eq('user_id', profileData.id)
-          .eq('farmer_id', farmerId);
+          .eq('id', existingRatingId);
 
         if (error) {
           throw error;
@@ -112,19 +131,24 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
         
         toast.success('Rating updated successfully!');
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('ratings')
           .insert({
             user_id: profileData.id,
             farmer_id: farmerId,
             rating,
-          });
+            review: trimmedReview,
+            order_id: orderId || null,
+          })
+          .select('id')
+          .single();
 
         if (error) {
           throw error;
         }
         toast.success('Thank you for your rating!');
         setHasRated(true);
+        setExistingRatingId(inserted?.id ?? null);
       }
 
       setExistingRating(rating);
@@ -134,7 +158,7 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
       console.error('Error submitting rating:', error);
       
       if (error.code === '23505') {
-        toast.error('You have already rated this farmer');
+        toast.error(orderId ? 'You have already rated this order' : 'You have already rated this farmer');
       } else if (error.code === '23503') {
         toast.error('Invalid user or farmer ID. Please try refreshing the page.');
       } else {
@@ -146,7 +170,8 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
   };
 
   const containerClass = standalone
-    "w-full flex flex-col items-center justify-center";
+    ? "w-full flex flex-col items-center justify-center"
+    : "w-full flex flex-col items-center justify-center";
 
   return (
     <div className={containerClass}>
@@ -158,11 +183,13 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
       
       {hasRated && (
         <p className="text-sm text-gray-600 mb-3 text-center">
-          You previously rated this farmer {existingRating} star{existingRating > 1 ? 's' : ''}
+          {orderId
+            ? `You already rated this transaction ${existingRating} star${existingRating > 1 ? 's' : ''}`
+            : `You previously rated this farmer ${existingRating} star${existingRating > 1 ? 's' : ''}`}
         </p>
       )}
       
-      <div className="flex items-center justify-center gap-2 mb-6">
+      <div className="flex items-center justify-center gap-2 mb-4">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
@@ -181,6 +208,19 @@ export default function RateFarmer({ farmerId, onRatingSubmitted, standalone = t
             />
           </button>
         ))}
+      </div>
+
+      {/* Review textarea */}
+      <div className="w-full mb-5">
+        <textarea
+          value={review}
+          onChange={(e) => setReview(e.target.value.slice(0, 500))}
+          disabled={submitting}
+          rows={3}
+          placeholder="Write a review... (optional)"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-200"
+        />
+        <p className="text-right text-xs text-gray-400 mt-1">{review.length}/500</p>
       </div>
       
       <button

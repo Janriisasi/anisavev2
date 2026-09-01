@@ -3144,3 +3144,16 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_last_price_update() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_last_price_update() TO anon;
+
+-- ============================================================
+-- REVIEWS FEATURE — Add review text to rating tables
+-- Run this in Supabase SQL Editor
+-- ============================================================
+
+-- Add review text column to farmer ratings (buyer → rates farmer)
+ALTER TABLE public.ratings
+  ADD COLUMN IF NOT EXISTS review TEXT CHECK (LENGTH(review) <= 500);
+
+-- Add review text column to buyer ratings (farmer → rates buyer)
+ALTER TABLE public.buyer_ratings
+  ADD COLUMN IF NOT EXISTS review TEXT CHECK (LENGTH(review) <= 500);

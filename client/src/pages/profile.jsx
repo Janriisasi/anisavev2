@@ -6,6 +6,7 @@ import compressImage from "../utils/imageCompression";
 import DeleteConfirmationModal from "../components/deleteConfirmation";
 import FarmerOrderRequests from "../components/farmerOrderRequests";
 import LogoutConfirmationModal from "../components/logoutConfirmation";
+import ReviewsModal from "../components/reviewsModal";
 import toast from "react-hot-toast";
 import {
   Camera,
@@ -88,6 +89,7 @@ export default function Profile() {
   const [activeSection, setActiveSection] = useState(
     location.state?.activeSection || "products",
   ); // 'products' | 'orders'
+  const [showReviews, setShowReviews] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     full_name: "",
@@ -794,12 +796,17 @@ export default function Profile() {
                           <span>{profile.contact_number}</span>
                         </div>
                       )}
-                      <div className="bg-yellow-100 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2">
+                      <button
+                        onClick={() => setShowReviews(true)}
+                        title="View all reviews"
+                        className="bg-yellow-100 hover:bg-yellow-200 px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-colors duration-200 cursor-pointer"
+                      >
                         <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />
                         <span>
                           {avgRating > 0 ? avgRating : "No ratings yet"}
                         </span>
-                      </div>
+                        <span className="text-xs text-yellow-700 font-medium hidden sm:inline">· Reviews</span>
+                      </button>
                       <div
                         className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 ${soldCount > 0 ? "bg-green-100" : "bg-gray-100"}`}
                       >
@@ -1100,6 +1107,15 @@ export default function Profile() {
         onConfirm={handleSignOutConfirm}
         isLoggingOut={isLoggingOut}
       />
+
+      <ReviewsModal
+        isOpen={showReviews}
+        onClose={() => setShowReviews(false)}
+        targetId={user?.id}
+        targetName={profile?.full_name || profile?.username || 'You'}
+        mode="both"
+        currentUserId={user?.id || null}
+      />
     </div>
   );
-}
+}

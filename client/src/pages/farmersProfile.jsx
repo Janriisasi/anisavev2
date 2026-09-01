@@ -4,6 +4,7 @@ import supabase from "../lib/supabase";
 import { useUser } from "../hooks/useUser";
 import RateFarmer from "../components/rateFarmer";
 import StartChatButton from "../components/startChatButton";
+import ReviewsModal from "../components/reviewsModal";
 import {
   Star,
   MapPin,
@@ -41,6 +42,7 @@ export default function FarmerProfile() {
   // Only show the full skeleton on a farmer we've never loaded before.
   const [loading, setLoading] = useState(!cached);
   const [cartModalData, setCartModalData] = useState(null);
+  const [showReviews, setShowReviews] = useState(false);
   const { isInCart, ensureCartLoaded } = useCart();
 
   useEffect(() => {
@@ -412,7 +414,11 @@ export default function FarmerProfile() {
                       </button>
                     </div>
                   )}
-                  <div className="bg-yellow-100 px-2 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2">
+                  <button
+                    onClick={() => setShowReviews(true)}
+                    title="View all reviews"
+                    className="bg-yellow-100 hover:bg-yellow-200 px-2 sm:px-4 py-2 rounded-lg flex items-center gap-1 sm:gap-2 transition-colors duration-200 cursor-pointer"
+                  >
                     <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
                     <span className="text-xs sm:text-sm">
                       {avgRating > 0 ? avgRating : "No ratings"}
@@ -422,7 +428,8 @@ export default function FarmerProfile() {
                         </span>
                       )}
                     </span>
-                  </div>
+                    <span className="text-xs text-yellow-700 font-medium ml-0.5 hidden sm:inline">· Reviews</span>
+                  </button>
                 </div>
 
                 {user && user.id !== farmer.id && (
@@ -575,6 +582,15 @@ export default function FarmerProfile() {
             onClose={() => setCartModalData(null)}
           />
         )}
+
+        <ReviewsModal
+          isOpen={showReviews}
+          onClose={() => setShowReviews(false)}
+          targetId={farmer?.id}
+          targetName={farmer?.full_name || farmer?.username || 'Farmer'}
+          mode="both"
+          currentUserId={user?.id || null}
+        />
       </div>
     </div>
   );

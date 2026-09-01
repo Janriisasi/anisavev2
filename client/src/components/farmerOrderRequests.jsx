@@ -91,7 +91,7 @@ export default function FarmerOrderRequests() {
   const [actionLoading, setActionLoading] = useState(null); // order id being actioned
   const [declineModal, setDeclineModal] = useState(null); // order to decline
   const [filter, setFilter] = useState("confirming"); // 'confirming' | 'all'
-  const [ratingModal, setRatingModal] = useState(null); // { buyerId, buyerName, buyerAvatar, orderSnapshot }
+  const [ratingModal, setRatingModal] = useState(null); // { buyerId, buyerName, buyerAvatar, orderId, orderSnapshot }
 
   const fetchOrders = useCallback(async () => {
     if (!user) return;
@@ -202,6 +202,7 @@ export default function FarmerOrderRequests() {
         buyerId: order.buyer_id,
         buyerName: order.buyer?.full_name || order.buyer?.username,
         buyerAvatar: order.buyer?.avatar_url || null,
+        orderId: order.id,
         orderSnapshot: {
           name: order.product_snapshot?.name,
           quantity_kg: order.quantity_kg,
@@ -517,6 +518,7 @@ export default function FarmerOrderRequests() {
         targetId={ratingModal?.buyerId}
         targetName={ratingModal?.buyerName}
         targetAvatar={ratingModal?.buyerAvatar}
+        orderId={ratingModal?.orderId}
         orderSnapshot={ratingModal?.orderSnapshot}
       />
     </div>

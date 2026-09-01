@@ -4,11 +4,13 @@ import { useUser } from '../hooks/useUser';
 import { Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function RateBuyer({ buyerId, onRatingSubmitted, standalone = true }) {
+export default function RateBuyer({ buyerId, orderId = null, onRatingSubmitted, standalone = true }) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
+  const [review, setReview] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [hasRated, setHasRated] = useState(false);
+  const [existingRatingId, setExistingRatingId] = useState(null);
   const [existingRating, setExistingRating] = useState(0);
   const { user } = useUser();
 
@@ -16,7 +18,8 @@ export default function RateBuyer({ buyerId, onRatingSubmitted, standalone = tru
     if (user && buyerId) {
       checkExistingRating();
     }
-  }, [user, buyerId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, buyerId, orderId]);
 
   const checkExistingRating = async () => {
     try {
@@ -31,22 +34,37 @@ export default function RateBuyer({ buyerId, onRatingSubmitted, standalone = tru
         return;
       }
 
-      const { data, error } = await supabase
+      // Scope to this specific order when we have one, otherwise fall back
+      // to the general, order-less review (no standalone buyer widget exists
+      // today, but this keeps the component consistent with RateFarmer).
+      let query = supabase
         .from('buyer_ratings')
-        .select('rating')
+        .select('id, rating, review')
         .eq('farmer_id', profileData.id)
-        .eq('buyer_id', buyerId)
-        .single();
+        .eq('buyer_id', buyerId);
 
-      if (error && error.code !== 'PGRST116') {
+      query = orderId ? query.eq('order_id', orderId) : query.is('order_id', null);
+
+      const { data, error } = await query.limit(1);
+
+      if (error) {
         console.error('Error checking existing rating:', error);
         return;
       }
 
-      if (data) {
+      const existing = data?.[0];
+      if (existing) {
         setHasRated(true);
-        setExistingRating(data.rating);
-        setRating(data.rating);
+        setExistingRatingId(existing.id);
+        setExistingRating(existing.rating);
+        setRating(existing.rating);
+        setReview(existing.review || '');
+      } else {
+        setHasRated(false);
+        setExistingRatingId(null);
+        setExistingRating(0);
+        setRating(0);
+        setReview('');
       }
     } catch (error) {
       console.error('Error checking existing rating:', error);
@@ -89,30 +107,37 @@ export default function RateBuyer({ buyerId, onRatingSubmitted, standalone = tru
         return;
       }
 
-      if (hasRated) {
+      const trimmedReview = review.trim() || null;
+
+      if (hasRated && existingRatingId) {
         const { error } = await supabase
           .from('buyer_ratings')
           .update({
             rating,
+            review: trimmedReview,
             updated_at: new Date().toISOString(),
           })
-          .eq('farmer_id', profileData.id)
-          .eq('buyer_id', buyerId);
+          .eq('id', existingRatingId);
 
         if (error) throw error;
         toast.success('Rating updated successfully!');
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('buyer_ratings')
           .insert({
             farmer_id: profileData.id,
             buyer_id: buyerId,
             rating,
-          });
+            review: trimmedReview,
+            order_id: orderId || null,
+          })
+          .select('id')
+          .single();
 
         if (error) throw error;
         toast.success('Thank you for your rating!');
         setHasRated(true);
+        setExistingRatingId(inserted?.id ?? null);
       }
 
       setExistingRating(rating);
@@ -120,7 +145,7 @@ export default function RateBuyer({ buyerId, onRatingSubmitted, standalone = tru
     } catch (error) {
       console.error('Error submitting rating:', error);
       if (error.code === '23505') {
-        toast.error('You have already rated this buyer');
+        toast.error(orderId ? 'You have already rated this order' : 'You have already rated this buyer');
       } else if (error.code === '23503') {
         toast.error('Invalid user or buyer ID. Please try refreshing the page.');
       } else {
@@ -145,11 +170,13 @@ export default function RateBuyer({ buyerId, onRatingSubmitted, standalone = tru
 
       {hasRated && (
         <p className="text-sm text-gray-600 mb-3 text-center">
-          You previously rated this buyer {existingRating} star{existingRating > 1 ? 's' : ''}
+          {orderId
+            ? `You already rated this transaction ${existingRating} star${existingRating > 1 ? 's' : ''}`
+            : `You previously rated this buyer ${existingRating} star${existingRating > 1 ? 's' : ''}`}
         </p>
       )}
 
-      <div className="flex items-center justify-center gap-2 mb-6">
+      <div className="flex items-center justify-center gap-2 mb-4">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
@@ -168,6 +195,19 @@ export default function RateBuyer({ buyerId, onRatingSubmitted, standalone = tru
             />
           </button>
         ))}
+      </div>
+
+      {/* Review textarea */}
+      <div className="w-full mb-5">
+        <textarea
+          value={review}
+          onChange={(e) => setReview(e.target.value.slice(0, 500))}
+          disabled={submitting}
+          rows={3}
+          placeholder="Write a review... (optional)"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-200"
+        />
+        <p className="text-right text-xs text-gray-400 mt-1">{review.length}/500</p>
       </div>
 
       <button

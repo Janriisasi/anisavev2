@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, CheckCircle } from 'lucide-react';
 import RateFarmer from './rateFarmer';
@@ -13,7 +14,10 @@ import RateBuyer from './rateBuyer';
  *  - targetId: string  – farmerId when mode='rate_farmer', buyerId when mode='rate_buyer'
  *  - targetName: string – display name of the person being rated
  *  - targetAvatar: string | null
- *  - orderSnapshot: { name, quantity_kg, total_amount } – optional product info
+ *  - orderId: string | null – the specific order this rating belongs to. Falls
+ *      back to orderSnapshot.id if not passed explicitly. Required for each
+ *      transaction to get its own review instead of overwriting the last one.
+ *  - orderSnapshot: { id, name, quantity_kg, total_amount } – optional product info
  */
 export default function PostTransactionRatingModal({
   isOpen,
@@ -22,6 +26,7 @@ export default function PostTransactionRatingModal({
   targetId,
   targetName,
   targetAvatar,
+  orderId = null,
   orderSnapshot,
 }) {
   if (!isOpen) return null;
@@ -33,8 +38,14 @@ export default function PostTransactionRatingModal({
     : 'How was this buyer to work with?';
   const avatarSeed = targetName?.replace(/\s+/g, '') || 'user';
   const avatarSrc = targetAvatar || `https://api.dicebear.com/9.x/dylan/svg?seed=${avatarSeed}`;
+  const resolvedOrderId = orderId || orderSnapshot?.id || null;
 
-  return (
+  // Rendered via a portal so `fixed inset-0` always measures against the
+  // real viewport. Without this, any ancestor with backdrop-blur/transform
+  // (e.g. the Order Requests wrapper on the Profile page) becomes the
+  // containing block for our fixed overlay and the modal ends up pinned
+  // to that ancestor's box instead of centered on screen.
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -45,7 +56,7 @@ export default function PostTransactionRatingModal({
           onClick={onClose}
         >
           <motion.div
-            className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden"
+            className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]"
             initial={{ opacity: 0, scale: 0.92, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 24 }}
@@ -103,12 +114,14 @@ export default function PostTransactionRatingModal({
               {isFarmerMode ? (
                 <RateFarmer
                   farmerId={targetId}
+                  orderId={resolvedOrderId}
                   onRatingSubmitted={onClose}
                   standalone={false}
                 />
               ) : (
                 <RateBuyer
                   buyerId={targetId}
+                  orderId={resolvedOrderId}
                   onRatingSubmitted={onClose}
                   standalone={false}
                 />
@@ -124,6 +137,7 @@ export default function PostTransactionRatingModal({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
