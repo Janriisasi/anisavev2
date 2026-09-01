@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, MessageSquare, Edit3, Trash2, Check, XCircle, Users, Leaf } from 'lucide-react';
 import supabase from '../lib/supabase';
@@ -52,19 +53,32 @@ function StarPicker({ value, onChange }) {
 // ─────────────────────────────────────────────────
 // Single review card
 // ─────────────────────────────────────────────────
-function ReviewCard({ review, isOwn, onEdit, onDelete }) {
+function ReviewCard({ review, isOwn, onEdit, onDelete, onClose, currentUserId }) {
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [editRating, setEditRating] = useState(review.rating);
   const [editText, setEditText] = useState(review.review || '');
   const [saving, setSaving] = useState(false);
 
-  const avatarSeed = review.reviewer?.username || review.reviewer?.full_name || review.reviewer_id;
+  const reviewerId = review.reviewer_id || review.reviewer?.id;
+  const avatarSeed = review.reviewer?.username || review.reviewer?.full_name || reviewerId;
   const avatarSrc =
     review.reviewer?.avatar_url ||
     `https://api.dicebear.com/9.x/dylan/svg?seed=${avatarSeed}`;
   const displayName =
     review.reviewer?.full_name || review.reviewer?.username || 'Unknown User';
   const username = review.reviewer?.username;
+
+  const handleProfileClick = (e) => {
+    e.stopPropagation();
+    if (!reviewerId) return;
+    if (onClose) onClose();
+    if (currentUserId && reviewerId === currentUserId) {
+      navigate('/profile');
+    } else {
+      navigate(`/farmer/${reviewerId}`);
+    }
+  };
 
   const handleSave = async () => {
     if (editRating === 0) {
@@ -96,24 +110,40 @@ function ReviewCard({ review, isOwn, onEdit, onDelete }) {
     >
       <div className="flex items-start gap-3">
         {/* Avatar */}
-        <img
-          src={avatarSrc}
-          alt={displayName}
-          className="w-10 h-10 rounded-full object-cover border-2 border-gray-100 flex-shrink-0"
-          onError={(e) => {
-            e.target.src = `https://api.dicebear.com/9.x/dylan/svg?seed=${avatarSeed}`;
-          }}
-        />
+        <button
+          type="button"
+          onClick={handleProfileClick}
+          className="focus:outline-none transition-transform hover:scale-105 active:scale-95 flex-shrink-0 cursor-pointer"
+          title={`View ${displayName}'s profile`}
+        >
+          <img
+            src={avatarSrc}
+            alt={displayName}
+            className="w-10 h-10 rounded-full object-cover border-2 border-gray-100"
+            onError={(e) => {
+              e.target.src = `https://api.dicebear.com/9.x/dylan/svg?seed=${avatarSeed}`;
+            }}
+          />
+        </button>
 
         <div className="flex-1 min-w-0">
           {/* Name row */}
           <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="font-semibold text-gray-800 text-sm leading-tight">{displayName}</p>
+            <button
+              type="button"
+              onClick={handleProfileClick}
+              className="text-left group focus:outline-none cursor-pointer min-w-0"
+              title={`View ${displayName}'s profile`}
+            >
+              <p className="font-semibold text-gray-800 text-sm leading-tight group-hover:text-green-700 transition-colors truncate">
+                {displayName}
+              </p>
               {username && (
-                <p className="text-gray-400 text-xs">@{username}</p>
+                <p className="text-gray-400 text-xs group-hover:text-green-600 transition-colors truncate">
+                  @{username}
+                </p>
               )}
-            </div>
+            </button>
 
             {/* Edit / Delete — only owner sees these */}
             {isOwn && !editing && (
@@ -440,6 +470,8 @@ export default function ReviewsModal({
                       isOwn={currentUserId && review.reviewer_id === currentUserId}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
+                      onClose={onClose}
+                      currentUserId={currentUserId}
                     />
                   ))}
                 </AnimatePresence>
