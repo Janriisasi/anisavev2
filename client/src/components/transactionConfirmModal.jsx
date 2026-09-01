@@ -171,7 +171,6 @@ export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
                     <span>{cartItem?.quantity_kg} {snapshot.unit}</span>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-gray-600">
-                    <DollarSign className="w-3 h-3" />
                     <span>₱{cartItem?.price_at_add}/{snapshot.unit}</span>
                   </div>
                 </div>

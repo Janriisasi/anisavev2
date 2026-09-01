@@ -638,22 +638,17 @@ export default function CartPage() {
                                     <p className="text-xs text-gray-500">
                                       {snap.category}
                                     </p>
-                                    <div className="flex items-center gap-3 mt-1.5">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-sm text-green-700 font-bold">
-                                          ₱{item.price_at_add}/{unit}
-                                        </span>
-                                        <div className="flex items-center gap-1.5 ml-1">
-                                          <CartItemQuantityControl item={item} unit={unit} updateQuantity={updateQuantity} />
-                                          <span className="text-xs text-gray-500">{unit}</span>
-                                        </div>
+                                    <div className="mt-1.5 space-y-1.5">
+                                      <span className="text-sm text-green-700 font-bold block">
+                                        ₱{item.price_at_add}/{unit}
+                                      </span>
+                                      <div className="flex items-center gap-1.5">
+                                        <CartItemQuantityControl item={item} unit={unit} updateQuantity={updateQuantity} />
+                                        <span className="text-xs text-gray-500">{unit}</span>
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex flex-col items-end gap-2">
-                                    <p className="font-bold text-gray-800">
-                                      ₱{itemTotal}
-                                    </p>
+                                  <div className="flex flex-col items-end justify-between gap-2 self-stretch">
                                     <button
                                       onClick={() => handleRemove(item.id)}
                                       disabled={removingId === item.id}
@@ -665,6 +660,9 @@ export default function CartPage() {
                                         <Trash2 className="w-4 h-4" />
                                       )}
                                     </button>
+                                    <p className="font-bold text-gray-800">
+                                      ₱{itemTotal}
+                                    </p>
                                   </div>
                                 </div>
 
