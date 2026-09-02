@@ -11,19 +11,61 @@ function VerifyOtp() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+  const RESEND_COOLDOWN = 600; // 10 minutes, in seconds
+  const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
   const [canResend, setCanResend] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   const inputRefs = useRef([]);
 
-  const email = location.state?.email;
+  const PENDING_EMAIL_KEY = "anisave_otp_pending_email";
+
+  // location.state can, in some webviews, fail to survive a reload —
+  // fall back to a persisted copy so a refresh never force-logs the
+  // user back out to /login mid-verification.
+  const email = location.state?.email || sessionStorage.getItem(PENDING_EMAIL_KEY);
+
+  // Persist the *absolute* target time (not a tick count) so the
+  // countdown survives page refreshes, sleep/wake, and backgrounded
+  // tabs — all of which pause or reset a plain setTimeout-based timer.
+  const storageKey = email ? `anisave_otp_resend_until_${email}` : null;
+
+  const formatCountdown = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const getRemainingSeconds = () => {
+    if (!storageKey) return 0;
+    const target = Number(sessionStorage.getItem(storageKey));
+    if (!target) return 0;
+    return Math.max(0, Math.ceil((target - Date.now()) / 1000));
+  };
+
+  const startResendCooldown = () => {
+    if (!storageKey) return;
+    sessionStorage.setItem(storageKey, String(Date.now() + RESEND_COOLDOWN * 1000));
+    setCountdown(RESEND_COOLDOWN);
+    setCanResend(false);
+  };
 
   useEffect(() => {
     if (!email) {
       navigate("/login", { replace: true });
       return;
     }
+    sessionStorage.setItem(PENDING_EMAIL_KEY, email);
     inputRefs.current[0]?.focus();
+
+    // If we've been here before (e.g. page refreshed) and a cooldown
+    // is already stored, resume it instead of resetting to 10:00.
+    const remaining = getRemainingSeconds();
+    if (remaining > 0) {
+      setCountdown(remaining);
+      setCanResend(false);
+    } else {
+      startResendCooldown();
+    }
   }, [email, navigate]);
 
   useEffect(() => {
@@ -31,9 +73,34 @@ function VerifyOtp() {
       setCanResend(true);
       return;
     }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    // Re-derive from the stored timestamp every tick (rather than just
+    // decrementing) so drift from throttled/paused timers self-corrects.
+    const timer = setTimeout(() => {
+      const remaining = getRemainingSeconds();
+      setCountdown(remaining);
+      if (remaining <= 0) setCanResend(true);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [countdown]);
+
+  // When the laptop wakes from sleep or the tab regains focus, the
+  // background setTimeout may have been paused for way longer than
+  // 1s. Recompute immediately instead of waiting for the next tick.
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        const remaining = getRemainingSeconds();
+        setCountdown(remaining);
+        setCanResend(remaining <= 0);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleVisibility);
+    };
+  }, [email]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -105,6 +172,8 @@ function VerifyOtp() {
       // becomes truthy right as we navigate to /homepage. No earlier
       // page (login, OTP) ever saw a flash of being logged in.
       releaseAuthState();
+      if (storageKey) sessionStorage.removeItem(storageKey);
+      sessionStorage.removeItem(PENDING_EMAIL_KEY);
 
       // Manually sync AuthContext immediately rather than waiting on
       // the next onAuthStateChange tick — keeps things snappy on
@@ -160,8 +229,7 @@ function VerifyOtp() {
       toast.success("A new code has been sent to your email.");
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
-      setCountdown(60);
-      setCanResend(false);
+      startResendCooldown();
     } catch (err) {
       toast.error("Something went wrong. Please try again.");
     } finally {
@@ -242,7 +310,7 @@ function VerifyOtp() {
           ) : (
             <p className="text-gray-500 text-xs sm:text-sm">
               Resend code in{" "}
-              <span className="font-semibold text-green-700">{countdown}s</span>
+              <span className="font-semibold text-green-700">{formatCountdown(countdown)}</span>
             </p>
           )}
         </div>
@@ -251,7 +319,11 @@ function VerifyOtp() {
         <p className="text-center mt-4 text-gray-500 text-xs sm:text-sm">
           Wrong email?{" "}
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => {
+              if (storageKey) sessionStorage.removeItem(storageKey);
+              sessionStorage.removeItem(PENDING_EMAIL_KEY);
+              navigate("/login");
+            }}
             className="text-green-800 hover:text-green-900 font-medium"
           >
             Go back

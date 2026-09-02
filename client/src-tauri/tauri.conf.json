@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' tauri: asset: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.net https://router.huggingface.co https://api.elevenlabs.io; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' blob:; img-src 'self' asset: https: blob: data:; media-src 'self' blob:"
+      "csp": "default-src 'self' tauri: asset: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.net https://router.huggingface.co https://api.elevenlabs.io; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' blob: https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' asset: https: blob: data:; media-src 'self' blob:"
     }
   },
   "bundle": {
