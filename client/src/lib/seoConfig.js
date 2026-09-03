@@ -1,52 +1,56 @@
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { getSEOForPath, SITE_URL } from "../lib/seoConfig";
+// SEO metadata for public routes only. Any path not listed here —
+// protected pages, /admin, auth flow pages, 404s, unmatched dynamic
+// routes — falls through to the noindex default in getSEOForPath().
+// This is intentionally a whitelist, not a blocklist: a new protected
+// route added to Routes.jsx is automatically noindex without anyone
+// having to remember to add it here.
 
-function setMeta(attr, key, content) {
-  let el = document.querySelector(`meta[${attr}="${key}"]`);
-  if (!el) {
-    el = document.createElement("meta");
-    el.setAttribute(attr, key);
-    document.head.appendChild(el);
-  }
-  el.setAttribute("content", content);
-}
+export const SITE_URL = "https://anisave-webapp.vercel.app";
 
-function setCanonical(href) {
-  let el = document.querySelector('link[rel="canonical"]');
-  if (!el) {
-    el = document.createElement("link");
-    el.setAttribute("rel", "canonical");
-    document.head.appendChild(el);
-  }
-  el.setAttribute("href", href);
-}
+const DEFAULT_TITLE =
+  "AniSave";
+const DEFAULT_DESCRIPTION =
+  "AniSave connects Filipino farmers and buyers with real-time crop prices and a direct agricultural marketplace — know your prices like never before.";
+
+const PUBLIC_ROUTES_SEO = {
+  "/landing": {
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
+  "/faq": {
+    title: "FAQ – AniSave",
+    description:
+      "Answers to common questions about tracking agricultural market prices and connecting with buyers or farmers on AniSave.",
+  },
+  "/download": {
+    title: "Download AniSave",
+    description:
+      "Get AniSave for real-time agricultural market prices and a direct farmer-to-buyer marketplace.",
+  },
+  "/privacy": {
+    title: "Privacy Policy – AniSave",
+    description:
+      "Read AniSave's privacy policy to learn how your information is collected, used, and protected.",
+  },
+  "/terms": {
+    title: "Terms of Service – AniSave",
+    description: "Read the terms of service that govern your use of AniSave.",
+  },
+};
+
+const NOINDEX_FALLBACK = {
+  title: DEFAULT_TITLE,
+  description: DEFAULT_DESCRIPTION,
+};
 
 /**
- * Keeps <title>, meta description, meta robots, canonical link, and the
- * JS-visible Open Graph tags in sync with the current route.
- *
- * This app is a client-only SPA served from one index.html, so crawlers
- * or scrapers that don't execute JS (most social-share bots) always see
- * the static tags baked into index.html. This hook only updates what
- * JS-rendering crawlers (Googlebot, etc.) see after the app mounts —
- * index.html's static tags remain the safe, generic fallback for
- * everything else.
+ * Returns { title, description, index } for a given pathname.
+ * `index: true` only for the whitelisted public routes above.
  */
-export default function useSEO() {
-  const location = useLocation();
-
-  useEffect(() => {
-    const seo = getSEOForPath(location.pathname);
-    const canonicalUrl = `${SITE_URL}${location.pathname}`;
-
-    document.title = seo.title;
-    setMeta("name", "description", seo.description);
-    setMeta("name", "robots", seo.index ? "index, follow" : "noindex, nofollow");
-    setCanonical(canonicalUrl);
-
-    setMeta("property", "og:title", seo.title);
-    setMeta("property", "og:description", seo.description);
-    setMeta("property", "og:url", canonicalUrl);
-  }, [location.pathname]);
+export function getSEOForPath(pathname) {
+  const match = PUBLIC_ROUTES_SEO[pathname];
+  if (match) {
+    return { ...match, index: true };
+  }
+  return { ...NOINDEX_FALLBACK, index: false };
 }
