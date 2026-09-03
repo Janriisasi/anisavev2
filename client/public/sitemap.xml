@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://anisave-webapp.vercel.app/landing</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://anisave-webapp.vercel.app/download</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://anisave-webapp.vercel.app/faq</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://anisave-webapp.vercel.app/privacy</loc>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://anisave-webapp.vercel.app/terms</loc>
+    <priority>0.3</priority>
+  </url>
+</urlset>

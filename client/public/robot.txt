@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Auth flow pages — not useful search results, and reset-password can
+# carry a one-time token in the URL that shouldn't be crawled or cached.
+Disallow: /login
+Disallow: /signup
+Disallow: /verify-otp
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /complete-profile
+
+# Authenticated app pages — require a session, so there's nothing for a
+# crawler to see without one.
+Disallow: /homepage
+Disallow: /profile
+Disallow: /categories
+Disallow: /product/
+Disallow: /contacts
+Disallow: /farmer/
+Disallow: /cart
+Disallow: /chat
+Disallow: /notifications
+
+Sitemap: https://anisave-webapp.vercel.app/sitemap.xml

@@ -3,20 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Anisave - Know your prices like never before. A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops.">
-    
+    <meta name="description" content="AniSave connects Filipino farmers and buyers with real-time crop prices and a direct agricultural marketplace — know your prices like never before.">
+    <meta name="robots" content="index, follow">
+
     <title>AniSave</title>
-    
+
+    <!-- Canonical. This static file is served byte-identical for every
+         SPA route (client-side routing), so for crawlers that don't run
+         JS, every URL would otherwise look like duplicate content.
+         Pointing the static fallback at /landing consolidates that
+         signal onto the real public entry page. Routes.jsx itself is
+         crawlable/JS-rendered by Googlebot, which gets the correct
+         per-route canonical from useSEO instead — see src/hooks/useSEO.js. -->
+    <link rel="canonical" href="https://anisave-webapp.vercel.app/landing">
+
     <!-- DNS Prefetch & Preconnect for faster resource loading -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
+
     <!-- Preload Critical Images for LCP improvement -->
     <link rel="preload" as="image" href="/images/bg_feat.webp">
     <link rel="preload" as="image" href="/images/anisave_logo.webp">
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/images/anicon.png" />
 
@@ -32,16 +42,32 @@
     </noscript>
 
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="AniSave">
-    <meta property="og:description" content="A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops.">
-    <meta property="og:image" content="/images/anisave_logo.webp">
+    <meta property="og:site_name" content="AniSave">
+    <meta property="og:title" content="AniSave – Real-Time Agricultural Market Prices & Farmer-Buyer Marketplace">
+    <meta property="og:description" content="AniSave connects Filipino farmers and buyers with real-time crop prices and a direct agricultural marketplace — know your prices like never before.">
+    <meta property="og:image" content="https://anisave-webapp.vercel.app/images/anisave_logo.webp">
+    <meta property="og:url" content="https://anisave-webapp.vercel.app/landing">
     <meta property="og:type" content="website">
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="AniSave">
-    <meta name="twitter:description" content="A simple yet powerful tool designed to help farmers stay informed about real-time market prices for their crops.">
-    
+    <meta name="twitter:title" content="AniSave – Real-Time Agricultural Market Prices & Farmer-Buyer Marketplace">
+    <meta name="twitter:description" content="AniSave connects Filipino farmers and buyers with real-time crop prices and a direct agricultural marketplace — know your prices like never before.">
+    <meta name="twitter:image" content="https://anisave-webapp.vercel.app/images/anisave_logo.webp">
+
+    <!-- Structured Data — kept to fields we can state as fact (name, url,
+         description). No ratings, prices, or org/address details exist
+         to report, so none are included. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "AniSave",
+      "url": "https://anisave-webapp.vercel.app/",
+      "description": "AniSave connects Filipino farmers and buyers with real-time crop prices and a direct agricultural marketplace."
+    }
+    </script>
+
     <!-- Critical CSS - Inlined for faster FCP -->
     <style>
       * {

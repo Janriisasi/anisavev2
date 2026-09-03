@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/authContext";
 import { useAuth } from "./hooks/useAuth";
+import useSEO from "./hooks/useSEO";
 import { CartProvider } from "./contexts/cartContext";
 import { NotificationProvider } from "./contexts/notificationContext";
 import {
@@ -21,6 +22,10 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const { showTutorial, closeTutorial } = useTutorialContext();
+
+  // Keeps <title>, meta description/robots, canonical, and OG tags in
+  // sync with the current route — see src/hooks/useSEO.js.
+  useSEO();
 
   // Scroll to top on route change to prevent starting at the bottom of pages
   useEffect(() => {
