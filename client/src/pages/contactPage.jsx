@@ -305,7 +305,7 @@ export default function SavedContacts() {
           </>
         ) : contacts.length === 0 ? (
           <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
+            <div data-tutorial="contacts-list" className="text-center">
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-700 mb-2">
                 No saved contacts yet

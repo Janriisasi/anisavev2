@@ -11,7 +11,7 @@ import {
 import Navbar from "./components/navbar";
 import Routes from "./Routes";
 import Loader from "./components/loader";
-import TutorialOverlay from "./components/tutorialOverlay";
+import TutorialOverlay from './components/tutorial/tutorialOverlay';
 import toast, { Toaster } from "react-hot-toast";
 import { useEffect, useRef } from "react";
 import { onOpenUrl, getCurrent } from "@tauri-apps/plugin-deep-link";

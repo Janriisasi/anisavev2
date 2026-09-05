@@ -874,16 +874,14 @@ export default function Profile() {
 
         {/* Products section */}
         {activeSection === "products" && (
-          <div
-            data-tutorial="profile-products"
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20"
-          >
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-white/20">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
                 <Package className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />{" "}
                 Products
               </h2>
               <button
+                data-tutorial="profile-products"
                 onClick={handleAddProductClick}
                 className="px-2 py-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base flex-shrink-0 transition-all duration-200 bg-green-700 text-white hover:bg-green-800"
               >
@@ -1118,4 +1116,4 @@ export default function Profile() {
       />
     </div>
   );
-}
+}

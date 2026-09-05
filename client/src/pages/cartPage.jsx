@@ -493,7 +493,7 @@ export default function CartPage() {
 
         {/* Tabs */}
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex">
+          <div data-tutorial="cart-tabs" className="flex">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -555,7 +555,7 @@ export default function CartPage() {
                 />
               ) : (
                 <div className="space-y-6">
-                  {Object.values(cartBySeller).map(({ seller, items }) => {
+                  {Object.values(cartBySeller).map(({ seller, items }, index) => {
                     const groupTotal = items.reduce((s, i) => {
                       const availableQty = i.products?.quantity_kg || 0;
                       const isSoldOut =
@@ -566,6 +566,7 @@ export default function CartPage() {
                     return (
                       <motion.div
                         key={seller?.id}
+                        data-tutorial={index === 0 ? "cart-first-item" : undefined}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
