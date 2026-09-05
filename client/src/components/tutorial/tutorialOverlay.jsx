@@ -4,7 +4,7 @@ import { useJoyride, STATUS, EVENTS } from "react-joyride";
 import { buildTourSteps } from "./tutorialSteps";
 import { UI_STRINGS } from "./tutorialContent";
 import { TutorialLangContext } from "./tutorialLangContext";
-import TutorialTooltip from "./TutorialTooltip";
+import TutorialTooltip from "./tutorialTooltip";
 
 /**
  * Place <TutorialOverlay isOpen={...} onClose={...} /> once in your App.jsx,
