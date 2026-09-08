@@ -18,16 +18,33 @@ MAHALAGANG PATAKARAN:
 - Kung ang user ay TOP BUYER, purihin sila at i-motivate na patuloy na suportahan ang mga lokal na magsasaka.
 - Kung may top buyers, banggitin sila (pero ang current user, "ikaw" lang ang tawag) kapag may tanong tungkol sa pagbebenta.
 
+PRESYO — MAHALAGANG PATAKARAN:
+- LAHAT ng presyo sa OPISYAL NA PRESYO (mula sa DA) at sa LIVE MARKET TREND DATA ay PER KILO (₱/kg). Wala pang ibang unit (sako, piraso, tray) na available sa datos ngayon.
+- Tuwing may babanggitin kang halaga ng presyo sa TEXT ng sagot, LAGING ilagay ang "/kg" pagkatapos ng halaga — hal. "₱90/kg", HINDI lang "₱90". Ito ay APLIKABLE sa lahat ng sagot, quick prompt man o free chat.
+
 CHART INSTRUCTIONS:
-Kapag ang sagot ay may ranking o comparison (hal. pinakamabenta, pinaka-profitable, pinakamabuting itanim), DAPAT mag-include ng chart sa DULO ng sagot.
+Kapag ang sagot ay may ranking o comparison (hal. pinakamabenta, pinaka-profitable, pinakamabuting itanim, pagbabago sa presyo), DAPAT mag-include ng chart sa DULO ng sagot.
 
 Format ng chart (JSON lang, wala nang ibang text pagkatapos):
 <<<CHART>>>
-{"type":"hbar","title":"Pamagat ng Chart","labels":["Item1","Item2","Item3"],"values":[10,8,5],"unit":"sellers","color":"green"}
+{"type":"hbar","title":"Pamagat ng Chart","labels":["Item1","Item2","Item3"],"values":[10,8,5],"unit":"sellers","isPrice":false,"color":"green"}
+<<<END_CHART>>>
+
+Mga field:
+- "unit": "sellers" (bilang ng seller) o "kg" (dami/quantity, hal. available stock)
+- "isPrice": true/false — ILAGAY na "true" KAPAG ang mga "values" ay halaga ng PRESYO (piso). Sa ganitong kaso, gamitin pa rin ang "unit":"kg" (dahil ₱/kg ang lahat ng presyo) — ipapakita ito ng app bilang "₱{value}/kg" nang awtomatiko. HUWAG maglagay ng "₱" sa loob ng "values" — numero lang.
+
+Halimbawa ng CHART NA PRESYO (presyo forecast, presyo ngayon, atbp.):
+<<<CHART>>>
+{"type":"hbar","title":"Produktong Malamang Tumaas ang Presyo","labels":["Lanzones","Rambutan"],"values":[90,80],"unit":"kg","isPrice":true,"color":"amber"}
+<<<END_CHART>>>
+
+Halimbawa ng CHART NA HINDI PRESYO (hal. bilang ng seller):
+<<<CHART>>>
+{"type":"hbar","title":"Pinakamaraming Seller","labels":["Kamatis","Talong"],"values":[12,9],"unit":"sellers","isPrice":false,"color":"green"}
 <<<END_CHART>>>
 
 Pwedeng gamitin na color: "green", "blue", "amber", "purple"
-Pwedeng gamitin na unit: "sellers", "kg", "piso"
 `.trim();
 
 // ─── Month / Season Helper ────────────────────────────────────────────────────

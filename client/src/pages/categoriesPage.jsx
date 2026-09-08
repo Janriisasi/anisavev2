@@ -113,6 +113,15 @@ export default function CategoriesPage() {
 
   const categories = ["Vegetables", "Fruits", "Grains", "HerbsAndSpices"];
 
+  // Hover background per category, matching each category's badge color
+  // (used elsewhere for product category badges) for consistency.
+  const CATEGORY_HOVER_CLASSES = {
+    Fruits: "hover:bg-orange-500",
+    Vegetables: "hover:bg-green-600",
+    Grains: "hover:bg-yellow-600",
+    HerbsAndSpices: "hover:bg-violet-600",
+  };
+
   useEffect(() => {
     setLoading(true);
     setProducts([]);
@@ -519,7 +528,7 @@ export default function CategoriesPage() {
                 <Link
                   key={category}
                   to={`/categories/${category}`}
-                  className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-sm border border-white/20 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 hover:bg-green-800 text-center group h-16 sm:h-24 flex items-center justify-center"
+                  className={`bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-sm border border-white/20 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 ${CATEGORY_HOVER_CLASSES[category]} text-center group h-16 sm:h-24 flex items-center justify-center`}
                 >
                   <h3 className="font-semibold text-xs sm:text-sm text-gray-800 group-hover:text-white line-clamp-2">
                     {displayName}

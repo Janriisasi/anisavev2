@@ -19,6 +19,24 @@ import toast from "react-hot-toast";
 import usePullToRefresh from "../hooks/usePullToRefresh";
 import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
+// Category → badge color mapping, for quick visual distinction between
+// product categories (Fruits, Vegetables, Grains, Herbs & Spices).
+const CATEGORY_BADGE_STYLES = {
+  Fruits: { label: "Fruits", classes: "bg-orange-100 text-orange-700" },
+  Vegetables: { label: "Vegetables", classes: "bg-green-100 text-green-700" },
+  Grains: { label: "Grains", classes: "bg-yellow-100 text-yellow-700" },
+  HerbsAndSpices: {
+    label: "Herbs & Spices",
+    classes: "bg-violet-100 text-violet-700",
+  },
+};
+
+const getCategoryBadge = (category) =>
+  CATEGORY_BADGE_STYLES[category] || {
+    label: category,
+    classes: "bg-gray-100 text-gray-600",
+  };
+
 export default function ProductSellersPage() {
   const { productName } = useParams();
   const [product, setProduct] = useState(null);
@@ -285,8 +303,7 @@ export default function ProductSellersPage() {
     );
   }
 
-  const categoryLabel =
-    product.category === "HerbsAndSpices" ? "Herbs & Spices" : product.category;
+  const categoryBadge = getCategoryBadge(product.category);
 
   return (
     <div className="min-h-screen bg-[#f9fafb]">
@@ -348,8 +365,10 @@ export default function ProductSellersPage() {
 
                 {/* Category badge + price */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="inline-block bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
-                    {categoryLabel}
+                  <span
+                    className={`inline-block text-xs font-medium px-3 py-1 rounded-full ${categoryBadge.classes}`}
+                  >
+                    {categoryBadge.label}
                   </span>
                   <span className="text-[#1a5c2a] font-bold text-lg">
                     ₱{product.price}/kg

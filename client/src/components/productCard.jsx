@@ -2,6 +2,24 @@ import { useNavigate } from "react-router-dom";
 import { useMarketPrices } from "../contexts/marketPricesContext";
 import StartChatButton from "../components/startChatButton";
 
+// Category → badge color mapping, for quick visual distinction between
+// product categories (Fruits, Vegetables, Grains, Herbs & Spices).
+const CATEGORY_BADGE_STYLES = {
+  Fruits: { label: "Fruits", classes: "bg-orange-100 text-orange-700" },
+  Vegetables: { label: "Vegetables", classes: "bg-green-100 text-green-700" },
+  Grains: { label: "Grains", classes: "bg-yellow-100 text-yellow-700" },
+  HerbsAndSpices: {
+    label: "Herbs & Spices",
+    classes: "bg-violet-100 text-violet-700",
+  },
+};
+
+const getCategoryBadge = (category) =>
+  CATEGORY_BADGE_STYLES[category] || {
+    label: category,
+    classes: "bg-gray-100 text-gray-600",
+  };
+
 export default function ProductCard({
   product,
   onSaveContact,
@@ -57,7 +75,13 @@ export default function ProductCard({
       <div className="p-5 space-y-3">
         <div className="">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
-            <span>{category === "HerbsAndSpices" ? "Herbs & Spices" : category}</span>
+            <span
+              className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                getCategoryBadge(category).classes
+              }`}
+            >
+              {getCategoryBadge(category).label}
+            </span>
             {product.negotiable && (
               <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
                 Negotiable

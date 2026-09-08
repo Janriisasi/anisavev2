@@ -23,7 +23,6 @@ import {
   LOADING_MESSAGES,
   DEFAULT_LOADING,
   CHART_COLORS,
-  MEDALS,
   getGreeting,
 } from "../utils/aiConstants";
 
@@ -67,12 +66,16 @@ SlideshowLoader.displayName = "SlideshowLoader";
 // ─── Animated Horizontal Bar Chart ───────────────────────────────────────────
 const TrendChart = memo(({ chartData }) => {
   if (!chartData) return null;
-  const { title, labels, values, unit, color = "green" } = chartData;
+  const { title, labels, values, unit, isPrice, color = "green" } = chartData;
   const c = CHART_COLORS[color] || CHART_COLORS.green;
   const maxVal = Math.max(...values, 1);
 
+  // All AniSave price data (official DA prices + live trend avg price) is
+  // quoted per kilogram, so any chart flagged isPrice always renders as
+  // "₱{value}/kg" — never a bare peso figure with no unit.
   const formatVal = (v) => {
-    if (unit === "piso") return `₱${v}`;
+    if (isPrice) return `₱${v}/${unit || "kg"}`;
+    if (unit === "piso") return `₱${v}`; // legacy cached responses (pre-fix)
     if (unit === "kg") return `${v} kg`;
     return `${v} ${unit}`;
   };
@@ -101,7 +104,9 @@ const TrendChart = memo(({ chartData }) => {
             <div key={i}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                  <span className="text-sm">{MEDALS[i] ?? `#${i + 1}`}</span>
+                  <span className="text-sm font-semibold text-gray-500">
+                    #{i + 1}
+                  </span>
                   {label}
                 </span>
                 <span
@@ -244,7 +249,7 @@ const TrendingSection = memo(
                   const isMe = userId && b.id === userId;
                   return (
                     <span key={b.id}>
-                      {MEDALS[i] ?? `#${i + 1}`}{" "}
+                      #{i + 1}{" "}
                       <strong>{isMe ? "Ikaw" : b.name}</strong> ({b.orderCount}{" "}
                       orders)
                       {i < topBuyers.length - 1 ? "  ·  " : ""}
@@ -453,7 +458,7 @@ const IdleSlideshow = memo(
                         const isMe = userId && b.id === userId;
                         return (
                           <span key={b.id}>
-                            {MEDALS[i] ?? `#${i + 1}`}{" "}
+                            #{i + 1}{" "}
                             <strong>{isMe ? "Ikaw" : b.name}</strong> (
                             {b.orderCount} orders)
                             {i < topBuyers.length - 1 ? "  ·  " : ""}

@@ -1,5 +1,8 @@
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours in ms
-const KEY_PREFIX = "ai_cache_";
+// v2: bumped prefix so stale pre-fix cache entries (missing the ₱/kg unit
+// on price charts) are treated as a miss instead of being served for up to
+// 6 more hours after this fix ships.
+const KEY_PREFIX = "ai_cache_v2_";
 const QUICK_KEYS = ["plant", "price", "sell", "tips"];
 
 // ─── Read ─────────────────────────────────────────────────────────────────────

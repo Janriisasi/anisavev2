@@ -29,6 +29,24 @@ import {
 import usePullToRefresh from "../hooks/usePullToRefresh";
 import PullToRefreshIndicator from "../components/pullToRefreshIndicator";
 
+// Category → badge color mapping, for quick visual distinction between
+// product categories (Fruits, Vegetables, Grains, Herbs & Spices).
+const CATEGORY_BADGE_STYLES = {
+  Fruits: { label: "Fruits", classes: "bg-orange-100 text-orange-700" },
+  Vegetables: { label: "Vegetables", classes: "bg-green-100 text-green-700" },
+  Grains: { label: "Grains", classes: "bg-yellow-100 text-yellow-700" },
+  HerbsAndSpices: {
+    label: "Herbs & Spices",
+    classes: "bg-violet-100 text-violet-700",
+  },
+};
+
+const getCategoryBadge = (category) =>
+  CATEGORY_BADGE_STYLES[category] || {
+    label: category,
+    classes: "bg-gray-100 text-gray-600",
+  };
+
 const loadedImageCache = new Set();
 
 const ProductImage = ({ src, alt }) => {
@@ -985,9 +1003,13 @@ export default function Profile() {
                         <h3 className="font-bold text-gray-800 text-lg mb-1 truncate">
                           {product.name}
                         </h3>
-                        <p className="text-gray-600 text-sm">
-                          {product.category}
-                        </p>
+                        <span
+                          className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            getCategoryBadge(product.category).classes
+                          }`}
+                        >
+                          {getCategoryBadge(product.category).label}
+                        </span>
                       </div>
                       <div className="mb-2">
                         <span className="text-green-600 font-bold text-lg block">

@@ -2,6 +2,24 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import supabase from '../lib/supabase';
 
+// Category → badge color mapping, for quick visual distinction between
+// product categories (Fruits, Vegetables, Grains, Herbs & Spices).
+const CATEGORY_BADGE_STYLES = {
+  Fruits: { label: 'Fruits', classes: 'bg-orange-100 text-orange-700' },
+  Vegetables: { label: 'Vegetables', classes: 'bg-green-100 text-green-700' },
+  Grains: { label: 'Grains', classes: 'bg-yellow-100 text-yellow-700' },
+  HerbsAndSpices: {
+    label: 'Herbs & Spices',
+    classes: 'bg-violet-100 text-violet-700',
+  },
+};
+
+const getCategoryBadge = (category) =>
+  CATEGORY_BADGE_STYLES[category] || {
+    label: category,
+    classes: 'bg-gray-100 text-gray-600',
+  };
+
 export default function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -53,7 +71,13 @@ export default function ProductDetails() {
             </span>
           )}
         </div>
-        <p className="text-gray-600 text-sm mb-2">Category: {product.category}</p>
+        <span
+          className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-2 ${
+            getCategoryBadge(product.category).classes
+          }`}
+        >
+          {getCategoryBadge(product.category).label}
+        </span>
         <p className="text-xl font-semibold mb-4">₱{product.price} / {unit}</p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 text-sm">
