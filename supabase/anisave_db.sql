@@ -1323,6 +1323,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER PUBLICATION supabase_realtime ADD TABLE cart_items;
 ALTER PUBLICATION supabase_realtime ADD TABLE orders;
 ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+ALTER PUBLICATION supabase_realtime ADD TABLE conversations;
+ALTER PUBLICATION supabase_realtime ADD TABLE user_presence;
 
 -- ============================================================
 -- DONE. Tables created:

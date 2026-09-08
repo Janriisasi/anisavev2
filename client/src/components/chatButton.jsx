@@ -6,6 +6,7 @@ import supabase from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useIsMobile } from '../hooks/useIsMobile';
 import ChatPopup from './chatPopup';
+import toast from 'react-hot-toast';
 
 /**
  * ChatButton — renders the chat action in three variants:
@@ -61,17 +62,76 @@ export default function ChatButton({
 
     fetchUnreadCount();
 
-    const channel = supabase
-      .channel('messages-updates')
+    // 1. Instant notification broadcast on user-chat channel
+    const userMsgChannel = supabase
+      .channel(`user-chat:${user.id}`, {
+        config: { broadcast: { ack: false } },
+      })
+      .on('broadcast', { event: 'incoming_message' }, ({ payload }) => {
+        fetchUnreadCount();
+
+        // If user is not currently inside this conversation, pop up an in-app notification toast
+        if (
+          payload &&
+          payload.conversation_id &&
+          window.__currentActiveConversationId !== payload.conversation_id
+        ) {
+          const rawContent = payload.message?.content || '';
+          const preview = rawContent
+            .replace(/\[IMAGE:.*?\]/g, '📷 Image')
+            .replace(/\[PRODUCT_CONTEXT:.*?\]/g, '')
+            .replace(/\[ORDER_CONFIRM:.*?\]/g, '📦 Order')
+            .trim() || 'Sent an attachment';
+
+          toast(
+            (t) => (
+              <div
+                className="flex items-center gap-3 cursor-pointer py-0.5"
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  if (isMobile) {
+                    navigate('/chat');
+                  } else {
+                    setOpenState(true);
+                  }
+                }}
+              >
+                <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 text-green-700 font-bold">
+                  💬
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-900 truncate">
+                    {payload.sender_name || 'New Message'}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{preview}</p>
+                </div>
+              </div>
+            ),
+            {
+              id: `chat-notif-${payload.message?.id || Date.now()}`,
+              duration: 4500,
+              position: 'top-right',
+            }
+          );
+        }
+      })
+      .subscribe();
+
+    // 2. Database changes on messages
+    const dbChannel = supabase
+      .channel(`messages-updates:${user.id}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `recipient_id=eq.${user.id}`,
         },
-        () => fetchUnreadCount()
+        (payload) => {
+          if (payload.new?.recipient_id === user.id) {
+            fetchUnreadCount();
+          }
+        }
       )
       .on(
         'postgres_changes',
@@ -79,11 +139,23 @@ export default function ChatButton({
           event: 'UPDATE',
           schema: 'public',
           table: 'messages',
-          filter: `recipient_id=eq.${user.id}`,
         },
-        () => fetchUnreadCount()
+        (payload) => {
+          if (payload.new?.recipient_id === user.id) {
+            fetchUnreadCount();
+          }
+        }
       )
       .subscribe();
+
+    // 3. Auto-refresh when tab/phone becomes active (mobile screen unlock / app switch)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchUnreadCount();
+    };
+    const handleUnreadChanged = () => fetchUnreadCount();
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('chatUnreadChanged', handleUnreadChanged);
 
     /**
      * openChat event — dispatched by StartChatButton.
@@ -115,11 +187,14 @@ export default function ChatButton({
     window.addEventListener('openChat', handleOpenChat);
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(userMsgChannel);
+      supabase.removeChannel(dbChannel);
       window.removeEventListener('openChat', handleOpenChat);
+      window.removeEventListener('chatUnreadChanged', handleUnreadChanged);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, isMobile, mobileTab, mobileMenu]);
+  }, [user?.id, isMobile, mobileTab, mobileMenu]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;

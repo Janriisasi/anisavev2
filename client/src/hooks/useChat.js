@@ -22,11 +22,13 @@ export function useChat({ isActive = true } = {}) {
   const channelRef = useRef(null);
 
   // ─── Fetch all conversations with last-message + unread counts ──────────────
-  const fetchConversations = useCallback(async () => {
+  const fetchConversations = useCallback(async (isInitial = false) => {
     if (!user) return;
 
     try {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      }
 
       const { data: convos, error } = await supabase
         .from('conversations')
@@ -84,7 +86,9 @@ export function useChat({ isActive = true } = {}) {
     } catch (err) {
       console.error('useChat — error fetching conversations:', err);
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      }
     }
   }, [user]);
 
@@ -92,36 +96,62 @@ export function useChat({ isActive = true } = {}) {
   useEffect(() => {
     if (!isActive || !user) return;
 
-    fetchConversations();
+    fetchConversations(true);
 
-    const channel = supabase
-      .channel('use-chat-conversations')
+    // 1. Broadcast channel for instantaneous notification of new messages
+    const userNotifyChannel = supabase
+      .channel(`user-chat:${user.id}`, {
+        config: { broadcast: { ack: false } },
+      })
+      .on('broadcast', { event: 'incoming_message' }, () => {
+        fetchConversations(false);
+      })
+      .subscribe();
+
+    // 2. Database changes on conversations and messages
+    const dbChannel = supabase
+      .channel(`use-chat-db:${user.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'conversations' },
-        () => fetchConversations()
+        () => fetchConversations(false)
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
           if (
-            payload.new.sender_id === user.id ||
-            payload.new.recipient_id === user.id
+            payload.new?.sender_id === user.id ||
+            payload.new?.recipient_id === user.id
           ) {
-            fetchConversations();
+            fetchConversations(false);
           }
         }
       )
       .subscribe();
 
-    channelRef.current = channel;
+    // 3. Auto-refresh when tab becomes visible (silent background update)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchConversations(false);
+      }
+    };
+
+    // 4. Custom event from local actions
+    const handleUnreadChanged = () => {
+      fetchConversations(false);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('chatUnreadChanged', handleUnreadChanged);
 
     return () => {
-      channel.unsubscribe();
-      channelRef.current = null;
+      supabase.removeChannel(userNotifyChannel);
+      supabase.removeChannel(dbChannel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('chatUnreadChanged', handleUnreadChanged);
     };
-  }, [isActive, user, fetchConversations]);
+  }, [isActive, user?.id, fetchConversations]);
 
   // ─── Derived state ───────────────────────────────────────────────────────────
   const filteredConversations = conversations.filter(
@@ -141,7 +171,7 @@ export function useChat({ isActive = true } = {}) {
 
   const handleBackToList = useCallback(() => {
     setSelectedConversation(null);
-    fetchConversations(); // Refresh unread counts after exiting a chat
+    fetchConversations(false); // Silent refresh unread counts after exiting a chat
   }, [fetchConversations]);
 
   return {

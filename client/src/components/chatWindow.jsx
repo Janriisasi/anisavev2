@@ -52,6 +52,7 @@ export default function ChatWindow({
   const typingTimeoutRef = useRef(null);
   const otherTypingTimeoutRef = useRef(null);
   const typingChannelRef = useRef(null);
+  const msgChannelRef = useRef(null);
   const inputRef = useRef(null);
   const channelsRef = useRef([]);
   // Product context card — shown at top of chat when opened from a product
@@ -78,15 +79,26 @@ export default function ChatWindow({
 
   // ─── Cleanup helper ──────────────────────────────────────────────────────────
   const cleanupChannels = useCallback(() => {
-    channelsRef.current.forEach((ch) => ch.unsubscribe());
+    channelsRef.current.forEach((ch) => {
+      try {
+        supabase.removeChannel(ch);
+      } catch (err) {
+        console.error("Error removing channel:", err);
+      }
+    });
     channelsRef.current = [];
+    msgChannelRef.current = null;
+    typingChannelRef.current = null;
   }, []);
 
   // ─── Main setup ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!conversation || !user) return;
 
-    fetchMessages();
+    // Track active conversation globally so in-app toasts aren't shown for current chat
+    window.__currentActiveConversationId = conversation.id;
+
+    fetchMessages(true);
     markAsRead();
     fetchPresence();
     checkIfSaved();
@@ -99,39 +111,53 @@ export default function ChatWindow({
     };
     document.addEventListener("mousedown", handleClickOutside);
 
-    // ── 1. Real-time messages ─────────────────────────────────────────────────
-    // IMPORTANT: We intentionally omit the `filter` from postgres_changes.
-    // Supabase row-level filters on realtime require the filtered column to be
-    // part of the table's REPLICA IDENTITY — if it isn't, the subscription
-    // silently receives nothing. By listening to ALL inserts on the messages
-    // table and filtering in JS, we guarantee delivery regardless of DB config.
+    // ── 1. Real-time messages (Instant Broadcast + DB Postgres Changes) ────────
+    const handleIncomingMessage = (incoming) => {
+      if (!incoming || incoming.conversation_id !== conversation.id) return;
+      if (incoming.sender_id === user.id) return;
+
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === incoming.id)) return prev;
+        return [...prev, incoming];
+      });
+
+      markAsRead();
+      scrollToBottom();
+    };
 
     const msgChannel = supabase
-      .channel(`chat-messages:${conversation.id}`)
+      .channel(`chat-room:${conversation.id}`, {
+        config: {
+          broadcast: { ack: false, self: false },
+        },
+      })
+      .on("broadcast", { event: "new_message" }, (payload) => {
+        handleIncomingMessage(payload.payload?.message);
+      })
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          // NO filter here — we filter in the callback instead
         },
         (payload) => {
-          const incoming = payload.new;
-
-          // JS-side filter: only messages for this conversation
-          if (incoming.conversation_id !== conversation.id) return;
-
-          // Skip own messages — already added optimistically in sendMessage
-          if (incoming.sender_id === user.id) return;
-
-          setMessages((prev) => {
-            if (prev.find((m) => m.id === incoming.id)) return prev;
-            return [...prev, incoming];
-          });
-
-          markAsRead();
-          scrollToBottom();
+          handleIncomingMessage(payload.new);
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const updated = payload.new;
+          if (!updated || updated.conversation_id !== conversation.id) return;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)),
+          );
         },
       )
       .subscribe((status) => {
@@ -142,9 +168,10 @@ export default function ChatWindow({
         }
       });
 
+    msgChannelRef.current = msgChannel;
     channelsRef.current.push(msgChannel);
 
-    // Always-on polling safety net (every 4 s) — catches any messages that
+    // Fast polling safety net (every 2.5 s) — catches any messages that
     // slip through if realtime is flaky. Deduplication prevents duplicates.
     startPollingFallback();
 
@@ -194,14 +221,26 @@ export default function ChatWindow({
 
     channelsRef.current.push(typingChannel);
 
-    // ── 4. Refresh presence every 30 s to catch stale records ─────────────────
+    // ── 4. Auto-refresh when tab/phone becomes active (mobile screen unlock / app switch) ──
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchMessages(false);
+        fetchPresence();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // ── 5. Refresh presence every 30 s to catch stale records ─────────────────
     const presenceTimer = setInterval(fetchPresence, 30_000);
 
     return () => {
+      window.__currentActiveConversationId = null;
       cleanupChannels();
       clearInterval(presenceTimer);
       stopPollingFallback();
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [conversation.id, user?.id]); // stable deps — avoids re-subscribing on every render
 
@@ -239,7 +278,7 @@ export default function ChatWindow({
       } catch (e) {
         console.error("Polling error:", e);
       }
-    }, 4000); // every 4 s
+    }, 2500); // every 2.5 s
   };
 
   const stopPollingFallback = () => {
@@ -250,9 +289,11 @@ export default function ChatWindow({
   };
 
   // ─── Data fetchers ────────────────────────────────────────────────────────────
-  const fetchMessages = async () => {
+  const fetchMessages = async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      }
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -299,9 +340,13 @@ export default function ChatWindow({
       }
     } catch (error) {
       console.error("Error fetching messages:", error);
-      toast.error("Failed to load messages");
+      if (isInitial) {
+        toast.error("Failed to load messages");
+      }
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      }
     }
   };
 
@@ -413,6 +458,7 @@ export default function ChatWindow({
       });
       const { data } = await supabase.rpc("get_unread_count");
       if (onUnreadChange) onUnreadChange(data || 0);
+      window.dispatchEvent(new CustomEvent("chatUnreadChanged"));
     } catch (error) {
       console.error("Error marking as read:", error);
     }
@@ -564,6 +610,45 @@ export default function ChatWindow({
 
       inputRef.current?.focus();
       scrollToBottom();
+
+      // 1. Instant peer-to-peer broadcast to conversation room
+      try {
+        if (msgChannelRef.current) {
+          msgChannelRef.current.send({
+            type: "broadcast",
+            event: "new_message",
+            payload: { message: data },
+          });
+        }
+      } catch (broadcastErr) {
+        console.warn("Failed to broadcast message to room:", broadcastErr);
+      }
+
+      // 2. Instant notification to recipient user channel (updates their badge/list immediately)
+      try {
+        const notifyChannel = supabase.channel(`user-chat:${otherUser.id}`, {
+          config: { broadcast: { ack: false } },
+        });
+        notifyChannel.subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            notifyChannel.send({
+              type: "broadcast",
+              event: "incoming_message",
+              payload: {
+                message: data,
+                conversation_id: conversation.id,
+                sender_id: user.id,
+                sender_name: user.user_metadata?.full_name || user.email,
+              },
+            });
+            setTimeout(() => supabase.removeChannel(notifyChannel), 1500);
+          }
+        });
+      } catch (notifyErr) {
+        console.warn("Failed to notify recipient user channel:", notifyErr);
+      }
+
+      window.dispatchEvent(new CustomEvent("chatUnreadChanged"));
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");

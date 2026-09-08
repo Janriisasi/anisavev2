@@ -102,7 +102,7 @@ export default function ChatConversationList({
     });
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
       typingChannels.forEach((ch) => supabase.removeChannel(ch));
     };
   }, [conversations, user?.id]);

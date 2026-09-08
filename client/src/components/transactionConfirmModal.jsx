@@ -93,13 +93,57 @@ export default function OrderConfirmModal({ cartItem, onClose, onSuccess }) {
         image_url: snapshot.image_url,
       })}]\nI'd like to confirm my order of ${cartItem.quantity_kg} ${snapshot.unit} of ${snapshot.name} at ₱${cartItem.price_at_add}/${snapshot.unit}. Total: ₱${total}. Please review my order request!`;
 
-      await supabase.from('messages').insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        recipient_id: recipientId,
-        content: msgContent,
-        read: false,
-      });
+      const { data: insertedMsg } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          recipient_id: recipientId,
+          content: msgContent,
+          read: false,
+        })
+        .select()
+        .single();
+
+      // Broadcast order message instantly so farmer sees it pop up in chat/dashboard
+      try {
+        const roomChannel = supabase.channel(`chat-room:${conversationId}`, {
+          config: { broadcast: { ack: false } },
+        });
+        roomChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            roomChannel.send({
+              type: 'broadcast',
+              event: 'new_message',
+              payload: { message: insertedMsg },
+            });
+            setTimeout(() => supabase.removeChannel(roomChannel), 1500);
+          }
+        });
+
+        const userNotifyChannel = supabase.channel(`user-chat:${recipientId}`, {
+          config: { broadcast: { ack: false } },
+        });
+        userNotifyChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            userNotifyChannel.send({
+              type: 'broadcast',
+              event: 'incoming_message',
+              payload: {
+                message: insertedMsg,
+                conversation_id: conversationId,
+                sender_id: user.id,
+                sender_name: user.user_metadata?.full_name || user.email,
+              },
+            });
+            setTimeout(() => supabase.removeChannel(userNotifyChannel), 1500);
+          }
+        });
+      } catch (bErr) {
+        console.warn('Realtime broadcast failed in order confirm:', bErr);
+      }
+
+      window.dispatchEvent(new CustomEvent('chatUnreadChanged'));
 
       // 5. Remove from cart
       await supabase.from('cart_items').delete().eq('id', cartItem.id).eq('buyer_id', user.id);

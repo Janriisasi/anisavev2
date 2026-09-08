@@ -24,21 +24,30 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
   useEffect(() => {
     if (!isOpen || !user) return;
 
-    fetchConversations();
+    fetchConversations(true);
 
-    // Subscribe to conversation updates
-    const channel = supabase
-      .channel('conversations-updates')
+    // 1. Broadcast channel for instantaneous notification of new messages
+    const userNotifyChannel = supabase
+      .channel(`user-chat:${user.id}`, {
+        config: { broadcast: { ack: false } },
+      })
+      .on('broadcast', { event: 'incoming_message' }, () => {
+        fetchConversations(false);
+      })
+      .subscribe();
+
+    // 2. Database changes on conversations and messages
+    const dbChannel = supabase
+      .channel(`chat-popup-db:${user.id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'conversations',
-          filter: `participant_1=eq.${user.id},participant_2=eq.${user.id}`
         },
         () => {
-          fetchConversations();
+          fetchConversations(false);
         }
       )
       .on(
@@ -46,27 +55,33 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages'
+          table: 'messages',
         },
         (payload) => {
-          // Update conversation list when new message arrives
-          if (payload.new.sender_id === user.id || payload.new.recipient_id === user.id) {
-            fetchConversations();
+          if (payload.new?.sender_id === user.id || payload.new?.recipient_id === user.id) {
+            fetchConversations(false);
           }
         }
       )
       .subscribe();
 
-    return () => {
-      channel.unsubscribe();
+    const handleUnreadChanged = () => {
+      fetchConversations(false);
     };
-  }, [isOpen, user]);
+    window.addEventListener('chatUnreadChanged', handleUnreadChanged);
 
-  const fetchConversations = async () => {
+    return () => {
+      supabase.removeChannel(userNotifyChannel);
+      supabase.removeChannel(dbChannel);
+      window.removeEventListener('chatUnreadChanged', handleUnreadChanged);
+    };
+  }, [isOpen, user?.id]);
+
+  const fetchConversations = async (isInitial = false) => {
     if (!user) return;
 
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
 
       // Fetch conversations where user is participant
       const { data: convos, error } = await supabase
@@ -100,7 +115,7 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
             .eq('conversation_id', conv.id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           // Get unread count
           const { count: unreadCount } = await supabase
@@ -123,7 +138,7 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
