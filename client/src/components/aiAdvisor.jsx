@@ -63,83 +63,7 @@ const SlideshowLoader = memo(({ promptKey }) => {
 });
 SlideshowLoader.displayName = "SlideshowLoader";
 
-// ─── Animated Horizontal Bar Chart ───────────────────────────────────────────
-const TrendChart = memo(({ chartData }) => {
-  if (!chartData) return null;
-  const { title, labels, values, unit, isPrice, color = "green" } = chartData;
-  const c = CHART_COLORS[color] || CHART_COLORS.green;
-  const maxVal = Math.max(...values, 1);
-
-  // All AniSave price data (official DA prices + live trend avg price) is
-  // quoted per kilogram, so any chart flagged isPrice always renders as
-  // "₱{value}/kg" — never a bare peso figure with no unit.
-  const formatVal = (v) => {
-    if (isPrice) return `₱${v}/${unit || "kg"}`;
-    if (unit === "piso") return `₱${v}`; // legacy cached responses (pre-fix)
-    if (unit === "kg") return `${v} kg`;
-    return `${v} ${unit}`;
-  };
-
-  return (
-    <motion.div
-      className="mt-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
-      style={{ background: c.bg }}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15, duration: 0.4 }}
-    >
-      <div
-        className="px-4 py-2.5 flex items-center gap-2"
-        style={{ background: c.header }}
-      >
-        <BarChart2 size={13} style={{ color: c.text }} />
-        <span className="text-xs font-semibold" style={{ color: c.text }}>
-          {title}
-        </span>
-      </div>
-      <div className="px-4 py-3 space-y-3">
-        {labels.map((label, i) => {
-          const pct = (values[i] / maxVal) * 100;
-          return (
-            <div key={i}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                  <span className="text-sm font-semibold text-gray-500">
-                    #{i + 1}
-                  </span>
-                  {label}
-                </span>
-                <span
-                  className="text-xs font-bold tabular-nums"
-                  style={{ color: c.text }}
-                >
-                  {formatVal(values[i])}
-                </span>
-              </div>
-              <div
-                className="w-full rounded-full overflow-hidden"
-                style={{ height: 10, background: c.track }}
-              >
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: c.bar, opacity: i === 0 ? 1 : 0.75 }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.max(pct, 3)}%` }}
-                  transition={{
-                    delay: 0.1 + i * 0.06,
-                    duration: 0.55,
-                    ease: "easeOut",
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-});
-TrendChart.displayName = "TrendChart";
+import { TrendChart } from "./trendChart";
 
 // ─── Trending Section ─────────────────────────────────────────────────────────
 const TrendingSection = memo(
@@ -592,7 +516,7 @@ const ChatBubble = memo(({ msg }) => {
         </div>
       )}
       <div
-        className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-sm ${
+        className={`${msg.chartData ? "max-w-[94%] sm:max-w-[85%]" : "max-w-[80%]"} rounded-2xl px-2.5 sm:px-3.5 py-2.5 text-xs leading-relaxed shadow-sm ${
           isUser
             ? "bg-green-700 text-white rounded-br-sm"
             : "bg-white border border-gray-100 text-gray-800 rounded-bl-sm"
@@ -704,7 +628,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
 
         {/* ── Unified Slideshow Box (Greeting · Market Trends · Trending · etc.) ── */}
         {trendReady && (
-          <div className="bg-white rounded-2xl px-2.5 pt-2 pb-2.5 sm:px-3 sm:pt-2.5 sm:pb-3">
+          <div className="bg-white rounded-2xl pt-2 pb-2.5 sm:pt-2.5 sm:pb-3">
             <IdleSlideshow
               userName={userName}
               myProducts={myProducts}
@@ -745,14 +669,14 @@ const AiAdvisor = ({ myProducts = [] }) => {
                 {!loading && !showChat && (response || error) && (
                   <motion.div
                     key="response"
-                    className="mx-3 mb-3 rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-white"
+                    className="mx-2 sm:mx-3 mb-3 rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-white"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
                     {activePrompt && !error && (
-                      <div className="bg-green-700 px-4 py-2 flex items-center gap-2">
+                      <div className="bg-green-700 px-3 sm:px-4 py-2 flex items-center gap-2">
                         <span className="text-base">{activePrompt.emoji}</span>
                         <span className="text-white text-xs font-semibold">
                           {activePrompt.label}
@@ -770,7 +694,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
                         <span>{error}</span>
                       </div>
                     ) : (
-                      <div className="px-4 py-3 text-sm text-gray-800 leading-relaxed">
+                      <div className="px-2.5 sm:px-4 py-3 text-sm text-gray-800 leading-relaxed">
                         <MarkdownText text={response} />
                         {chartData && <TrendChart chartData={chartData} />}
                       </div>
@@ -782,12 +706,12 @@ const AiAdvisor = ({ myProducts = [] }) => {
                 {showChat && (
                   <motion.div
                     key="chat"
-                    className="mx-3 mb-3 mt-3"
+                    className="mx-2 sm:mx-3 mb-3 mt-3"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <div className="px-3 py-3 space-y-3 max-h-72 overflow-y-auto">
+                    <div className="px-1.5 sm:px-3 py-3 space-y-3 max-h-72 overflow-y-auto">
                       {chatHistory.map((msg, i) => (
                         <ChatBubble key={i} msg={msg} />
                       ))}
@@ -806,7 +730,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
               {!showChat && (
                 <motion.div
                   key="quick-prompts"
-                  className="grid grid-cols-2 gap-2.5 px-3 pt-2 pb-3"
+                  className="grid grid-cols-2 gap-2.5 sm:gap-4 px-4 pt-2 pb-3 sm:pb-4"
                   initial={{ opacity: 1, height: "auto" }}
                   exit={{
                     opacity: 0,
@@ -826,8 +750,9 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       transition={{ delay: i * 0.06 }}
                       className={`
                         relative overflow-hidden
-                        bg-white border rounded-2xl p-3
-                        flex flex-col items-center gap-1.5 shadow-sm
+                        bg-white border rounded-2xl p-3 sm:p-6
+                        flex flex-col items-center justify-center gap-1.5 sm:gap-3 shadow-sm
+                        sm:min-h-[106px]
                         disabled:opacity-50 disabled:cursor-not-allowed
                         transition-all duration-200
                         hover:shadow-md hover:border-green-300 hover:-translate-y-0.5
@@ -842,8 +767,8 @@ const AiAdvisor = ({ myProducts = [] }) => {
                       {activeKey === qp.key && !loading && (
                         <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-600" />
                       )}
-                      <qp.icon size={22} className="text-green-700" />
-                      <span className="text-[11px] sm:text-xs font-semibold text-center leading-tight text-gray-700">
+                      <qp.icon className="w-[22px] h-[22px] sm:w-8 sm:h-8 text-green-700" />
+                      <span className="text-[11px] sm:text-base font-semibold text-center leading-tight text-gray-700">
                         {qp.label}
                       </span>
                     </motion.button>
@@ -853,7 +778,7 @@ const AiAdvisor = ({ myProducts = [] }) => {
             </AnimatePresence>
 
             {/* ── Free Chat Input ── */}
-            <div className="px-3 pb-3">
+            <div className="px-4 pb-3">
               <div className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-3 py-2 shadow-sm focus-within:border-green-400 focus-within:ring-2 focus-within:ring-green-100 transition-all">
                 <textarea
                   ref={inputRef}

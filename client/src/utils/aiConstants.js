@@ -65,6 +65,96 @@ export const PRODUCT_IMAGES = {
   Habichuelas: "/images/habichuelas.webp",
 };
 
+// Tagalog and common alternative aliases for product image matching
+const CROP_NAME_ALIASES = {
+  talong: "Eggplant",
+  eggplant: "Eggplant",
+  kamatis: "Tomato",
+  tomato: "Tomato",
+  repolyo: "Cabbage",
+  cabbage: "Cabbage",
+  karot: "Carrot",
+  carrot: "Carrot",
+  patatas: "Potato",
+  potato: "Potato",
+  kalabasa: "Squash",
+  squash: "Squash",
+  sitaw: "Sitao",
+  sitao: "Sitao",
+  "string beans": "String Beans",
+  ampalaya: "Ampalaya",
+  bittergourd: "Ampalaya",
+  okra: "Okra",
+  pechay: "Pechay",
+  sili: "Chili",
+  labuyo: "Chili",
+  chili: "Chili",
+  luya: "Ginger",
+  ginger: "Ginger",
+  bawang: "Garlic",
+  garlic: "Garlic",
+  sibuyas: "Red Onion",
+  "red onion": "Red Onion",
+  "white onion": "White Onion",
+  onion: "Red Onion",
+  mangga: "Mango",
+  mango: "Mango",
+  saging: "Banana",
+  banana: "Banana",
+  mais: "Corn",
+  corn: "Corn",
+  palay: "Rice",
+  bigas: "Rice",
+  rice: "Rice",
+  turmeric: "Turmeric",
+  calamansi: "Calamansi",
+  kalamansi: "Calamansi",
+  papaya: "Papaya",
+  pinya: "Pineapple",
+  pineapple: "Pineapple",
+  pakwan: "Watermelon",
+  watermelon: "Watermelon",
+  avocado: "Avocado",
+  abukado: "Avocado",
+  melon: "Melon",
+  pomelo: "Pomelo",
+  suha: "Pomelo",
+  mungbean: "Mungbean",
+  monggo: "Mungbean",
+  munggo: "Mungbean",
+  habichuelas: "Habichuelas",
+  lemongrass: "Lemongrass",
+  tanglad: "Lemongrass",
+  basil: "Basil",
+};
+
+/**
+ * Returns image path for given product / crop name with Tagalog alias matching
+ */
+export const getProductImage = (name) => {
+  if (!name || typeof name !== "string") return null;
+  if (PRODUCT_IMAGES[name]) return PRODUCT_IMAGES[name];
+
+  const lower = name.toLowerCase();
+  const cleaned = lower.replace(/[^a-z0-9\s]/g, " ").trim();
+
+  // Try alias lookup
+  for (const [alias, standardName] of Object.entries(CROP_NAME_ALIASES)) {
+    if (cleaned.includes(alias) || alias.includes(cleaned)) {
+      if (PRODUCT_IMAGES[standardName]) return PRODUCT_IMAGES[standardName];
+    }
+  }
+
+  // Try partial match with PRODUCT_IMAGES keys
+  for (const [key, url] of Object.entries(PRODUCT_IMAGES)) {
+    if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+      return url;
+    }
+  }
+
+  return null;
+};
+
 // ─── Quick Prompts ────────────────────────────────────────────────────────────
 export const QUICK_PROMPTS = [
   { key: "plant", icon: Sprout, label: "Pinakamabuting Itanim Ngayon" },
@@ -149,9 +239,9 @@ export const CHART_COLORS = {
 // ─── Quick Prompt Text Generator ──────────────────────────────────────────────
 export const getQuickPromptText = (key, { month, season }) =>
   ({
-    plant: `Buwan ng ${month}, ${season}. Base sa live trend data at presyo, aling 5 pananim ang pinaka-magandang itanim NGAYON? Ibigay ang: pangalan, araw bago anihin, at presyo. Gumawa ng chart gamit ang quantity available bilang value. Sagot sa Tagalog, maikli lang.`,
-    price: `Base sa seasonal trends ng Pilipinas ngayong ${month} at sa live data, aling 5 produkto ang malamang na TATAAS ang presyo sa susunod na 1-2 linggo? Ibigay ang dahilan at ang kasalukuyang presyo (LAGING may "/kg", hal. "₱90/kg") at gumawa ng chart na may isPrice:true. Sagot sa Tagalog, maikli lang.`,
-    sell: `Base sa LIVE MARKET TREND DATA, aling 5 produkto ang PINAKAMABENTA at PINAKA-IN-DEMAND sa AniSave NGAYON? Gamitin ang seller count bilang pangunahing batayan. I-rank at gumawa ng chart ng seller count. Sagot sa Tagalog, maikli lang.`,
+    plant: `Buwan ng ${month}, ${season}. Base sa live trend data at presyo, aling 5 pananim ang pinaka-magandang itanim NGAYON? Gumawa ng chart gamit ang quantity available bilang value. Sagot sa Tagalog — isang maikling panimulang pangungusap lang bago ang chart, WALANG listahan ng detalye ng bawat pananim.`,
+    price: `Base sa seasonal trends ng Pilipinas ngayong ${month} at sa live data, aling 5 produkto ang malamang na TATAAS ang presyo sa susunod na 1-2 linggo? Gumawa ng chart na may isPrice:true gamit ang kasalukuyang presyo bilang value. Sagot sa Tagalog — isang maikling panimulang pangungusap lang bago ang chart, WALANG listahan ng detalye ng bawat produkto.`,
+    sell: `Base sa LIVE MARKET TREND DATA, aling 5 produkto ang PINAKAMABENTA at PINAKA-IN-DEMAND sa AniSave NGAYON? Gamitin ang seller count bilang pangunahing batayan. I-rank at gumawa ng chart ng seller count. Sagot sa Tagalog — isang maikling panimulang pangungusap lang bago ang chart, WALANG listahan ng detalye ng bawat produkto.`,
     tips: `Bigyan mo ako ng 5 praktikal na tips sa pagsasaka ngayong ${month} sa Pilipinas. Kasama na ang panahon, mga peste, lupa, at tamang oras ng pagbebenta. Sagot sa Tagalog, maikli lang.`,
   })[key];
 

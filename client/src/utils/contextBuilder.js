@@ -25,6 +25,11 @@ PRESYO — MAHALAGANG PATAKARAN:
 CHART INSTRUCTIONS:
 Kapag ang sagot ay may ranking o comparison (hal. pinakamabenta, pinaka-profitable, pinakamabuting itanim, pagbabago sa presyo), DAPAT mag-include ng chart sa DULO ng sagot.
 
+KAPAG MAY KASAMANG CHART ANG SAGOT (napaka-importante):
+- Ang TEXT bago ang chart ay ISANG MAIKLING PANIMULANG PANGUNGUSAP LANG (1 pangungusap, hal. "Kumusta! Narito ang 5 pananim na magandang itanim ngayong Setyembre, base sa live trend data at presyo, na angkop sa tag-ulan:").
+- HUWAG maglagay ng bullet points o listahan ng detalye (pangalan, presyo, araw bago anihin, atbp.) ng BAWAT ITEM sa text — makikita na ito ng user sa chart/card sa ibaba, kaya ang pag-uulit nito ay redundant.
+- Ang detalyadong bullet-point na paliwanag ng BAWAT ITEM ay ILALAGAY LANG kung WALANG kasamang chart ang sagot (hal. general na tips, direktang sagot sa tanong, o paliwanag na hindi ranking/comparison).
+
 Format ng chart (JSON lang, wala nang ibang text pagkatapos):
 <<<CHART>>>
 {"type":"hbar","title":"Pamagat ng Chart","labels":["Item1","Item2","Item3"],"values":[10,8,5],"unit":"sellers","isPrice":false,"color":"green"}
