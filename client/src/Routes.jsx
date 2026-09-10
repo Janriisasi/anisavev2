@@ -26,6 +26,7 @@ const CartPage       = lazy(() => import('./pages/cartPage'));
 const DownloadPage   = lazy(() => import('./pages/downloadPage'));       // NEW
 const ChatPageMobile    = lazy(() => import('./pages/chatPage'));        // NEW — mobile full-page chat
 const NotificationsPage = lazy(() => import('./pages/notificationsPage')); // NEW — mobile full-page notifications
+const BrowseProductsPage = lazy(() => import('./pages/browseProductsPage')); // Mobile browse page
 const NotFoundPage   = lazy(() => import('./pages/notFoundPage'));
 
 export default function Routes() {
@@ -91,6 +92,7 @@ export default function Routes() {
         <Route path="/cart"     element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
         <Route path="/chat"          element={<ProtectedRoute><ChatPageMobile /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/browse"        element={<ProtectedRoute><BrowseProductsPage /></ProtectedRoute>} />
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />

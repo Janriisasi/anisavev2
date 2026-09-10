@@ -758,7 +758,8 @@ const Home = () => {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Browse Products Section */}
+              {/* Browse Products Section — desktop only; mobile uses the /browse tab */}
+              <div className="hidden md:block">
               <motion.div
                 className="mb-10"
                 initial={{ opacity: 0 }}
@@ -940,6 +941,7 @@ const Home = () => {
                   </motion.div>
                 )}
               </motion.div>
+              </div>
             </>
           )}
         </div>

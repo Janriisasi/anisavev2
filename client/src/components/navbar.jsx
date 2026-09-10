@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../lib/supabase';
-import { Search, Home, User, LogOut } from 'lucide-react';
+import { Search, Home, User, LogOut, Store } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import AboutModal from './aboutModal';
 import ChatButton from './chatButton';
@@ -17,7 +17,6 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -272,87 +271,12 @@ export default function Navbar() {
               <ChatButton />
             </div>
 
-            {/* ── MOBILE: Search + Logout (right of logo) ── */}
+            {/* ── MOBILE: Cart icon + Logout (right of logo) ── */}
             <div className="flex md:hidden items-center gap-2 flex-1 justify-end">
-              <AnimatePresence mode="wait">
-                {isMobileSearchOpen ? (
-                  <motion.div
-                    key="mobile-search-expanded"
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: "100%", opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="relative flex items-center gap-2"
-                  >
-                    <div className="relative flex-1">
-                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-green-800 w-4 h-4 pointer-events-none" />
-                      <input
-                        autoFocus
-                        type="text"
-                        placeholder="Search users..."
-                        className="w-full pl-8 pr-3 py-1.5 bg-white rounded-full text-black text-sm placeholder-gray-400 focus:outline-none ring-2 ring-green-600/20 focus:ring-green-500"
-                        value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
-                          handleSearch(e.target.value);
-                        }}
-                        onBlur={() => {
-                          if (!searchQuery) {
-                            setTimeout(() => setIsMobileSearchOpen(false), 200);
-                          }
-                          setTimeout(() => setShowSearchResults(false), 300);
-                        }}
-                      />
-                    </div>
-
-                    {/* Mobile search dropdown */}
-                    {showSearchResults && searchResults.users?.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border overflow-hidden z-[9999] max-h-72 overflow-y-auto animate-fadeIn">
-                        <div className="px-4 py-2 bg-gray-50 text-gray-700 font-semibold text-xs sticky top-0">
-                          Users
-                        </div>
-                        {searchResults.users.map((u) => (
-                          <div
-                            key={u.id}
-                            className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800 border-b border-gray-100 last:border-b-0"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleUserClick(u.id);
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={
-                                  u.avatar_url ||
-                                  `https://api.dicebear.com/9.x/dylan/svg?seed=${u.username || u.id}`
-                                }
-                                alt=""
-                                className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                              />
-                              <div className="font-medium truncate text-sm">
-                                {u.full_name || u.username}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    key="mobile-search-icon"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                    onClick={() => setIsMobileSearchOpen(true)}
-                    data-tutorial="mobile-search-btn"
-                    className="flex items-center justify-center w-9 h-9 rounded-full bg-green-700 hover:bg-green-600 transition-colors flex-shrink-0"
-                    title="Search"
-                  >
-                    <Search className="w-4 h-4 text-white" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
+              {/* Cart button — replaces search bar on mobile top nav */}
+              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-green-400 hover:bg-green-500 transition-colors flex-shrink-0">
+                <CartButton />
+              </div>
 
               {/* Logout button */}
               <button
@@ -402,12 +326,22 @@ export default function Navbar() {
           isActive={isTabActive('/notifications')}
         />
 
-        {/* Cart */}
-        <CartButton
-          mobileTab
-          mobileMenu
-          isActive={isTabActive('/cart')}
-        />
+        {/* Browse (replaces Cart in bottom tab on mobile) */}
+        <motion.button
+          onClick={() => handleNavigation('/browse')}
+          data-tutorial="mobile-tab-browse"
+          className={`relative flex flex-col items-center justify-center py-2 px-1 flex-1 min-w-0 transition-colors hover:bg-green-700/50 ${
+            isTabActive('/browse') ? 'text-white' : 'text-green-100/70 hover:text-white'
+          }`}
+        >
+          <div className={`relative ${isTabActive('/browse') ? 'scale-110' : ''} transition-transform`}>
+            <Store className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] mt-1 font-medium">Browse</span>
+          {isTabActive('/browse') && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-t-full" />
+          )}
+        </motion.button>
 
         {/* Chat — real /chat route now, no overlay tracking needed */}
         <ChatButton
