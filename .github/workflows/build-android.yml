@@ -39,6 +39,12 @@ jobs:
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
+          sdkmanager "ndk;27.0.12077973"
+
+      - name: Configure Android environment
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: npm ci
