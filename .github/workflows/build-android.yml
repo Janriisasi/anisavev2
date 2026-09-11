@@ -53,7 +53,7 @@ jobs:
         run: npm run tauri android init -- --ci
 
       - name: Build AniSave for Android
-        run: npm run tauri android build
+        run: npm run tauri android build -- --apk --split-per-abi
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
