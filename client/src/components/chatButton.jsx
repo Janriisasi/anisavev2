@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import supabase from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useIsMobile } from '../hooks/useIsMobile';
 import ChatPopup from './chatPopup';
-import toast from 'react-hot-toast';
 
 /**
  * ChatButton — renders the chat action in three variants:
@@ -16,10 +14,24 @@ import toast from 'react-hot-toast';
  *                        opens the popup on desktop (edge-case safety).
  * • mobileMenu         — hamburger-menu row; navigates on mobile.
  *
- * The `openChat` custom event (fired by StartChatButton) is handled by
- * exactly one instance based on viewport:
- *   – mobile  → mobileTab instance navigates to /chat with route state
- *   – desktop → default instance opens the popup
+ * IMPORTANT: all three variants can be mounted in the DOM at the same
+ * time (toggled with responsive Tailwind classes rather than a JS
+ * conditional). Because of that, this component must NEVER open its own
+ * realtime subscription for unread counts / notification toasts — doing
+ * so means every mounted variant opens a duplicate subscription to the
+ * same `user-chat:${user.id}` broadcast topic, which is exactly what was
+ * causing the "new message" popup to fire inconsistently (worked on one
+ * window/session, not another, only fired once, etc).
+ *
+ * The single subscription now lives in `useChatNotifications`, mounted
+ * ONCE near the app root (e.g. in your Navbar/Layout). That hook owns
+ * fetching the unread count and showing the toast; it hands the count
+ * down here as the `unreadCount` prop.
+ *
+ * The `openChat` custom event (fired by StartChatButton) is still
+ * handled per-instance below, because which instance should react to it
+ * (navigate vs. open popup) genuinely depends on which variant this is —
+ * that part is unrelated to the notification bug and is unchanged.
  */
 export default function ChatButton({
   mobileMenu = false,
@@ -27,6 +39,7 @@ export default function ChatButton({
   isActive = false,
   showIndicator = false,
   indicatorLayoutId = 'tab-indicator',
+  unreadCount = 0, // ← now supplied by the parent via useChatNotifications
   onOpen,
 }) {
   const { user } = useAuth();
@@ -35,9 +48,18 @@ export default function ChatButton({
   const location = useLocation();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [initialConversation, setInitialConversation] = useState(null);
   const [productContext, setProductContext] = useState(null);
+
+  // Local copy of the badge count so the desktop popup can push instant
+  // updates (e.g. right after marking messages as read) without waiting
+  // for the next global refetch. Always re-syncs to the prop whenever it
+  // changes, so this never drifts from the single source of truth.
+  const [displayUnreadCount, setDisplayUnreadCount] = useState(unreadCount);
+  useEffect(() => {
+    console.log('[ChatButton] unreadCount prop is now:', unreadCount); // ← temp
+    setDisplayUnreadCount(unreadCount);
+  }, [unreadCount]);
 
   const setOpenState = (val) => {
     setIsOpen(val);
@@ -56,110 +78,11 @@ export default function ChatButton({
     return () => window.removeEventListener('closeOverlays', handleClose);
   }, []);
 
-  // Unread badge + realtime + openChat event
+  // openChat event — dispatched by StartChatButton.
   useEffect(() => {
     if (!user) return;
 
-    fetchUnreadCount();
-
-    // 1. Instant notification broadcast on user-chat channel
-    const userMsgChannel = supabase
-      .channel(`user-chat:${user.id}`, {
-        config: { broadcast: { ack: false } },
-      })
-      .on('broadcast', { event: 'incoming_message' }, ({ payload }) => {
-        fetchUnreadCount();
-
-        // If user is not currently inside this conversation, pop up an in-app notification toast
-        if (
-          payload &&
-          payload.conversation_id &&
-          window.__currentActiveConversationId !== payload.conversation_id
-        ) {
-          const rawContent = payload.message?.content || '';
-          const preview = rawContent
-            .replace(/\[IMAGE:.*?\]/g, '📷 Image')
-            .replace(/\[PRODUCT_CONTEXT:.*?\]/g, '')
-            .replace(/\[ORDER_CONFIRM:.*?\]/g, '📦 Order')
-            .trim() || 'Sent an attachment';
-
-          toast(
-            (t) => (
-              <div
-                className="flex items-center gap-3 cursor-pointer py-0.5"
-                onClick={() => {
-                  toast.dismiss(t.id);
-                  if (isMobile) {
-                    navigate('/chat');
-                  } else {
-                    setOpenState(true);
-                  }
-                }}
-              >
-                <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 text-green-700 font-bold">
-                  💬
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-900 truncate">
-                    {payload.sender_name || 'New Message'}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">{preview}</p>
-                </div>
-              </div>
-            ),
-            {
-              id: `chat-notif-${payload.message?.id || Date.now()}`,
-              duration: 4500,
-              position: 'top-right',
-            }
-          );
-        }
-      })
-      .subscribe();
-
-    // 2. Database changes on messages
-    const dbChannel = supabase
-      .channel(`messages-updates:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-        },
-        (payload) => {
-          if (payload.new?.recipient_id === user.id) {
-            fetchUnreadCount();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-        },
-        (payload) => {
-          if (payload.new?.recipient_id === user.id) {
-            fetchUnreadCount();
-          }
-        }
-      )
-      .subscribe();
-
-    // 3. Auto-refresh when tab/phone becomes active (mobile screen unlock / app switch)
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') fetchUnreadCount();
-    };
-    const handleUnreadChanged = () => fetchUnreadCount();
-
-    document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('chatUnreadChanged', handleUnreadChanged);
-
     /**
-     * openChat event — dispatched by StartChatButton.
-     *
      * We only allow ONE instance to handle this at a time:
      *   • On mobile  → the mobileTab instance navigates to /chat
      *   • On desktop → the default instance opens the popup
@@ -187,25 +110,10 @@ export default function ChatButton({
     window.addEventListener('openChat', handleOpenChat);
 
     return () => {
-      supabase.removeChannel(userMsgChannel);
-      supabase.removeChannel(dbChannel);
       window.removeEventListener('openChat', handleOpenChat);
-      window.removeEventListener('chatUnreadChanged', handleUnreadChanged);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, isMobile, mobileTab, mobileMenu]);
-
-  const fetchUnreadCount = async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase.rpc('get_unread_count');
-      if (error) throw error;
-      setUnreadCount(data || 0);
-    } catch (err) {
-      console.error('Error fetching unread count:', err);
-    }
-  };
 
   /** Main click handler — navigate on mobile, toggle popup on desktop */
   const toggleChat = () => {
@@ -243,14 +151,14 @@ export default function ChatButton({
         >
           <MessageCircle className="w-6 h-6" />
           <AnimatePresence>
-            {unreadCount > 0 && (
+            {displayUnreadCount > 0 && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
                 className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1 shadow-sm"
               >
-                {unreadCount > 99 ? '99+' : unreadCount}
+                {displayUnreadCount > 99 ? '99+' : displayUnreadCount}
               </motion.div>
             )}
           </AnimatePresence>
@@ -276,9 +184,9 @@ export default function ChatButton({
           <MessageCircle className="w-5 h-5" />
           <span>Messages</span>
         </div>
-        {unreadCount > 0 && (
+        {displayUnreadCount > 0 && (
           <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {displayUnreadCount > 99 ? '99+' : displayUnreadCount}
           </span>
         )}
       </motion.button>
@@ -298,14 +206,14 @@ export default function ChatButton({
         <MessageCircle className="w-5 h-5 text-white" />
 
         <AnimatePresence>
-          {unreadCount > 0 && (
+          {displayUnreadCount > 0 && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
               className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
             >
-              {unreadCount > 99 ? '99+' : unreadCount}
+              {displayUnreadCount > 99 ? '99+' : displayUnreadCount}
             </motion.div>
           )}
         </AnimatePresence>
@@ -315,7 +223,7 @@ export default function ChatButton({
       <ChatPopup
         isOpen={isOpen}
         onClose={handleClose}
-        onUnreadChange={setUnreadCount}
+        onUnreadChange={setDisplayUnreadCount}
         initialConversation={initialConversation}
         productContext={productContext}
       />

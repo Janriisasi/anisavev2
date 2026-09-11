@@ -26,17 +26,14 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
 
     fetchConversations(true);
 
-    // 1. Broadcast channel for instantaneous notification of new messages
-    const userNotifyChannel = supabase
-      .channel(`user-chat:${user.id}`, {
-        config: { broadcast: { ack: false } },
-      })
-      .on('broadcast', { event: 'incoming_message' }, () => {
-        fetchConversations(false);
-      })
-      .subscribe();
+    // NOTE: no `user-chat:${user.id}` broadcast subscription here anymore.
+    // useChatNotifications (mounted once in Navbar) owns that topic and
+    // dispatches the `chatUnreadChanged` DOM event below whenever a
+    // message comes in — a second subscription to the same topic here
+    // was what silently broke the shared one once this popup had been
+    // opened and closed.
 
-    // 2. Database changes on conversations and messages
+    // Database changes on conversations and messages
     const dbChannel = supabase
       .channel(`chat-popup-db:${user.id}`)
       .on(
@@ -71,7 +68,6 @@ export default function ChatPopup({ isOpen, onClose, onUnreadChange, initialConv
     window.addEventListener('chatUnreadChanged', handleUnreadChanged);
 
     return () => {
-      supabase.removeChannel(userNotifyChannel);
       supabase.removeChannel(dbChannel);
       window.removeEventListener('chatUnreadChanged', handleUnreadChanged);
     };

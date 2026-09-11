@@ -9,6 +9,7 @@ import ChatButton from './chatButton';
 import CartButton from './cartButton';
 import NotificationButton from './notificationButton';
 import { usePresence } from '../hooks/usePresence';
+import { useChatNotifications } from '../hooks/useChatNotifications';
 import LogoutConfirmationModal from './logoutConfirmation';
 
 export default function Navbar() {
@@ -71,6 +72,14 @@ export default function Navbar() {
   }, []);
 
   usePresence();
+
+  // Single source of truth for the chat unread badge + "new message" toast.
+  // Both ChatButton instances below (desktop + mobile) are mounted in the
+  // DOM at the same time — they're only CSS-hidden per breakpoint, not
+  // unmounted — so this must be called exactly once here, never inside
+  // ChatButton itself, or the notification subscription gets duplicated.
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
+  useChatNotifications({ onUnreadChange: setChatUnreadCount });
 
   const closeSearch = () => {
     setShowSearchResults(false);
@@ -268,7 +277,7 @@ export default function Navbar() {
 
               <NotificationButton />
               <CartButton />
-              <ChatButton />
+              <ChatButton unreadCount={chatUnreadCount} />
             </div>
 
             {/* ── MOBILE: Cart icon + Logout (right of logo) ── */}
@@ -348,6 +357,7 @@ export default function Navbar() {
           mobileTab
           mobileMenu
           isActive={isTabActive('/chat')}
+          unreadCount={chatUnreadCount}
         />
 
         {/* Profile (replaces Menu) */}

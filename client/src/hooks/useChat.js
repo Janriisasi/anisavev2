@@ -98,17 +98,14 @@ export function useChat({ isActive = true } = {}) {
 
     fetchConversations(true);
 
-    // 1. Broadcast channel for instantaneous notification of new messages
-    const userNotifyChannel = supabase
-      .channel(`user-chat:${user.id}`, {
-        config: { broadcast: { ack: false } },
-      })
-      .on('broadcast', { event: 'incoming_message' }, () => {
-        fetchConversations(false);
-      })
-      .subscribe();
+    // NOTE: no `user-chat:${user.id}` broadcast subscription here anymore.
+    // useChatNotifications (mounted once in Navbar) owns that topic and
+    // dispatches the `chatUnreadChanged` DOM event whenever a message
+    // comes in — a second subscription to the same topic here caused the
+    // exact "works until you open/close chat once" flakiness we chased
+    // in ChatPopup.
 
-    // 2. Database changes on conversations and messages
+    // Database changes on conversations and messages
     const dbChannel = supabase
       .channel(`use-chat-db:${user.id}`)
       .on(
@@ -130,14 +127,14 @@ export function useChat({ isActive = true } = {}) {
       )
       .subscribe();
 
-    // 3. Auto-refresh when tab becomes visible (silent background update)
+    // Auto-refresh when tab becomes visible (silent background update)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchConversations(false);
       }
     };
 
-    // 4. Custom event from local actions
+    // Custom event from local actions
     const handleUnreadChanged = () => {
       fetchConversations(false);
     };
@@ -146,7 +143,6 @@ export function useChat({ isActive = true } = {}) {
     window.addEventListener('chatUnreadChanged', handleUnreadChanged);
 
     return () => {
-      supabase.removeChannel(userNotifyChannel);
       supabase.removeChannel(dbChannel);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('chatUnreadChanged', handleUnreadChanged);
