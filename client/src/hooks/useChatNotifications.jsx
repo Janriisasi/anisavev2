@@ -153,9 +153,14 @@ export function useChatNotifications({ onUnreadChange } = {}) {
                   window.dispatchEvent(new CustomEvent('openChat', { detail: {} }));
                 }}
               >
-                <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 text-green-700 font-bold">
-                  💬
-                </div>
+                <img
+                  src={
+                    payload.sender_avatar ||
+                    `https://api.dicebear.com/9.x/dylan/svg?seed=${payload.sender_name || 'user'}`
+                  }
+                  alt={payload.sender_name || 'New Message'}
+                  className="w-9 h-9 rounded-full object-cover flex-shrink-0 bg-green-100 border border-green-200"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-900 truncate">
                     {payload.sender_name || 'New Message'}

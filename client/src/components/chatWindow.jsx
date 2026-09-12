@@ -74,6 +74,21 @@ export default function ChatWindow({
     setShownProductContext(productContext);
   }, [productContext]);
 
+  // Own profile (avatar_url, full_name) for the outgoing notification payload —
+  // `user` from useAuth() is the raw Supabase auth object (authContext.jsx sets
+  // it straight from session.user), not merged with the `profiles` table, so
+  // user.user_metadata won't reliably have avatar_url or full_name.
+  const [myProfile, setMyProfile] = useState(null);
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("username, full_name, avatar_url")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => setMyProfile(data));
+  }, [user?.id]);
+
   const otherUser = conversation.otherParticipant;
   const isOnline = isPresenceOnline(presenceData);
 
@@ -638,7 +653,9 @@ export default function ChatWindow({
                 message: data,
                 conversation_id: conversation.id,
                 sender_id: user.id,
-                sender_name: user.user_metadata?.full_name || user.email,
+                sender_name:
+                  myProfile?.full_name || myProfile?.username || user.email,
+                sender_avatar: myProfile?.avatar_url || null,
               },
             });
             setTimeout(() => supabase.removeChannel(notifyChannel), 1500);
