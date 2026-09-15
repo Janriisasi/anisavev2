@@ -226,7 +226,7 @@ export default function DownloadPage() {
               return (
                 <div
                   key={platform.id}
-                  className={`relative bg-white rounded-[20px] shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:-translate-y-2 p-6 sm:p-8 flex flex-col ${
+                  className={`relative bg-white rounded-[20px] shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:-translate-y-2 p-6 sm:p-8 flex flex-col items-center text-center ${
                     isRecommended ? "ring-2 ring-[#00573C] ring-opacity-50" : ""
                   }`}
                 >
@@ -250,8 +250,8 @@ export default function DownloadPage() {
                   <p className="text-[#726767] text-sm mb-2.5">
                     {platform.tagline}
                   </p>
-                  <div className="flex items-center gap-2 mb-5 sm:mb-6">
-                    <span className="bg-[#024310] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                  <div className="flex items-center justify-center gap-2 mb-5 sm:mb-6">
+                    <span className="bg-yellow-400 text-[#024310] text-[10px] font-semibold px-2 py-0.5 rounded-full">
                       {link.version}
                     </span>
                     <span className="text-[#9a9a9a] text-xs">
